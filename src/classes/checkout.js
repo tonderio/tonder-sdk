@@ -1,9 +1,9 @@
 import { AES } from "crypto-js";
 
-export class MySDK {
+export class Checkout {
 
-    constructor({ apiKey, type, backgroundColor, color }) {
-        this.url = "http://localhost:8081/#/"
+    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB" }) {
+        this.url = "http://checkout.tonder.io/#/"
         this.apiKey = apiKey
         this.type = type
         this.backgroundColor = backgroundColor
@@ -30,7 +30,6 @@ export class MySDK {
     }
     setPayment = (paymentData) => {
         this.paymentData = paymentData
-        console.log(this.paymentData)
     }
     openTabListener = (tab, button) => {
         const tabInterval = setInterval(() => {
@@ -78,7 +77,7 @@ export class MySDK {
     }
     handleMessage = (event) => {
         if (event.origin === this.url) {
-            console.log('Received message: ' + event.data);
+            return event.data
         }
     }
 }
