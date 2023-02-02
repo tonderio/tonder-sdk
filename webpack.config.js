@@ -6,7 +6,7 @@ module.exports = {
         "path": __dirname + '/dist',
         "filename": "bundle.js"
     },
-    // devtool: 'cheap-module-eval-source-map',
+    devtool: 'inline-source-map',
     devServer: {
         static: {
             directory: path.join(__dirname, 'dist')
