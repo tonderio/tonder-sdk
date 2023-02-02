@@ -9,11 +9,20 @@ export class Checkout {
         this.backgroundColor = backgroundColor
         this.color = color
         this.params = ""
-
+    }
+    generateButton = (buttonText) => {
+        this.buttonText = buttonText ? buttonText : this.buttonText
         this.tonderButton = document.createElement('button');
-        this.tonderButton.innerHTML = "Proceder al pago";
+        this.tonderButton.innerHTML = this.buttonText;
         this.stylishButton(this.tonderButton)
         this.tonderButton.onclick = this.openCheckout
+    }
+    getButton = ({buttonText}) => {
+        this.generateButton(buttonText)
+        return this.tonderButton
+    }
+    mountButton = ({buttonText}) => {
+        this.generateButton(buttonText)
         document.getElementById("tonder-checkout").appendChild(this.tonderButton);
     }
     stylishButton = (element) => {

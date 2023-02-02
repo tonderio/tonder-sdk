@@ -1,6 +1,6 @@
 {
   "name": "tonder-sdk-test",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "tonder sdk for integrations",
   "main": "index.js",
   "scripts": {
