@@ -23,7 +23,13 @@ export class Checkout {
     }
     mountButton = ({buttonText}) => {
         this.generateButton(buttonText)
-        document.getElementById("tonder-checkout").appendChild(this.tonderButton);
+        const entryPoint = document.getElementById("tonder-checkout")
+        try {
+            entryPoint.innerHTML = ""
+            entryPoint.append(this.tonderButton)
+        } catch(error) {
+            console.error(error)
+        }
     }
     stylishButton = (element) => {
         element.style.backgroundColor = this.backgroundColor
@@ -55,7 +61,7 @@ export class Checkout {
         const encrypted = AES.encrypt(queryString, 'url-params-encrypt').toString()
         const encodedURL = encodeURIComponent(encrypted);
         this.params = "?" + encodedURL;
-        const newWindow = window.open(this.url + this.params, '_blank');
+        const newWindow = window.open(this.url + this.params, '_blank', `width=1200,height=$800,left=0,top=0`);
         this.tonderButton.disabled = true
         this.tonderButton.innerHTML = `
             <div class="loader"></div>
