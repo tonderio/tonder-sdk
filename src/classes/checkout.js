@@ -1,20 +1,35 @@
 import { AES } from "crypto-js";
 
-export class MySDK {
+export class Checkout {
 
-    constructor({ apiKey, type, backgroundColor, color }) {
-        this.url = "http://localhost:8081/#/"
+    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB" }) {
+        this.url = "http://checkout.tonder.io/#/"
         this.apiKey = apiKey
         this.type = type
         this.backgroundColor = backgroundColor
         this.color = color
         this.params = ""
-
+    }
+    generateButton = (buttonText) => {
+        this.buttonText = buttonText ? buttonText : this.buttonText
         this.tonderButton = document.createElement('button');
-        this.tonderButton.innerHTML = "Proceder al pago";
+        this.tonderButton.innerHTML = this.buttonText;
         this.stylishButton(this.tonderButton)
         this.tonderButton.onclick = this.openCheckout
-        document.getElementById("tonder-checkout").appendChild(this.tonderButton);
+    }
+    getButton = ({buttonText}) => {
+        this.generateButton(buttonText)
+        return this.tonderButton
+    }
+    mountButton = ({buttonText}) => {
+        this.generateButton(buttonText)
+        const entryPoint = document.getElementById("tonder-checkout")
+        try {
+            entryPoint.innerHTML = ""
+            entryPoint.append(this.tonderButton)
+        } catch(error) {
+            console.error(error)
+        }
     }
     stylishButton = (element) => {
         element.style.backgroundColor = this.backgroundColor
@@ -30,7 +45,6 @@ export class MySDK {
     }
     setPayment = (paymentData) => {
         this.paymentData = paymentData
-        console.log(this.paymentData)
     }
     openTabListener = (tab, button) => {
         const tabInterval = setInterval(() => {
@@ -47,7 +61,7 @@ export class MySDK {
         const encrypted = AES.encrypt(queryString, 'url-params-encrypt').toString()
         const encodedURL = encodeURIComponent(encrypted);
         this.params = "?" + encodedURL;
-        const newWindow = window.open(this.url + this.params, '_blank');
+        const newWindow = window.open(this.url + this.params, '_blank', `width=1200,height=$800,left=0,top=0`);
         this.tonderButton.disabled = true
         this.tonderButton.innerHTML = `
             <div class="loader"></div>
@@ -78,7 +92,7 @@ export class MySDK {
     }
     handleMessage = (event) => {
         if (event.origin === this.url) {
-            console.log('Received message: ' + event.data);
+            return event.data
         }
     }
 }
