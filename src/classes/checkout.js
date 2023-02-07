@@ -56,7 +56,10 @@ export class Checkout {
         }, 500)
     }
     openCheckout = () => {
-        const params = {...this.paymentData, apiKey: this.apiKey, type: this.type}
+        const params = { apiKey: this.apiKey, ...this.paymentData, type: this.type}
+        if (params.products) {
+            params.products = JSON.stringify(params.products)
+        }
         const queryString = new URLSearchParams(params).toString();
         const encrypted = AES.encrypt(queryString, 'url-params-encrypt').toString()
         const encodedURL = encodeURIComponent(encrypted);
