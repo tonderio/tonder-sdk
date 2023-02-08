@@ -9,6 +9,7 @@ export class Checkout {
         this.backgroundColor = backgroundColor
         this.color = color
         this.params = ""
+        this.buttonText = "Proceder al pago"
     }
     generateButton = (buttonText) => {
         this.buttonText = buttonText ? buttonText : this.buttonText
@@ -51,7 +52,7 @@ export class Checkout {
             if (tab.closed) {
                 clearInterval(tabInterval);
                 button.disabled = false
-                button.innerHTML = 'Proceder al pago'
+                button.innerHTML = this.buttonText
             }
         }, 500)
     }
