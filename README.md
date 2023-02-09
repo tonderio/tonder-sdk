@@ -67,9 +67,9 @@ tonderCheckout.mountButton(buttonOptions)
 | color           | string        | Hex color #000000                                   |
 
 ## setPayment params
-# products
+### products
 It will receive an array of objects that represent the products.
-'''json
+```javascript
 [
     {
         name: 'name of the product',
@@ -77,11 +77,11 @@ It will receive an array of objects that represent the products.
         image: 'url to the image to be used'
     }
 ]
-'''
-# shippingCost
+```
+### shippingCost
 It is a valid float string, that will be the shipping cost.
 
-# email
+### email
 The email of the customer that is making the purchase.
 ## License
 

@@ -2,8 +2,8 @@ import { AES } from "crypto-js";
 
 export class Checkout {
 
-    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB" }) {
-        this.url = "http://checkout.tonder.io/#/"
+    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB", url="http://checkout.tonder.io/#/"}) {
+        this.url = url
         this.apiKey = apiKey
         this.type = type
         this.backgroundColor = backgroundColor
@@ -62,6 +62,7 @@ export class Checkout {
             params.products = JSON.stringify(params.products)
         }
         const queryString = new URLSearchParams(params).toString();
+        console.log(queryString)
         const encrypted = AES.encrypt(queryString, 'url-params-encrypt').toString()
         const encodedURL = encodeURIComponent(encrypted);
         this.params = "?" + encodedURL;
