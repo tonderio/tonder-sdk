@@ -2,13 +2,14 @@ import { AES } from "crypto-js";
 
 export class Checkout {
 
-    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB" }) {
-        this.url = "http://checkout.tonder.io/#/"
+    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB", url="http://checkout.tonder.io/#/"}) {
+        this.url = url
         this.apiKey = apiKey
         this.type = type
         this.backgroundColor = backgroundColor
         this.color = color
         this.params = ""
+        this.buttonText = "Proceder al pago"
     }
     generateButton = (buttonText) => {
         this.buttonText = buttonText ? buttonText : this.buttonText
@@ -51,13 +52,17 @@ export class Checkout {
             if (tab.closed) {
                 clearInterval(tabInterval);
                 button.disabled = false
-                button.innerHTML = 'Proceder al pago'
+                button.innerHTML = this.buttonText
             }
         }, 500)
     }
     openCheckout = () => {
-        const params = {...this.paymentData, apiKey: this.apiKey, type: this.type}
+        const params = { apiKey: this.apiKey, ...this.paymentData, type: this.type}
+        if (params.products) {
+            params.products = JSON.stringify(params.products)
+        }
         const queryString = new URLSearchParams(params).toString();
+        console.log(queryString)
         const encrypted = AES.encrypt(queryString, 'url-params-encrypt').toString()
         const encodedURL = encodeURIComponent(encrypted);
         this.params = "?" + encodedURL;
