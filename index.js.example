@@ -11,28 +11,10 @@ const config = {
 }
 const tonderCheckout = new Checkout(config)
 const params = {
-    products: [
-        {
-            name: "Product 1",
-            price: "399.99",
-            image: "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            quantity: 2,
-            description: "Test description",
-            product_reference: "1",
-        },
-        {
-            name: "Product 2",
-            price: "200.00",
-            image: "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            quantity: 1,
-            description: "test",
-            product_reference: "2",
-        },
-    ],
     shippingCost: "129.99",
     email: "fuentesc91@gmail.com"
 }
-tonderCheckout.setPayment(params)
+tonderCheckout.setOrder(params)
 
 
 tonderCheckout.mountButton({ buttonText: 'Proceder al pago' })

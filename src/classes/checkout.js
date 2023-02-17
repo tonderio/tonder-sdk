@@ -2,14 +2,18 @@ import { AES } from "crypto-js";
 
 export class Checkout {
 
-    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB", url="http://checkout.tonder.io/#/"}) {
+    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB", cb=()=>{}, url="http://checkout.tonder.io/#/"}) {
         this.url = url
         this.apiKey = apiKey
         this.type = type
         this.backgroundColor = backgroundColor
         this.color = color
         this.params = ""
+        this.order = {}
         this.buttonText = "Proceder al pago"
+        this.cb = cb
+
+        window.addEventListener("message", this.receiveMessage.bind(this), false);
     }
     generateButton = (buttonText) => {
         this.buttonText = buttonText ? buttonText : this.buttonText
@@ -44,8 +48,12 @@ export class Checkout {
         element.style.width = '100%'
         element.style.boxShadow = '0 3px 6px 0 rgba(0,0,0,0.16)'
     }
-    setPayment = (paymentData) => {
-        this.paymentData = paymentData
+    setOrder = ({products, email, shippingCost }) => {
+        let _order = {}
+        if (products) _order.products = products 
+        if (email) _order.email = email 
+        if (shippingCost) _order.shippingCost = shippingCost
+        this.order = {...this.order, ..._order}
     }
     openTabListener = (tab, button) => {
         const tabInterval = setInterval(() => {
@@ -57,12 +65,7 @@ export class Checkout {
         }, 500)
     }
     openCheckout = () => {
-        const params = { apiKey: this.apiKey, ...this.paymentData, type: this.type}
-        if (params.products) {
-            params.products = JSON.stringify(params.products)
-        }
-        const queryString = new URLSearchParams(params).toString();
-        console.log(queryString)
+        const queryString = this.getUrlParams()
         const encrypted = AES.encrypt(queryString, 'url-params-encrypt').toString()
         const encodedURL = encodeURIComponent(encrypted);
         this.params = "?" + encodedURL;
@@ -95,9 +98,21 @@ export class Checkout {
         `
         this.openTabListener(newWindow, this.tonderButton)
     }
-    handleMessage = (event) => {
-        if (event.origin === this.url) {
-            return event.data
+    getUrlParams = () => {
+        const params = { apiKey: this.apiKey, ...this.order, type: this.type}
+        if (params.products) {
+            params.products = JSON.stringify(params.products)
+        }
+        const queryString = new URLSearchParams(params).toString();
+        return queryString
+    }
+    receiveMessage(event) {
+        // Parse data if it is possible, in case of error it will return the raw data.
+        try {
+            const data = JSON.parse(event.data)
+            this.cb(data)
+        } catch(error) {
+            this.cb(event.data)
         }
     }
 }

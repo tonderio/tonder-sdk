@@ -37,13 +37,15 @@ const paymentOptions = {
     products: [
         {
             name:"Product 1",
-            price:"399.99",
+            price_unit: "399.99",
             image:"https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+            quantity: "1",
+            description: "Test",
+            
         },
         {
             name:"Product 2",
-            price:"599.99",
-            image:"https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+            price_unit:"599.99",
         },
     ]
     shippingCost:"150",
@@ -58,6 +60,62 @@ const buttonOptions = {
 tonderCheckout.mountButton(buttonOptions)
 ```
 
+##React Example
+```javascript
+import React, { useState, useLayoutEffect, useContext, useEffect } from 'react'
+import { Checkout as TonderCheckout } from 'tonder-sdk-test'
+
+import { CartContext } from '../context/CartContext'
+
+
+export const Checkout = () => {
+    const cart = useContext(CartContext)
+
+    const [checkoutResponse, setCheckoutResponse] = useState({})
+    const receiveResponse = (data) => {
+        setCheckoutResponse(data)
+    }
+    const config = {
+        apiKey: "Your Tonder API Key",
+        type: "payment",
+        cb: receiveResponse,
+    }
+    const tonderCheckout = new TonderCheckout(config)
+    const params = {
+        shippingCost: cart.shippingCost,
+        email: "customer@mail.com"
+    }
+    tonderCheckout.setOrder(params)
+
+    useEffect(()=>{
+        function setOrder() {
+            const _tonderCart = cart.items.map(product => {
+                return {
+                    name: product.title,
+                    price_unit: product.price,
+                    quantity: product.quantity
+                }
+            })
+            tonderCheckout.setOrder({products: _tonderCart})
+        }
+        setOrder()
+    }, [cart.items])
+
+    useLayoutEffect(() => {
+        tonderCheckout.mountButton({ buttonText: 'Proceder al pago' })
+    })
+
+    return (
+        <div>
+            <h1>Checkout</h1>
+            <div id="tonder-checkout">
+            </div>
+            <p>{checkoutResponse?.data?.status}</p>
+        </div>
+    )
+}
+```
+
 ## Configuration
 | Property        | Type          | Description                                         |
 |:---------------:|:-------------:|:---------------------------------------------------:|
@@ -65,6 +123,7 @@ tonderCheckout.mountButton(buttonOptions)
 | type            | string        | values: 'payment', 'lite', 'full'                   |
 | backgroundColor | string        | Hex color #000000                                   |
 | color           | string        | Hex color #000000                                   |
+| cb              | function      | Function executed when checkout send a response     |
 
 ## setPayment params
 ### products
@@ -73,7 +132,7 @@ It will receive an array of objects that represent the products.
 [
     {
         name: 'name of the product',
-        price: 'price of the product',
+        price_unit: 'price of the product',
         image: 'url to the image to be used'
     }
 ]
