@@ -26,7 +26,7 @@ import { Checkout } from 'tonder-sdk-test';
 
 // Initialize the checkout
 const config = {
-    apiKey: "businessAPIKey",
+    apiKey: "Your Tonder API Key",
     type: "payment",
 };
 const tonderCheckout = new TonderCheckout(config);
@@ -60,7 +60,7 @@ const buttonOptions = {
 tonderCheckout.mountButton(buttonOptions)
 ```
 
-##React Example
+## React Example
 ```javascript
 import React, { useState, useLayoutEffect, useContext, useEffect } from 'react'
 import { Checkout as TonderCheckout } from 'tonder-sdk-test'
@@ -132,8 +132,8 @@ It will receive an array of objects that represent the products.
 [
     {
         name: 'name of the product',
-        price_unit: 'price of the product',
-        image: 'url to the image to be used'
+        price_unit: 'valid float string with the price of the product',
+        quantity: 'valid integer strig with the quantity of this product',
     }
 ]
 ```

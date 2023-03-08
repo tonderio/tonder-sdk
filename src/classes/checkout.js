@@ -14,6 +14,8 @@ export class Checkout {
         this.cb = cb
 
         window.addEventListener("message", this.receiveMessage.bind(this), false);
+
+        
     }
     generateButton = (buttonText) => {
         this.buttonText = buttonText ? buttonText : this.buttonText
@@ -54,6 +56,7 @@ export class Checkout {
         if (email) _order.email = email 
         if (shippingCost) _order.shippingCost = shippingCost
         this.order = {...this.order, ..._order}
+        return this.order
     }
     openTabListener = (tab, button) => {
         const tabInterval = setInterval(() => {
