@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -11,10 +12,22 @@
     <script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js"></script>
     <title>SDK Test Demo</title>
 </head>
+
 <body>
     <h1>SDK Test Demo</h1>
-    <div id="tonder-checkout">
-    </div>
+    <form id="payment-form">
+        <div style="margin-bottom: 2rem;">
+            <input name="payment" type="radio" , id="tonder-pay" value="1"/>
+            <label for="tonder-pay">Pago con tarjeta de credito o debito</label>
+            <div style="margin-top: 2rem;" id="tonder-checkout">
+            </div>
+        </div>
+        <div style="margin-bottom: 2rem;" value="2">
+            <input name="payment" type="radio" , id="other" />
+            <label for="other">Otra opcion</label>
+        </div>
+    </form>
     <script src="./bundle.js"></script>
 </body>
+
 </html>

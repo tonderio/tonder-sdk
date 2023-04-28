@@ -1,5 +1,5 @@
 export class InlineCheckout {
-    constructor() {
+    constructor({form, radioName}) {
         this.baseUrlTonder = 'https://stage.tonder.io/api/v1/'
         this.apiKeyTonder = 'f4ab1f9140ce5b17a1bbd0b62b7f949cdd18967b'
         this.email = 'customer@mail.com'
@@ -15,6 +15,7 @@ export class InlineCheckout {
                 "amount_total": 11
             }
         ]
+        this.total = 11
         this.firstName = 'Carlos'
         this.lastName = 'Fuentes'
         this.country = 'Mexico'
@@ -24,6 +25,19 @@ export class InlineCheckout {
         this.postCode = '45130'
         this.email = 'fuentesc91@gmail.com'
         this.phone = '3334632217'
+        this.form = form
+        this.radioName = radioName
+    }
+
+    toCurrency(value) {
+        if (isNaN(parseFloat(value))) {
+            return value;
+        }
+        var formatter = new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        });
+        return formatter.format(value)
     }
 
     injectCheckout() {
@@ -39,7 +53,7 @@ export class InlineCheckout {
                     <div id="collectCvvTonder" class="empty-div-cvc-tonder"></div>
                 </div>
                 <div id="msgError"></div>
-                <button id="tonderPayButton">Pagar</button>
+                <button id="tonderPayButton" class="payButton">Pagar ${this.toCurrency(this.total)}</button>
             </div>
 
             <style>
@@ -47,6 +61,13 @@ export class InlineCheckout {
                     width: 90% !important;
                     font-family: "Arial", sans-serif !important;
                     margin: 0 auto !important;
+                    max-height: 0px;
+                    overflow: hidden;
+                    transition: max-height 0.5s ease-out;
+                }
+
+                .container-selected {
+                    max-height: 100vh;
                 }
         
                 .p-card-tonder {
@@ -134,6 +155,16 @@ export class InlineCheckout {
                     text-decoration: None !important;
                     color: black !important;
                 }
+                .payButton {
+                    min-height: 2.3rem;
+                    border-radius: 0.5rem;
+                    cursor: pointer;
+                    width: 100%;
+                    text-align: center;
+                    border: none;
+                    background-color: #000;
+                    color: #fff;
+                }
         
                 @media screen and (max-width: 600px) {
                     .p-card-tonder {
@@ -203,19 +234,7 @@ export class InlineCheckout {
             openpayPublicKeyTonder = dataBusinessTonder.openpay_keys.public_key
 
         } catch (error) {
-            if (jQuery('#payment_method_zplit').is(':checked')) {
-                jQuery('form.checkout #place_order').prop('disabled', true);
-            }
-
-            jQuery('form.checkout').on('change', 'input[name="payment_method"]', function () {
-                // If the custom payment method is selected
-                if (jQuery('#payment_method_zplit').is(':checked')) {
-                    // Click on the WC button
-                    jQuery('form.checkout #place_order').prop('disabled', true);
-                } else {
-                    jQuery('form.checkout #place_order').prop('disabled', false);
-                }
-            });
+            console.log(error)
         }
 
         // --- Skyflow ---
@@ -354,11 +373,10 @@ export class InlineCheckout {
         // --- End skyflow ---
 
         // --- Tokenization ---
-        // var checkoutFormTonder = jQuery('form.woocommerce-checkout');
 
         const getResponseTonder = async () => {
             // Disable button
-            // jQuery('form.checkout #place_order').prop('disabled', true);
+            document.querySelector('#tonderPayButton').disabled = true;
 
             // Data from checkout
             var billingFirstName = this.firstName
@@ -371,8 +389,6 @@ export class InlineCheckout {
             var billingEmail = this.email
             var billingPhone = this.phone
 
-            console.log(billingFirstName, billingLastName, billingCountry, billingAddressOne, billingCity, billingState, billingPostcode, billingEmail, billingPhone)
-
             if (!billingFirstName || !billingLastName || !billingCountry ||
                 !billingAddressOne || !billingCity || !billingState || !billingPostcode ||
                 !billingEmail || !billingPhone) {
@@ -380,7 +396,7 @@ export class InlineCheckout {
                 msgErrorDiv.classList.add("error-tonder-container-tonder");
                 msgErrorDiv.innerHTML = "Verifica los campos obligatorios";
                 setTimeout(function () {
-                    jQuery('form.checkout #place_order').prop('disabled', false);
+                    document.querySelector('#tonderPayButton').disabled = false;
                     msgErrorDiv.classList.remove("error-tonder-container-tonder");
                     msgErrorDiv.innerHTML = "";
                 }, 3000);
@@ -397,7 +413,7 @@ export class InlineCheckout {
                 msgErrorDiv.classList.add("error-tonder-container-tonder");
                 msgErrorDiv.innerHTML = "Por favor, verifica todos los campos de tu tarjeta";
                 setTimeout(function () {
-                    jQuery('form.checkout #place_order').prop('disabled', false);
+                    document.querySelector('#tonderPayButton').disabled = false;
                     msgErrorDiv.classList.remove("error-tonder-container-tonder");
                     msgErrorDiv.innerHTML = "";
                 }, 3000);
@@ -467,25 +483,26 @@ export class InlineCheckout {
                 const jsonResponseRouter = await createCheckoutRouterTonder(routerItems);
 
                 if (jsonResponseRouter) {
-                    jQuery('form.checkout #place_order').prop('disabled', false);
+                    document.querySelector('#tonderPayButton').disabled = false;
                     return true
                 } else {
                     var msgErrorDiv = document.getElementById("msgError");
                     msgErrorDiv.classList.add("error-tonder-container-tonder");
                     msgErrorDiv.innerHTML = "No se ha podido procesar el pago";
                     setTimeout(function () {
-                        jQuery('form.checkout #place_order').prop('disabled', false);
+                        document.querySelector('#tonderPayButton').disabled = false;
                         msgErrorDiv.classList.remove("error-tonder-container-tonder");
                         msgErrorDiv.innerHTML = "";
                     }, 3000);
                     return false
                 }
             } catch (error) {
+                console.log(error)
                 var msgErrorDiv = document.getElementById("msgError");
                 msgErrorDiv.classList.add("error-tonder-container-tonder");
                 msgErrorDiv.innerHTML = "Ha ocurrido un error";
                 setTimeout(function () {
-                    jQuery('form.checkout #place_order').prop('disabled', false);
+                    document.querySelector('#tonderPayButton').disabled = false;
                     msgErrorDiv.classList.remove("error-tonder-container-tonder");
                     msgErrorDiv.innerHTML = "";
                 }, 3000);
@@ -495,44 +512,28 @@ export class InlineCheckout {
 
         // Inline checkout code
 
-        document.querySelector('#tonderPayButton').addEventListener('click', async function() {
+        document.querySelector('#tonderPayButton').addEventListener('click', async function(event) {
+            event.preventDefault()
             // Start tokenization
             const response = await getResponseTonder()
             // Response
             console.log(response)
-        })
-        // if (jQuery('#payment_method_zplit').is(':checked')) {
-        //     // Click on the WC button
-        //     jQuery('form.checkout #place_order').on('click', async function (e) {
-        //         // Prevent the form submission
-        //         e.preventDefault();
-        //         // Start the tokenization
-        //         const response = await getResponseTonder();
-        //         // Response
-        //         if (response == true) {
-        //             checkoutFormTonder.submit();
-        //         }
-        //     });
-        // }
-
-        jQuery('form.checkout').on('change', 'input[name="payment_method"]', function () {
-            // If the custom payment method is selected
-            if (jQuery('#payment_method_zplit').is(':checked')) {
-                // Click on the WC button
-                jQuery('form.checkout #place_order').on('click', async function (e) {
-                    // Prevent the form submission
-                    e.preventDefault();
-                    // Start the tokenization
-                    const response = await getResponseTonder();
-                    // Response
-                    if (response == true) {
-                        checkoutFormTonder.submit();
-                    }
-                });
-            } else {
-                jQuery('form.checkout #place_order').off('click');
+            if (response) {
+                this.form.submit()
             }
-        });
+        })
+
+        const radios = document.querySelectorAll(`input[type=radio][name=${this.radioName}]`)
+        radios.forEach(radio => radio.addEventListener('change', () => {
+            console.log(radio)
+
+            if (radio.id === "tonder-pay") {
+                document.querySelector('.container-tonder').classList.add('container-selected')
+            } else {
+                document.querySelector('.container-tonder').classList.remove('container-selected')
+            }
+        }))
+
 
         // --- Request to backend ---
         // -- Register user --
