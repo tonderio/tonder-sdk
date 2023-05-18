@@ -76,7 +76,6 @@ class InlineCheckout {
   
     injectCheckout() {
       const injectInterval = setInterval(() => {
-        console.log(document.querySelector("#tonder-checkout"));
         if (document.querySelector("#tonder-checkout")) {
           document.querySelector("#tonder-checkout").innerHTML = `
           <div class="container-tonder">
@@ -117,6 +116,7 @@ class InlineCheckout {
                   max-height: 0px;
                   overflow: hidden;
                   transition: max-height 0.5s ease-out;
+                  max-width: 600px
               }
   
               .container-selected {
