@@ -142,6 +142,77 @@ It is a valid float string, that will be the shipping cost.
 
 ### email
 The email of the customer that is making the purchase.
+# Tonder inline SDK
+
+## Instalation
+
+You can import InlineCheckout from the instalation, or use a Script tag to import with the following URL
+```html
+<script src="https://cdn.jsdelivr.net/gh/fuentesc91/react-example-use-tonder-sdk/public/inlinesdk.js" ></script>
+```
+
+## Configuration
+
+You only need to initialize the object (or add it in the index.html file of a javascript framework) as the following example
+
+```javascript
+    const customer = {
+        firstName: "name";
+        lastName: "of customer";
+        country: "Mexico";
+        address: "street address";
+        city: "city";
+        state: "state";
+        postCode: "00000";
+        email: "customer@mail.com";
+        phone: "9999999999";
+    }
+
+    const items = [
+      {
+        description: "Example",
+        quantity: 1,
+        price_unit: 1,
+        discount: 0,
+        taxes: 0,
+        product_reference: 1,
+        name: "Producto",
+        amount_total: 1,
+      },
+    ];
+
+    const form = document.querySelector("#payment-form"); // the node form of the checkout process.
+    const apiKey = "f4ab1f9140ce5b17a1bbd0b62b7f949cdd18967b"; //Your tonder API KEY
+    const inlineCheckout = new InlineCheckout({
+    form: form,
+    apiKey: apiKey,
+    totalElementId: "cart-total", //the ID of the total element where the total is showing.
+    customer: ,
+    items:
+    });
+    inlineCheckout.injectCheckout();
+```
+### form
+The form where the checkout is showing, at the end of a successful payment, the sdk will trigger the submit of the form.
+
+### apiKey
+Your api key getted from Tonder Dashboard
+
+### totalEmenetId
+The ID of the element where the total is showing, the SDK will extract the total.
+
+### customer (optional)
+The data of the customer to be registered in the transaction
+
+### items
+An array of items to be registered in the Tonder order.
+
+### Mount element
+You need to have an element where the inline checkout will be mounted, this should be a DIV element with the ID "tonder-checkout"
+
+```html
+<div id="tonder-checkout"></div>
+```
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
