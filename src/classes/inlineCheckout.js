@@ -6,9 +6,11 @@ export class InlineCheckout {
     totalElementId,
     customer,
     items,
+    returnUrl,
   }) {
-    this.baseUrlTonder = "https://stage.tonder.io/api/v1/";
+    this.baseUrlTonder = "http://localhost:8000/api/v1/";
     this.apiKeyTonder = apiKey;
+    this.returnUrl = returnUrl;
     this.email = "customer@mail.com";
     this.cartItemsTonder = items || [
       {
@@ -736,6 +738,7 @@ transform: rotate(360deg);
           last_name: "",
           email_client: billingEmail,
           phone_number: billingPhone,
+          return_url: this.returnUrl,
           id_product: "no_id",
           quantity_product: 1,
           id_ship: "0",
@@ -795,7 +798,8 @@ transform: rotate(360deg);
       console.log(response);
       payButton.innerHTML = prevButtonContent;
       if (response) {
-        this.form.submit();
+        console.log('response: ', response)
+        // this.form.submit();
       }
     });
 
