@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      .checkout-container {
+        display: flex;
+        align-items: flex-start;
+      }
+      .right {
+        width: 50vw;
+        height: 80vh;
+        font-size: 3rem;
+        font-weight: bold;
+        display: flex;
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        padding: 2rem;
+        justify-content: center;
+        align-content: center;
+      }
+    </style>
+    <title>Tonder SDK Demo</title>
+  </head>
+
+  <body>
+    <h1>Tonder SDK Demo</h1>
+    <div class="checkout-container">
+      <form id="payment-form">
+        <div style="margin-bottom: 2rem;">
+          <input name="payment" type="radio" id="tonder-pay" value="1" checked/>
+          <label for="tonder-pay">Pago con tarjeta de credito o debito</label>
+          <div style="margin-top: 2rem;" id="tonder-checkout">
+          </div>
+        </div>
+        <div style="margin-bottom: 2rem;" value="2">
+          <input name="payment" type="radio" id="other" />
+          <label for="other">Otra opcion</label>
+        </div>
+      </form>
+      <div class="right">
+        <span>Total&nbsp</span>
+        <div id="cart-total">$100</div>
+      </div>
+    </div>
+  </body>
+</html>
