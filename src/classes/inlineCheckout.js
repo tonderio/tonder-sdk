@@ -699,8 +699,8 @@ transform: rotate(360deg);
         }
 
         // Check user
-        const jsonResponseUser = await clientRegisterTonder(billingEmail);
-        userKeyTonder = jsonResponseUser.token;
+        const jsonResponseUser = await getCustomer(billingEmail);
+        userKeyTonder = jsonResponseUser.auth_token;
 
         const total = this.total;
 
@@ -798,8 +798,7 @@ transform: rotate(360deg);
       console.log(response);
       payButton.innerHTML = prevButtonContent;
       if (response) {
-        console.log('response: ', response)
-        // this.form.submit();
+        this.form.submit();
       }
     });
 
@@ -830,33 +829,13 @@ transform: rotate(360deg);
 
     // --- Request to backend ---
     // -- Register user --
-    async function clientRegisterTonder(email) {
-      // Verify if the email is registered
-      const url = `${baseUrlTonder}client-existence/${email}`;
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-      });
-      if (response.status >= 200 && response.status <= 299) {
-        const jsonResponse = await response.json();
-        if (jsonResponse.message === true) {
-          return await activation(email);
-        } else {
-          return await registration(email);
-        }
-      } else {
-        throw new Error(`Error: ${response.statusText}`);
-      }
+    async function getCustomer(email) {
+     return await customerRegister(email);
     }
 
-    async function registration(email) {
-      const url = `${baseUrlTonder}customer-register/`;
-      const data = {
-        email: email,
-        password: "",
-        repeat_password: "",
-      };
+    async function customerRegister(email) {
+      const url = `${baseUrlTonder}customer/`;
+      const data = { email: email };
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -867,25 +846,6 @@ transform: rotate(360deg);
       });
 
       if (response.status === 201) {
-        const jsonResponse = await activation(email);
-        return jsonResponse;
-      } else {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-    }
-
-    async function activation(email) {
-      const url = `${baseUrlTonder}activate-customer/`;
-      const data = { email: email };
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.status >= 200 && response.status <= 299) {
         const jsonResponse = await response.json();
         return jsonResponse;
       } else {
