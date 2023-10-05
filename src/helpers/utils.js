@@ -63,7 +63,7 @@ export async function initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, 
             resolve(response.token);
           }
         };
-        const url = `${baseUrlTonder}vault-token/`;
+        const url = `${baseUrlTonder}/api/v1/vault-token/`;
         Http.open("GET", url);
         Http.setRequestHeader("Authorization", `Token ${apiKeyTonder}`);
         Http.send();
@@ -174,7 +174,7 @@ export async function initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, 
     });
 
   // Mount the elements.
-    cardNumberElementTonder.mount("#collectCardNumberTonder");
+  cardNumberElementTonder.mount("#collectCardNumberTonder");
   cvvElementTonder.mount("#collectCvvTonder");
   expiryMonthElementTonder.mount("#collectExpirationMonthTonder");
   expiryYearElementTonder.mount("#collectExpirationYearTonder");
@@ -280,19 +280,6 @@ export async function initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, 
       tonderContainerCardHolder.appendChild(errorLabel);
     }
   });
-}
 
-
-// Returns an object
-// https://example.com/?name=John&age=30&city=NewYork
-// { name: "John", age: "30", city: "NewYork" }
-export function getURLParameters() {
-  const parameters = {};
-  const urlParams = new URLSearchParams(window.location.search);
-
-  for (const [key, value] of urlParams) {
-    parameters[key] = value;
-  }
-
-  return parameters;
+  return collectContainerTonder
 }

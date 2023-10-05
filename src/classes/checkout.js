@@ -2,7 +2,14 @@ import { AES } from "crypto-js";
 
 export class Checkout {
 
-    constructor({ apiKey, type = "payment", backgroundColor="#141414", color="#EBEBEB", cb=()=>{}, url="http://checkout.tonder.io/#/"}) {
+    constructor({
+      apiKey,
+      type = "payment",
+      backgroundColor="#141414",
+      color="#EBEBEB",
+      cb=()=>{},
+      url="http://checkout.tonder.io/#/"
+    }) {
         this.url = url
         this.apiKey = apiKey
         this.type = type

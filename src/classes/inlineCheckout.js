@@ -4,13 +4,14 @@ import {
   addScripts,
   initSkyflow,
   toCurrency,
-  checkDuplicateIframes,
+  // checkDuplicateIframes,
   filtrarNumeros,
 } from '../helpers/utils';
 
 import {
   openpayCheckoutTonder
 } from '../data/api';
+import { ThreeDSHandler } from './3dsHandler.js';
 
 export class InlineCheckout {
   constructor({
@@ -21,8 +22,10 @@ export class InlineCheckout {
     customer,
     items,
     returnUrl,
+    // baseUrl = "http://localhost:8000/api/v1/",
+    baseUrl = "http://localhost:8000",
   }) {
-    this.baseUrlTonder = "http://localhost:8000/api/v1/";
+    this.baseUrlTonder = baseUrl;
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
     this.email = "customer@mail.com";
@@ -50,6 +53,7 @@ export class InlineCheckout {
     this.phone = customer?.phone || "9999999999";
     this.form = form;
     this.radioName = radioName;
+    this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl})
 
     addScripts();
   }
@@ -76,6 +80,8 @@ export class InlineCheckout {
 
 
   injectCheckout() {
+    this.process3ds.verifyTransactionStatus()
+    console.log('result: ', result)
     const injectInterval = setInterval(() => {
       if (document.querySelector("#tonder-checkout")) {
         document.querySelector("#tonder-checkout").innerHTML = cardTemplate;
@@ -106,7 +112,7 @@ export class InlineCheckout {
     // -- Business' details --
     try {
       const responseBusinessTonder = await fetch(
-        `${baseUrlTonder}payments/business/${apiKeyTonder}`,
+        `${baseUrlTonder}/api/v1/payments/business/${apiKeyTonder}`,
         {
           headers: {
             Authorization: `Token ${apiKeyTonder}`,
@@ -129,8 +135,8 @@ export class InlineCheckout {
       console.log(error);
     }
 
-    initSkyflow(vaultIdTonder, vaultUrlTonder, apiKeyTonder)
-    checkDuplicateIframes();
+    const collectContainerTonder = await initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, apiKeyTonder)
+    // checkDuplicateIframes();
 
     const getResponseTonder = async () => {
       // Disable button
@@ -178,6 +184,7 @@ export class InlineCheckout {
           "records"
         ][0]["fields"];
       } catch (error) {
+        console.log('error: ', error)
         var msgErrorDiv = document.getElementById("msgError");
         msgErrorDiv.classList.add("error-tonder-container-tonder");
         msgErrorDiv.innerHTML =
@@ -313,12 +320,10 @@ export class InlineCheckout {
       console.log(response);
       payButton.innerHTML = prevButtonContent;
       if (response) {
-        console.log('response: ', response)
-        if (response.psp_response.next_action) {
-          const redirectUrl = response.psp_response.next_action.redirect_to_url.url;
-          window.location.href = redirectUrl;
+        const process3ds = new ThreeDSHandler({payload: response})
+        if (!process3ds.redirectTo3DS()) {
+          this.form.submit()
         }
-        this.form.submit();
       }
     });
 
@@ -354,7 +359,7 @@ export class InlineCheckout {
     }
 
     async function customerRegister(email) {
-      const url = `${baseUrlTonder}customer/`;
+      const url = `${baseUrlTonder}/api/v1/customer/`;
       const data = { email: email };
       const response = await fetch(url, {
         method: "POST",
@@ -375,7 +380,7 @@ export class InlineCheckout {
 
     // -- Create order --
     async function createOrderTonder(orderItems) {
-      const url = `${baseUrlTonder}orders/`;
+      const url = `${baseUrlTonder}/api/v1/orders/`;
       const data = orderItems;
       const response = await fetch(url, {
         method: "POST",
@@ -395,7 +400,7 @@ export class InlineCheckout {
 
     // -- Create payment --
     async function createPaymentTonder(paymentItems) {
-      const url = `${baseUrlTonder}business/${paymentItems.business_pk}/payments/`;
+      const url = `${baseUrlTonder}/api/v1/business/${paymentItems.business_pk}/payments/`;
       const data = paymentItems;
       const response = await fetch(url, {
         method: "POST",
@@ -415,7 +420,7 @@ export class InlineCheckout {
 
     // -- Create payment with router --
     async function createCheckoutRouterTonder(routerItems) {
-      const url = `${baseUrlTonder}checkout-router/`;
+      const url = `${baseUrlTonder}/api/v1/checkout-router/`;
       const data = routerItems;
       const response = await fetch(url, {
         method: "POST",
