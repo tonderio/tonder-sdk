@@ -80,7 +80,6 @@ export class InlineCheckout {
 
   injectCheckout() {
     this.process3ds.verifyTransactionStatus()
-    console.log('result: ', result)
     const injectInterval = setInterval(() => {
       if (document.querySelector("#tonder-checkout")) {
         document.querySelector("#tonder-checkout").innerHTML = cardTemplate;
