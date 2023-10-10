@@ -22,8 +22,7 @@ export class InlineCheckout {
     customer,
     items,
     returnUrl,
-    // baseUrl = "http://localhost:8000/api/v1/",
-    baseUrl = "http://localhost:8000",
+    baseUrl = "https://stage.tonder.io",
   }) {
     this.baseUrlTonder = baseUrl;
     this.apiKeyTonder = apiKey;
