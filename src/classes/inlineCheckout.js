@@ -4,7 +4,7 @@ import {
   addScripts,
   initSkyflow,
   toCurrency,
-  // checkDuplicateIframes,
+  checkDuplicateIframes,
   filtrarNumeros,
 } from '../helpers/utils';
 
@@ -134,7 +134,7 @@ export class InlineCheckout {
     }
 
     const collectContainerTonder = await initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, apiKeyTonder)
-    // checkDuplicateIframes();
+    checkDuplicateIframes();
 
     const getResponseTonder = async () => {
       // Disable button
