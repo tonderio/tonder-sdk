@@ -1,4 +1,12 @@
 import { cardTemplate } from '../helpers/template.js'
+import {
+  responseBusinessTonder,
+  customerRegister,
+  createOrderTonder,
+  createPaymentTonder,
+  createCheckoutRouterTonder,
+  openpayCheckoutTonder
+} from '../data/api';
 
 import {
   addScripts,
@@ -8,9 +16,6 @@ import {
   filtrarNumeros,
 } from '../helpers/utils';
 
-import {
-  openpayCheckoutTonder
-} from '../data/api';
 import { ThreeDSHandler } from './3dsHandler.js';
 
 export class InlineCheckout {
@@ -22,7 +27,8 @@ export class InlineCheckout {
     customer,
     items,
     returnUrl,
-    baseUrl = "https://stage.tonder.io",
+    // TODO: Fix this
+    baseUrl = "http://localhost:8000",
   }) {
     this.baseUrlTonder = baseUrl;
     this.apiKeyTonder = apiKey;
@@ -109,15 +115,7 @@ export class InlineCheckout {
 
     // -- Business' details --
     try {
-      const responseBusinessTonder = await fetch(
-        `${baseUrlTonder}/api/v1/payments/business/${apiKeyTonder}`,
-        {
-          headers: {
-            Authorization: `Token ${apiKeyTonder}`,
-          },
-        }
-      );
-      const dataBusinessTonder = await responseBusinessTonder.json();
+      const dataBusinessTonder = await responseBusinessTonder(baseUrlTonder, apiKeyTonder);
 
       // Response data
       vaultIdTonder = dataBusinessTonder.vault_id;
@@ -126,8 +124,7 @@ export class InlineCheckout {
       businessPkTonder = dataBusinessTonder.business.pk;
 
       // Openpay
-      openpayMerchantIdTonder =
-        dataBusinessTonder.openpay_keys.merchant_id;
+      openpayMerchantIdTonder = dataBusinessTonder.openpay_keys.merchant_id;
       openpayPublicKeyTonder = dataBusinessTonder.openpay_keys.public_key;
     } catch (error) {
       console.log(error);
@@ -176,17 +173,13 @@ export class InlineCheckout {
       // Card
       var cardTokensSkyflowTonder = null;
       try {
-        const collectResponseSkyflowTonder =
-          await collectContainerTonder.collect();
-        cardTokensSkyflowTonder = await collectResponseSkyflowTonder[
-          "records"
-        ][0]["fields"];
+        const collectResponseSkyflowTonder = await collectContainerTonder.collect();
+        cardTokensSkyflowTonder = await collectResponseSkyflowTonder[ "records" ][0]["fields"];
       } catch (error) {
         console.log('error: ', error)
         var msgErrorDiv = document.getElementById("msgError");
         msgErrorDiv.classList.add("error-tonder-container-tonder");
-        msgErrorDiv.innerHTML =
-          "Por favor, verifica todos los campos de tu tarjeta";
+        msgErrorDiv.innerHTML = "Por favor, verifica todos los campos de tu tarjeta";
         setTimeout(function () {
           document.querySelector("#tonderPayButton").disabled = false;
           msgErrorDiv.classList.remove("error-tonder-container-tonder");
@@ -238,7 +231,11 @@ export class InlineCheckout {
           is_oneclick: true,
           items: cartItemsTonder,
         };
-        const jsonResponseOrder = await createOrderTonder(orderItems);
+        const jsonResponseOrder = await createOrderTonder(
+          baseUrlTonder,
+          apiKeyTonder,
+          orderItems
+        );
 
         // Create payment
         const now = new Date();
@@ -250,6 +247,8 @@ export class InlineCheckout {
           order: jsonResponseOrder.id,
         };
         const jsonResponsePayment = await createPaymentTonder(
+          baseUrlTonder,
+          apiKeyTonder,
           paymentItems
         );
 
@@ -275,6 +274,8 @@ export class InlineCheckout {
           payment_id: jsonResponsePayment.pk,
         };
         const jsonResponseRouter = await createCheckoutRouterTonder(
+          baseUrlTonder,
+          apiKeyTonder,
           routerItems
         );
 
@@ -320,124 +321,31 @@ export class InlineCheckout {
       if (response) {
         const process3ds = new ThreeDSHandler({payload: response})
         if (!process3ds.redirectTo3DS()) {
-          this.form.submit()
+          // TODO: Find an alternative to this 
+          // this.form.submit()
         }
       }
     });
 
     if (!this.radioName) {
-      document
-        .querySelector(".container-tonder")
-        .classList.add("container-selected");
+      document.querySelector(".container-tonder").classList.add("container-selected");
     } else {
-      const radios = document.querySelectorAll(
-        `input[type=radio][name=${this.radioName}]`
-      );
+      const radios = document.querySelectorAll(`input[type=radio][name=${this.radioName}]`);
       radios.forEach((radio) =>
         radio.addEventListener("change", () => {
           console.log(radio);
-
           if (radio.id === "tonder-pay") {
-            document
-              .querySelector(".container-tonder")
-              .classList.add("container-selected");
+            document.querySelector(".container-tonder").classList.add("container-selected");
           } else {
-            document
-              .querySelector(".container-tonder")
-              .classList.remove("container-selected");
+            document.querySelector(".container-tonder").classList.remove("container-selected");
           }
         })
       );
     }
 
-    // --- Request to backend ---
     // -- Register user --
     async function getCustomer(email) {
-      return await customerRegister(email);
+      return await customerRegister(baseUrlTonder, apiKeyTonder, email);
     }
-
-    async function customerRegister(email) {
-      const url = `${baseUrlTonder}/api/v1/customer/`;
-      const data = { email: email };
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.status === 201) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-      } else {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-    }
-
-    // -- Create order --
-    async function createOrderTonder(orderItems) {
-      const url = `${baseUrlTonder}/api/v1/orders/`;
-      const data = orderItems;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.status === 201) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-      } else {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-    }
-
-    // -- Create payment --
-    async function createPaymentTonder(paymentItems) {
-      const url = `${baseUrlTonder}/api/v1/business/${paymentItems.business_pk}/payments/`;
-      const data = paymentItems;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.status >= 200 && response.status <=299) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-      } else {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-    }
-
-    // -- Create payment with router --
-    async function createCheckoutRouterTonder(routerItems) {
-      const url = `${baseUrlTonder}/api/v1/checkout-router/`;
-      const data = routerItems;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.status >= 200 && response.status <= 299) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-      } else {
-        return false;
-      }
-    }
-
-    // function parseUrlParams() {
-      // }
-
   }
 }

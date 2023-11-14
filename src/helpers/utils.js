@@ -4,8 +4,7 @@ export function addScripts() {
   const openPay1 = document.createElement("script");
   openPay1.src = "https://openpay.s3.amazonaws.com/openpay.v1.min.js";
   const openPay2 = document.createElement("script");
-  openPay2.src =
-    "https://openpay.s3.amazonaws.com/openpay-data.v1.min.js";
+  openPay2.src = "https://openpay.s3.amazonaws.com/openpay-data.v1.min.js";
 
   document.head.appendChild(skyflow);
   document.head.appendChild(openPay1);
