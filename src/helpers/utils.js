@@ -25,19 +25,6 @@ export function filtrarNumeros(cadena) {
   return parseFloat(numerosFiltrados);
 }
 
-export function checkDuplicateIframes()  {
-  // Verify the first iframe
-  var containerCollectCardNumberTonder = document.getElementById(
-    "collectCardNumberTonder"
-  );
-  var iframes =
-    containerCollectCardNumberTonder.getElementsByTagName("iframe");
-
-  if (iframes.length > 1) {
-    location.reload();
-  }
-};
-
 export function toCurrency(value) {
   if (isNaN(parseFloat(value))) {
     return value;
@@ -54,7 +41,7 @@ export async function initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, 
     vaultID: vaultIdTonder,
     vaultURL: vaultUrlTonder,
     getBearerToken: () => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const Http = new XMLHttpRequest();
         Http.onreadystatechange = () => {
           if (Http.readyState === 4 && Http.status >= 200 && Http.status <= 299) {

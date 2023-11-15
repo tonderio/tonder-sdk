@@ -12,7 +12,6 @@ import {
   addScripts,
   initSkyflow,
   toCurrency,
-  checkDuplicateIframes,
   filtrarNumeros,
 } from '../helpers/utils';
 
@@ -131,7 +130,6 @@ export class InlineCheckout {
     }
 
     const collectContainerTonder = await initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, apiKeyTonder)
-    checkDuplicateIframes();
 
     const getResponseTonder = async () => {
       // Disable button
@@ -272,6 +270,7 @@ export class InlineCheckout {
           order_id: jsonResponseOrder.id,
           business_id: businessPkTonder,
           payment_id: jsonResponsePayment.pk,
+          source: 'sdk',
         };
         const jsonResponseRouter = await createCheckoutRouterTonder(
           baseUrlTonder,
