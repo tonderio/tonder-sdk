@@ -26,7 +26,6 @@ export class ThreeDSHandler {
 
   redirectTo3DS() {
     const url = this.payload?.next_action?.redirect_to_url?.url
-    console.log(this.payload)
     if (url) {
       this.saveVerifyTransactionUrl()
       window.location = url;

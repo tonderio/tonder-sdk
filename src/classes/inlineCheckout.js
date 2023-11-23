@@ -347,4 +347,16 @@ export class InlineCheckout {
       return await customerRegister(baseUrlTonder, apiKeyTonder, email);
     }
   }
+
+  removeCheckout() {
+    const formElement = document.querySelector("#tonder-checkout");
+    if (formElement) {
+      formElement.parentNode.removeChild(formElement);
+    }
+
+    clearInterval(this.injectInterval);
+    this.form = null;
+    this.radioName = null;
+    console.log("InlineCheckout removed from DOM and cleaned up.");
+  }
 }

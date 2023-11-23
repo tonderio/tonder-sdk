@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
-// TODO: Rename package to 'tonder-sdk'
+import React, { useState, useEffect } from 'react'
 import { InlineCheckout } from 'tonder-sdk-test'
 
 import sdkIcons from "../assets/img/sdk-icons.png";
@@ -7,26 +6,10 @@ import sdkIcons from "../assets/img/sdk-icons.png";
 export const Checkout = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [optionHidden, setOptionHidden] = useState(true);
-  const tonderLoaded = useRef(false);
-
-  // const [checkoutResponse, setCheckoutResponse] = useState({})
-  // const receiveResponse = (data) => {
-  //     setCheckoutResponse(data)
-  // }
-  // const form = document.querySelector("#payment-form");
-  // const config = {
-  //     apiKey: "Your Tonder API Key",
-  //     type: "payment",
-  //     cb: receiveResponse,
-  // }
   
   useEffect(()=>{
-    if (tonderLoaded.current) return;
     const form = document.querySelector("#payment-form");
     const apiKey = "d34a419991e0bd53ed5cae7faf979b3263afabf5";
-    // TODO: Remove this reference,
-    // it should be reactive to the context cart total
-    // not to a dom element
     const totalElement = document.querySelector("#cart-total");
     const returnUrl = window.location.href
     const inlineCheckout = new InlineCheckout({
@@ -35,10 +18,8 @@ export const Checkout = () => {
       totalElementId: totalElement,
       returnUrl: returnUrl
     });
-    tonderLoaded.current = true;
-    // Add removeCheckout function to replace tonderLoaded fix
-    // return () => inlineCheckout.remove()
     inlineCheckout.injectCheckout();
+    return () => inlineCheckout.removeCheckout()
   }, [])
 
   const checkoutStyle = {

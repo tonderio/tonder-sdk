@@ -91,7 +91,6 @@ export async function createCheckoutRouterTonder(baseUrlTonder, apiKeyTonder, ro
   });
   if (response.status >= 200 && response.status <= 299) {
     const jsonResponse = await response.json();
-    console.log('jsonResponse: ', jsonResponse)
     return jsonResponse;
   } else {
     return false;
