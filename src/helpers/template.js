@@ -10,16 +10,6 @@ export const cardTemplate = `
     <div id="collectCvvTonder" class="empty-div-cvc-tonder"></div>
   </div>
   <div id="msgError"></div>
-  <div>
-    <div class="container-politics-tonder">
-      <input type="checkbox" id="acceptTonder" name="scales" checked>
-      <label class="terms-label-tonder" for="scales">
-        He leído y estoy de acuerdo con los
-        <a class="link-terms-tonder" href="https://uploads-ssl.webflow.com/64064b12c34bf2edb2b35b4b/64340cb7f63339f5e75eaf51_Te%CC%81rminos-y-Condiciones.cefc632e785489045e68.pdf" target="_blank">términos y condiciones</a>
-        de este sitio web.
-      </label>
-    </div>
-  </div>
   <button id="tonderPayButton" class="payButton">Pagar</button>
 </div>
 
