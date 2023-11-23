@@ -1,16 +1,20 @@
 import { cardTemplate } from '../helpers/template.js'
+import {
+  responseBusinessTonder,
+  customerRegister,
+  createOrderTonder,
+  createPaymentTonder,
+  createCheckoutRouterTonder,
+  openpayCheckoutTonder
+} from '../data/api';
 
 import {
   addScripts,
   initSkyflow,
   toCurrency,
-  checkDuplicateIframes,
   filtrarNumeros,
 } from '../helpers/utils';
 
-import {
-  openpayCheckoutTonder
-} from '../data/api';
 import { ThreeDSHandler } from './3dsHandler.js';
 
 export class InlineCheckout {
@@ -22,7 +26,9 @@ export class InlineCheckout {
     customer,
     items,
     returnUrl,
-    baseUrl = "https://stage.tonder.io",
+    // TODO: Fix this
+    baseUrl = "http://localhost:8000",
+    cb=()=>{},
   }) {
     this.baseUrlTonder = baseUrl;
     this.apiKeyTonder = apiKey;
@@ -52,7 +58,8 @@ export class InlineCheckout {
     this.phone = customer?.phone || "9999999999";
     this.form = form;
     this.radioName = radioName;
-    this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl})
+    this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl});
+    this.cb = cb
 
     addScripts();
   }
@@ -90,9 +97,6 @@ export class InlineCheckout {
   }
 
   async fetchTonderData() {
-    var checkboxTonder = document.getElementById("acceptTonder");
-    checkboxTonder.checked = false;
-
     // Load inputs
     // Token
     const apiKeyTonder = this.apiKeyTonder;
@@ -109,15 +113,7 @@ export class InlineCheckout {
 
     // -- Business' details --
     try {
-      const responseBusinessTonder = await fetch(
-        `${baseUrlTonder}/api/v1/payments/business/${apiKeyTonder}`,
-        {
-          headers: {
-            Authorization: `Token ${apiKeyTonder}`,
-          },
-        }
-      );
-      const dataBusinessTonder = await responseBusinessTonder.json();
+      const dataBusinessTonder = await responseBusinessTonder(baseUrlTonder, apiKeyTonder);
 
       // Response data
       vaultIdTonder = dataBusinessTonder.vault_id;
@@ -126,15 +122,13 @@ export class InlineCheckout {
       businessPkTonder = dataBusinessTonder.business.pk;
 
       // Openpay
-      openpayMerchantIdTonder =
-        dataBusinessTonder.openpay_keys.merchant_id;
+      openpayMerchantIdTonder = dataBusinessTonder.openpay_keys.merchant_id;
       openpayPublicKeyTonder = dataBusinessTonder.openpay_keys.public_key;
     } catch (error) {
       console.log(error);
     }
 
     const collectContainerTonder = await initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, apiKeyTonder)
-    checkDuplicateIframes();
 
     const getResponseTonder = async () => {
       // Disable button
@@ -176,32 +170,13 @@ export class InlineCheckout {
       // Card
       var cardTokensSkyflowTonder = null;
       try {
-        const collectResponseSkyflowTonder =
-          await collectContainerTonder.collect();
-        cardTokensSkyflowTonder = await collectResponseSkyflowTonder[
-          "records"
-        ][0]["fields"];
+        const collectResponseSkyflowTonder = await collectContainerTonder.collect();
+        cardTokensSkyflowTonder = await collectResponseSkyflowTonder[ "records" ][0]["fields"];
       } catch (error) {
         console.log('error: ', error)
         var msgErrorDiv = document.getElementById("msgError");
         msgErrorDiv.classList.add("error-tonder-container-tonder");
-        msgErrorDiv.innerHTML =
-          "Por favor, verifica todos los campos de tu tarjeta";
-        setTimeout(function () {
-          document.querySelector("#tonderPayButton").disabled = false;
-          msgErrorDiv.classList.remove("error-tonder-container-tonder");
-          msgErrorDiv.innerHTML = "";
-        }, 3000);
-        return false;
-      }
-
-      var checkboxTonder = document.getElementById("acceptTonder");
-      console.log(checkboxTonder);
-      if (!checkboxTonder.checked) {
-        var msgErrorDiv = document.getElementById("msgError");
-        msgErrorDiv.classList.add("error-tonder-container-tonder");
-        msgErrorDiv.innerHTML =
-          "Necesitas aceptar los términos y condiciones";
+        msgErrorDiv.innerHTML = "Por favor, verifica todos los campos de tu tarjeta";
         setTimeout(function () {
           document.querySelector("#tonderPayButton").disabled = false;
           msgErrorDiv.classList.remove("error-tonder-container-tonder");
@@ -238,7 +213,11 @@ export class InlineCheckout {
           is_oneclick: true,
           items: cartItemsTonder,
         };
-        const jsonResponseOrder = await createOrderTonder(orderItems);
+        const jsonResponseOrder = await createOrderTonder(
+          baseUrlTonder,
+          apiKeyTonder,
+          orderItems
+        );
 
         // Create payment
         const now = new Date();
@@ -250,6 +229,8 @@ export class InlineCheckout {
           order: jsonResponseOrder.id,
         };
         const jsonResponsePayment = await createPaymentTonder(
+          baseUrlTonder,
+          apiKeyTonder,
           paymentItems
         );
 
@@ -273,8 +254,11 @@ export class InlineCheckout {
           order_id: jsonResponseOrder.id,
           business_id: businessPkTonder,
           payment_id: jsonResponsePayment.pk,
+          source: 'sdk',
         };
         const jsonResponseRouter = await createCheckoutRouterTonder(
+          baseUrlTonder,
+          apiKeyTonder,
           routerItems
         );
 
@@ -308,136 +292,56 @@ export class InlineCheckout {
 
     // Inline checkout code
     const payButton = document.querySelector("#tonderPayButton");
-    payButton.addEventListener("click", async function (event) {
+    payButton.addEventListener("click", async (event) => {
       event.preventDefault();
       const prevButtonContent = payButton.innerHTML;
       payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
       // Start tokenization
       const response = await getResponseTonder();
       // Response
-      console.log(response);
       payButton.innerHTML = prevButtonContent;
       if (response) {
         const process3ds = new ThreeDSHandler({payload: response})
+        this.cb(response)
         if (!process3ds.redirectTo3DS()) {
-          this.form.submit()
+          if (this.form) {
+            this.form.submit()
+          }
         }
       }
     });
 
     if (!this.radioName) {
-      document
-        .querySelector(".container-tonder")
-        .classList.add("container-selected");
+      document.querySelector(".container-tonder").classList.add("container-selected");
     } else {
-      const radios = document.querySelectorAll(
-        `input[type=radio][name=${this.radioName}]`
-      );
+      const radios = document.querySelectorAll(`input[type=radio][name=${this.radioName}]`);
       radios.forEach((radio) =>
         radio.addEventListener("change", () => {
           console.log(radio);
-
           if (radio.id === "tonder-pay") {
-            document
-              .querySelector(".container-tonder")
-              .classList.add("container-selected");
+            document.querySelector(".container-tonder").classList.add("container-selected");
           } else {
-            document
-              .querySelector(".container-tonder")
-              .classList.remove("container-selected");
+            document.querySelector(".container-tonder").classList.remove("container-selected");
           }
         })
       );
     }
 
-    // --- Request to backend ---
     // -- Register user --
     async function getCustomer(email) {
-      return await customerRegister(email);
+      return await customerRegister(baseUrlTonder, apiKeyTonder, email);
+    }
+  }
+
+  removeCheckout() {
+    const formElement = document.querySelector("#tonder-checkout");
+    if (formElement) {
+      formElement.parentNode.removeChild(formElement);
     }
 
-    async function customerRegister(email) {
-      const url = `${baseUrlTonder}/api/v1/customer/`;
-      const data = { email: email };
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.status === 201) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-      } else {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-    }
-
-    // -- Create order --
-    async function createOrderTonder(orderItems) {
-      const url = `${baseUrlTonder}/api/v1/orders/`;
-      const data = orderItems;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.status === 201) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-      } else {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-    }
-
-    // -- Create payment --
-    async function createPaymentTonder(paymentItems) {
-      const url = `${baseUrlTonder}/api/v1/business/${paymentItems.business_pk}/payments/`;
-      const data = paymentItems;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.status >= 200 && response.status <=299) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-      } else {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-    }
-
-    // -- Create payment with router --
-    async function createCheckoutRouterTonder(routerItems) {
-      const url = `${baseUrlTonder}/api/v1/checkout-router/`;
-      const data = routerItems;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${apiKeyTonder}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (response.status >= 200 && response.status <= 299) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-      } else {
-        return false;
-      }
-    }
-
-    // function parseUrlParams() {
-      // }
-
+    clearInterval(this.injectInterval);
+    this.form = null;
+    this.radioName = null;
+    console.log("InlineCheckout removed from DOM and cleaned up.");
   }
 }

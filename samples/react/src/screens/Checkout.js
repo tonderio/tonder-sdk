@@ -1,40 +1,26 @@
-import React, { useState, useContext, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { InlineCheckout } from 'tonder-sdk-test'
-import { CartContext } from '../context/CartContext'
 
 import sdkIcons from "../assets/img/sdk-icons.png";
 
 export const Checkout = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [optionHidden, setOptionHidden] = useState(true);
-
-  const cart = useContext(CartContext)
-
-  const [checkoutResponse, setCheckoutResponse] = useState({})
-  const receiveResponse = (data) => {
-      setCheckoutResponse(data)
-  }
-  const form = document.querySelector("#payment-form");
-  const config = {
-      apiKey: "Your Tonder API Key",
-      type: "payment",
-      cb: receiveResponse,
-  }
-
+  
   useEffect(()=>{
-    const apiKey = "00d17d61e9240c6e0611fbdb1558e636ed6389db";
+    const form = document.querySelector("#payment-form");
+    const apiKey = "d34a419991e0bd53ed5cae7faf979b3263afabf5";
     const totalElement = document.querySelector("#cart-total");
+    const returnUrl = window.location.href
     const inlineCheckout = new InlineCheckout({
       form: form,
       apiKey: apiKey,
       totalElementId: totalElement,
+      returnUrl: returnUrl
     });
     inlineCheckout.injectCheckout();
+    return () => inlineCheckout.removeCheckout()
   }, [])
-
-  // useLayoutEffect(() => {
-  //     tonderCheckout.mountButton({ buttonText: 'Proceder al pago' })
-  // })
 
   const checkoutStyle = {
     marginTop: "2rem",
@@ -78,7 +64,7 @@ export const Checkout = () => {
           </div>
           <div style={{ ...checkoutStyle, ...hiddenStyle }} id="tonder-checkout">
           </div>
-          <p>{checkoutResponse?.data?.status}</p>
+          {/* <p>{checkoutResponse?.data?.status}</p> */}
         </div>
         <div style={{ marginTop: "2rem" }}>
           <input
