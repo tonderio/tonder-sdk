@@ -28,6 +28,7 @@ export class InlineCheckout {
     returnUrl,
     // TODO: Fix this
     baseUrl = "http://localhost:8000",
+    cb=()=>{},
   }) {
     this.baseUrlTonder = baseUrl;
     this.apiKeyTonder = apiKey;
@@ -57,7 +58,8 @@ export class InlineCheckout {
     this.phone = customer?.phone || "9999999999";
     this.form = form;
     this.radioName = radioName;
-    this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl})
+    this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl});
+    this.cb = cb
 
     addScripts();
   }
@@ -95,9 +97,6 @@ export class InlineCheckout {
   }
 
   async fetchTonderData() {
-    var checkboxTonder = document.getElementById("acceptTonder");
-    checkboxTonder.checked = false;
-
     // Load inputs
     // Token
     const apiKeyTonder = this.apiKeyTonder;
@@ -178,21 +177,6 @@ export class InlineCheckout {
         var msgErrorDiv = document.getElementById("msgError");
         msgErrorDiv.classList.add("error-tonder-container-tonder");
         msgErrorDiv.innerHTML = "Por favor, verifica todos los campos de tu tarjeta";
-        setTimeout(function () {
-          document.querySelector("#tonderPayButton").disabled = false;
-          msgErrorDiv.classList.remove("error-tonder-container-tonder");
-          msgErrorDiv.innerHTML = "";
-        }, 3000);
-        return false;
-      }
-
-      var checkboxTonder = document.getElementById("acceptTonder");
-      console.log(checkboxTonder);
-      if (!checkboxTonder.checked) {
-        var msgErrorDiv = document.getElementById("msgError");
-        msgErrorDiv.classList.add("error-tonder-container-tonder");
-        msgErrorDiv.innerHTML =
-          "Necesitas aceptar los términos y condiciones";
         setTimeout(function () {
           document.querySelector("#tonderPayButton").disabled = false;
           msgErrorDiv.classList.remove("error-tonder-container-tonder");
@@ -308,20 +292,21 @@ export class InlineCheckout {
 
     // Inline checkout code
     const payButton = document.querySelector("#tonderPayButton");
-    payButton.addEventListener("click", async function (event) {
+    payButton.addEventListener("click", async (event) => {
       event.preventDefault();
       const prevButtonContent = payButton.innerHTML;
       payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
       // Start tokenization
       const response = await getResponseTonder();
       // Response
-      console.log(response);
       payButton.innerHTML = prevButtonContent;
       if (response) {
         const process3ds = new ThreeDSHandler({payload: response})
+        this.cb(response)
         if (!process3ds.redirectTo3DS()) {
-          // TODO: Find an alternative to this 
-          // this.form.submit()
+          if (this.form) {
+            this.form.submit()
+          }
         }
       }
     });
