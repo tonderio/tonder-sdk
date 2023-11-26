@@ -18,6 +18,8 @@ import {
 import { ThreeDSHandler } from './3dsHandler.js';
 
 export class InlineCheckout {
+  static injected = false;
+
   constructor({
     form,
     radioName,
@@ -30,6 +32,7 @@ export class InlineCheckout {
     baseUrl = "https://stage.tonder.io",
     cb=()=>{},
   }) {
+    this.abortController = new AbortController()
     this.baseUrlTonder = baseUrl;
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
@@ -86,12 +89,14 @@ export class InlineCheckout {
 
 
   injectCheckout() {
+    if (InlineCheckout.injected) return
     this.process3ds.verifyTransactionStatus()
     const injectInterval = setInterval(() => {
       if (document.querySelector("#tonder-checkout")) {
         document.querySelector("#tonder-checkout").innerHTML = cardTemplate;
         this.fetchTonderData();
         clearInterval(injectInterval);
+        InlineCheckout.injected = true
       }
     }, 500);
   }
@@ -113,7 +118,7 @@ export class InlineCheckout {
 
     // -- Business' details --
     try {
-      const dataBusinessTonder = await responseBusinessTonder(baseUrlTonder, apiKeyTonder);
+      const dataBusinessTonder = await responseBusinessTonder(baseUrlTonder, apiKeyTonder, this.abortController.signal);
 
       // Response data
       vaultIdTonder = dataBusinessTonder.vault_id;
@@ -128,7 +133,13 @@ export class InlineCheckout {
       console.log(error);
     }
 
-    const collectContainerTonder = await initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, apiKeyTonder)
+    const collectContainerTonder = await initSkyflow(
+      vaultIdTonder,
+      vaultUrlTonder,
+      baseUrlTonder,
+      apiKeyTonder,
+      this.abortController.signal
+    )
 
     const getResponseTonder = async () => {
       // Disable button
@@ -191,12 +202,13 @@ export class InlineCheckout {
         if (openpayMerchantIdTonder && openpayPublicKeyTonder) {
           deviceSessionIdTonder = await openpayCheckoutTonder(
             openpayMerchantIdTonder,
-            openpayPublicKeyTonder
+            openpayPublicKeyTonder,
+            this.abortController.signal
           );
         }
 
         // Check user
-        const jsonResponseUser = await getCustomer(billingEmail);
+        const jsonResponseUser = await getCustomer(billingEmail, this.abortController.signal);
         userKeyTonder = jsonResponseUser.auth_token;
 
         const total = this.total;
@@ -328,17 +340,20 @@ export class InlineCheckout {
     }
 
     // -- Register user --
-    async function getCustomer(email) {
-      return await customerRegister(baseUrlTonder, apiKeyTonder, email);
+    async function getCustomer(email, signal) {
+      return await customerRegister(baseUrlTonder, apiKeyTonder, email, signal);
     }
   }
 
   removeCheckout() {
+    InlineCheckout.injected = false
+    // Cancel all requests
+    this.abortController.abort(); 
+
     const formElement = document.querySelector("#tonder-checkout");
     if (formElement) {
       formElement.parentNode.removeChild(formElement);
     }
-
     clearInterval(this.injectInterval);
     this.form = null;
     this.radioName = null;

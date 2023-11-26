@@ -1,14 +1,32 @@
-export function addScripts() {
-  const skyflow = document.createElement("script");
-  skyflow.src = "https://js.skyflow.com/v1/index.js";
-  const openPay1 = document.createElement("script");
-  openPay1.src = "https://openpay.s3.amazonaws.com/openpay.v1.min.js";
-  const openPay2 = document.createElement("script");
-  openPay2.src = "https://openpay.s3.amazonaws.com/openpay-data.v1.min.js";
+export async function addScripts() {
+  try {
+    const skyflowScript = document.createElement("script");
+    skyflowScript.src = "https://js.skyflow.com/v1/index.js";
+    await new Promise((resolve, reject) => {
+      skyflowScript.onload = resolve;
+      skyflowScript.onerror = reject;
+      document.head.appendChild(skyflowScript);
+    });
 
-  document.head.appendChild(skyflow);
-  document.head.appendChild(openPay1);
-  document.head.appendChild(openPay2);
+    const openPay1Script = document.createElement("script");
+    openPay1Script.src = "https://openpay.s3.amazonaws.com/openpay.v1.min.js";
+    await new Promise((resolve, reject) => {
+      openPay1Script.onload = resolve;
+      openPay1Script.onerror = reject;
+      document.head.appendChild(openPay1Script);
+    });
+
+    const openPay2Script = document.createElement("script");
+    openPay2Script.src = "https://openpay.s3.amazonaws.com/openpay-data.v1.min.js";
+    await new Promise((resolve, reject) => {
+      openPay2Script.onload = resolve;
+      openPay2Script.onerror = reject;
+      document.head.appendChild(openPay2Script);
+    });
+
+  } catch (error) {
+    console.error("Error loading scripts", error);
+  }
 }
 
 export function filtrarNumeros(cadena) {
@@ -32,87 +50,107 @@ export function toCurrency(value) {
   var formatter = new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
+    minimumFractionDigits: 2
   });
   return formatter.format(value);
 }
 
-export async function initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, apiKeyTonder) {
+export async function mountElements(
+  cardNumberElementTonder,
+  cvvElementTonder,
+  expiryMonthElementTonder,
+  expiryYearElementTonder,
+  cardHolderNameElementTonder,
+) {
+  cardNumberElementTonder.mount("#collectCardNumberTonder");
+  cvvElementTonder.mount("#collectCvvTonder");
+  expiryMonthElementTonder.mount("#collectExpirationMonthTonder");
+  expiryYearElementTonder.mount("#collectExpirationYearTonder");
+  cardHolderNameElementTonder.mount("#collectCardholderNameTonder");
+}
+
+export async function initSkyflow(
+  vaultIdTonder,
+  vaultUrlTonder,
+  baseUrlTonder,
+  apiKeyTonder,
+  signal
+) {
   const skyflowTonder = await Skyflow.init({
     vaultID: vaultIdTonder,
     vaultURL: vaultUrlTonder,
-    getBearerToken: () => {
-      return new Promise((resolve) => {
-        const Http = new XMLHttpRequest();
-        Http.onreadystatechange = () => {
-          if (Http.readyState === 4 && Http.status >= 200 && Http.status <= 299) {
-            const response = JSON.parse(Http.responseText);
-            resolve(response.token);
-          }
-        };
-        const url = `${baseUrlTonder}/api/v1/vault-token/`;
-        Http.open("GET", url);
-        Http.setRequestHeader("Authorization", `Token ${apiKeyTonder}`);
-        Http.send();
+    getBearerToken: async () => {
+      // Pass the signal to the fetch call
+      const response = await fetch(`${baseUrlTonder}/api/v1/vault-token/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Token ${apiKeyTonder}`,
+        },
+        signal: signal,
       });
-    },
 
+      if (response.ok) {
+        const responseBody = await response.json();
+        return responseBody.token;
+      } else {
+        throw new Error('Failed to retrieve bearer token');
+      }
+    },
     options: {
       logLevel: Skyflow.LogLevel.ERROR,
-      // Actual value of element can only be accessed inside the handler,
-      // when the env is set to DEV.
-      // Make sure the env is set to PROD when using skyflow-js in production
       env: Skyflow.Env.DEV,
     },
   });
 
   // Create collect Container.
-    const collectContainerTonder = await skyflowTonder.container(
-      Skyflow.ContainerType.COLLECT
-    );
-  // Custom styles for collect elements.
-    const collectStylesOptionsTonder = {
-      inputStyles: {
-        base: {
-          border: "3px solid #eae8ee !important",
-          padding: "10px 16px !important",
-          borderRadius: "10px !important",
-          color: "#1d1d1d !important",
-          marginTop: "0px !important",
-          backgroundColor: "white !important",
-        },
-        complete: {
-          color: "#4caf50 !important",
-        },
-        empty: {},
-        focus: {},
-        invalid: {
-          color: "red !important",
-          backgroundColor: "#FFDBDB !important",
-        },
-      },
-      labelStyles: {
-        base: {
-          fontSize: "16px !important",
-          fontWeight: "bold !important",
-        },
-      },
-      errorTextStyles: {
-        base: {
-          color: "red !important",
-          fontSize: "0px !important",
-        },
-      },
-    };
+  const collectContainerTonder = await skyflowTonder.container(
+    Skyflow.ContainerType.COLLECT
+  );
 
-  // Create collect elements.
-    const cardNumberElementTonder = await collectContainerTonder.create({
-      table: "cards",
-      column: "card_number",
-      ...collectStylesOptionsTonder,
-      label: "",
-      placeholder: "Número de tarjeta",
-      type: Skyflow.ElementType.CARD_NUMBER,
-    });
+  // Custom styles for collect elements.
+  const collectStylesOptionsTonder = {
+    inputStyles: {
+      base: {
+        border: "3px solid #eae8ee !important",
+        padding: "10px 16px !important",
+        borderRadius: "10px !important",
+        color: "#1d1d1d !important",
+        marginTop: "0px !important",
+        backgroundColor: "white !important",
+      },
+      complete: {
+        color: "#4caf50 !important",
+      },
+      empty: {},
+      focus: {},
+      invalid: {
+        color: "red !important",
+        backgroundColor: "#FFDBDB !important",
+      },
+    },
+    labelStyles: {
+      base: {
+        fontSize: "16px !important",
+        fontWeight: "bold !important",
+      },
+    },
+    errorTextStyles: {
+      base: {
+        color: "red !important",
+        fontSize: "0px !important",
+      },
+    },
+  };
+
+// Create collect elements.
+  const cardNumberElementTonder = await collectContainerTonder.create({
+    table: "cards",
+    column: "card_number",
+    ...collectStylesOptionsTonder,
+    label: "",
+    placeholder: "Número de tarjeta",
+    type: Skyflow.ElementType.CARD_NUMBER,
+  });
 
   const cvvElementTonder = await collectContainerTonder.create({
     table: "cards",
@@ -159,12 +197,6 @@ export async function initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, 
       validations: [lengthMatchRule],
     });
 
-  // Mount the elements.
-  cardNumberElementTonder.mount("#collectCardNumberTonder");
-  cvvElementTonder.mount("#collectCvvTonder");
-  expiryMonthElementTonder.mount("#collectExpirationMonthTonder");
-  expiryYearElementTonder.mount("#collectExpirationYearTonder");
-  cardHolderNameElementTonder.mount("#collectCardholderNameTonder");
 
   cardNumberElementTonder.on(Skyflow.EventName.BLUR, (state) => {
     var tonderContainerNumber = document.getElementById(
@@ -266,6 +298,14 @@ export async function initSkyflow(vaultIdTonder, vaultUrlTonder, baseUrlTonder, 
       tonderContainerCardHolder.appendChild(errorLabel);
     }
   });
+
+  await mountElements(
+    cardNumberElementTonder,
+    cvvElementTonder,
+    expiryMonthElementTonder,
+    expiryYearElementTonder,
+    cardHolderNameElementTonder,
+  )
 
   return collectContainerTonder
 }

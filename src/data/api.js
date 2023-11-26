@@ -1,26 +1,27 @@
-export async function openpayCheckoutTonder(merchant_id, public_key) {
+export async function openpayCheckoutTonder(merchant_id, public_key, signal) {
   let openpay = await window.OpenPay;
   openpay.setId(merchant_id);
   openpay.setApiKey(public_key);
   openpay.setSandboxMode(true);
-  var response = await openpay.deviceData.setup();
+  var response = await openpay.deviceData.setup({signal});
   return response;
 }
 
-export async function responseBusinessTonder(baseUrlTonder, apiKeyTonder) {
+export async function responseBusinessTonder(baseUrlTonder, apiKeyTonder, signal) {
   const responseBusinessTonder = await fetch(
     `${baseUrlTonder}/api/v1/payments/business/${apiKeyTonder}`,
     {
       headers: {
         Authorization: `Token ${apiKeyTonder}`,
       },
+      signal: signal,
     }
   );
   const dataBusinessTonder = await responseBusinessTonder.json();
   return dataBusinessTonder
 }
 
-export async function customerRegister(baseUrlTonder, apiKeyTonder, email) {
+export async function customerRegister(baseUrlTonder, apiKeyTonder, email, signal) {
   const url = `${baseUrlTonder}/api/v1/customer/`;
   const data = { email: email };
   const response = await fetch(url, {
@@ -29,6 +30,7 @@ export async function customerRegister(baseUrlTonder, apiKeyTonder, email) {
       "Content-Type": "application/json",
       Authorization: `Token ${apiKeyTonder}`,
     },
+    signal: signal,
     body: JSON.stringify(data),
   });
 
