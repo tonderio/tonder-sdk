@@ -14,13 +14,15 @@ export const cardTemplate = `
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap');
 .container-tonder {
-  width: 90% !important;
+  background-color: #F9F9F9;
   font-family: 'Inter', sans-serif;
   margin: 0 auto !important;
+  padding: 30px;
   max-height: 0px;
   overflow: hidden;
   transition: max-height 0.5s ease-out;
   max-width: 600px;
+  border: solid 1px #e3e3e3;
 }
 
 .container-selected {
@@ -94,6 +96,7 @@ export const cardTemplate = `
   border: none;
   background-color: #000;
   color: #fff;
+  margin-bottom: 10px;
 }
 
 .error-custom-inputs-tonder{

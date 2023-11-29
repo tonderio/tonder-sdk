@@ -41,12 +41,16 @@ export async function initSkyflow(
     inputStyles: {
       base: {
         border: "1px solid #e0e0e0",
-        padding: "10px 9px",
+        padding: "10px 7px",
         borderRadius: "5px",
         color: "#1d1d1d",
         marginTop: "2px",
         backgroundColor: "white",
         fontFamily: '"Inter", sans-serif',
+        fontSize: '16px',
+        '&::placeholder': {
+          color: "#ccc",
+        },
       },
       cardIcon: {
         position: 'absolute',
@@ -74,7 +78,7 @@ export async function initSkyflow(
     },
     errorTextStyles: {
       base: {
-        fontSize: '11px',
+        fontSize: '12px',
         fontWeight: '500',
         color: "#f44336",
         fontFamily: '"Inter", sans-serif'
