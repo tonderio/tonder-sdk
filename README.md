@@ -9,6 +9,13 @@ You can install using NPM
 npm i tonder-sdk-test
 ```
 
+Add dependencies to the root of the app (index.html)
+```html
+<script src="https://js.skyflow.com/v1/index.js"></script>
+<script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js"></script>
+<script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js"></script>
+```
+
 ## Usage
 HTML
 ```html

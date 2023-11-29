@@ -9,7 +9,6 @@ import {
 } from '../data/api';
 
 import {
-  addScripts,
   toCurrency,
   filtrarNumeros,
   showError
@@ -67,8 +66,6 @@ export class InlineCheckout {
     this.collectContainer = null;
     this.merchantData = {}
     this.cb = cb
-
-    addScripts();
   }
 
   getInfoFromElements() {

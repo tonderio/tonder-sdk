@@ -12,10 +12,8 @@ export const cardTemplate = `
 </div>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap');
 .container-tonder {
   background-color: #F9F9F9;
-  font-family: 'Inter', sans-serif;
   margin: 0 auto !important;
   padding: 30px;
   max-height: 0px;
