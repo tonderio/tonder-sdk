@@ -1,4 +1,4 @@
-export async function openpayCheckoutTonder(merchant_id, public_key, signal) {
+export async function getOpenpayDeviceSessionID(merchant_id, public_key, signal) {
   let openpay = await window.OpenPay;
   openpay.setId(merchant_id);
   openpay.setApiKey(public_key);
@@ -7,8 +7,8 @@ export async function openpayCheckoutTonder(merchant_id, public_key, signal) {
   return response;
 }
 
-export async function responseBusinessTonder(baseUrlTonder, apiKeyTonder, signal) {
-  const responseBusinessTonder = await fetch(
+export async function getBusiness(baseUrlTonder, apiKeyTonder, signal) {
+  const getBusiness = await fetch(
     `${baseUrlTonder}/api/v1/payments/business/${apiKeyTonder}`,
     {
       headers: {
@@ -17,8 +17,8 @@ export async function responseBusinessTonder(baseUrlTonder, apiKeyTonder, signal
       signal: signal,
     }
   );
-  const dataBusinessTonder = await responseBusinessTonder.json();
-  return dataBusinessTonder
+  const response = await getBusiness.json();
+  return response
 }
 
 export async function customerRegister(baseUrlTonder, apiKeyTonder, email, signal) {

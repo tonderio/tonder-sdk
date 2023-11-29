@@ -1,19 +1,21 @@
 import { cardTemplate } from '../helpers/template.js'
 import {
-  responseBusinessTonder,
+  getBusiness,
   customerRegister,
   createOrderTonder,
   createPaymentTonder,
   createCheckoutRouterTonder,
-  openpayCheckoutTonder
+  getOpenpayDeviceSessionID
 } from '../data/api';
 
 import {
   addScripts,
-  initSkyflow,
   toCurrency,
   filtrarNumeros,
+  showError
 } from '../helpers/utils';
+
+import { initSkyflow } from '../helpers/skyflow'
 
 import { ThreeDSHandler } from './3dsHandler.js';
 
@@ -62,6 +64,8 @@ export class InlineCheckout {
     this.form = form;
     this.radioName = radioName;
     this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl});
+    this.collectContainer = null;
+    this.merchantData = {}
     this.cb = cb
 
     addScripts();
@@ -87,230 +91,13 @@ export class InlineCheckout {
     });
   }
 
-
-  injectCheckout() {
-    if (InlineCheckout.injected) return
-    this.process3ds.verifyTransactionStatus()
-    const injectInterval = setInterval(() => {
-      if (document.querySelector("#tonder-checkout")) {
-        document.querySelector("#tonder-checkout").innerHTML = cardTemplate;
-        this.fetchTonderData();
-        clearInterval(injectInterval);
-        InlineCheckout.injected = true
-      }
-    }, 500);
-  }
-
-  async fetchTonderData() {
-    // Load inputs
-    // Token
-    const apiKeyTonder = this.apiKeyTonder;
-    const cartItemsTonder = this.cartItemsTonder;
-    const baseUrlTonder = this.baseUrlTonder;
-    var vaultIdTonder;
-    var vaultUrlTonder;
-    var referenceTonder;
-    var userKeyTonder;
-    var businessPkTonder;
-    var openpayMerchantIdTonder;
-    var openpayPublicKeyTonder;
-    this.getInfoFromElements();
-
-    // -- Business' details --
-    try {
-      const dataBusinessTonder = await responseBusinessTonder(baseUrlTonder, apiKeyTonder, this.abortController.signal);
-
-      // Response data
-      vaultIdTonder = dataBusinessTonder.vault_id;
-      vaultUrlTonder = dataBusinessTonder.vault_url;
-      referenceTonder = dataBusinessTonder.reference;
-      businessPkTonder = dataBusinessTonder.business.pk;
-
-      // Openpay
-      openpayMerchantIdTonder = dataBusinessTonder.openpay_keys.merchant_id;
-      openpayPublicKeyTonder = dataBusinessTonder.openpay_keys.public_key;
-    } catch (error) {
-      console.log(error);
-    }
-
-    const collectContainerTonder = await initSkyflow(
-      vaultIdTonder,
-      vaultUrlTonder,
-      baseUrlTonder,
-      apiKeyTonder,
-      this.abortController.signal
-    )
-
-    const getResponseTonder = async () => {
-      // Disable button
-      document.querySelector("#tonderPayButton").disabled = true;
-
-      // Data from checkout
-      var billingFirstName = this.firstName;
-      var billingLastName = this.lastName;
-      var billingCountry = this.country;
-      var billingAddressOne = this.address;
-      var billingCity = this.city;
-      var billingState = this.state;
-      var billingPostcode = this.postCode;
-      var billingEmail = this.email;
-      var billingPhone = this.phone;
-
-      if (
-        !billingFirstName ||
-        !billingLastName ||
-        !billingCountry ||
-        !billingAddressOne ||
-        !billingCity ||
-        !billingState ||
-        !billingPostcode ||
-        !billingEmail ||
-        !billingPhone
-      ) {
-        var msgErrorDiv = document.getElementById("msgError");
-        msgErrorDiv.classList.add("error-tonder-container-tonder");
-        msgErrorDiv.innerHTML = "Verifica los campos obligatorios";
-        setTimeout(function () {
-          document.querySelector("#tonderPayButton").disabled = false;
-          msgErrorDiv.classList.remove("error-tonder-container-tonder");
-          msgErrorDiv.innerHTML = "";
-        }, 3000);
-        return false;
-      }
-
-      // Card
-      var cardTokensSkyflowTonder = null;
-      try {
-        const collectResponseSkyflowTonder = await collectContainerTonder.collect();
-        cardTokensSkyflowTonder = await collectResponseSkyflowTonder[ "records" ][0]["fields"];
-      } catch (error) {
-        console.log('error: ', error)
-        var msgErrorDiv = document.getElementById("msgError");
-        msgErrorDiv.classList.add("error-tonder-container-tonder");
-        msgErrorDiv.innerHTML = "Por favor, verifica todos los campos de tu tarjeta";
-        setTimeout(function () {
-          document.querySelector("#tonderPayButton").disabled = false;
-          msgErrorDiv.classList.remove("error-tonder-container-tonder");
-          msgErrorDiv.innerHTML = "";
-        }, 3000);
-        return false;
-      }
-
-      try {
-        // Openpay
-        let deviceSessionIdTonder;
-        if (openpayMerchantIdTonder && openpayPublicKeyTonder) {
-          deviceSessionIdTonder = await openpayCheckoutTonder(
-            openpayMerchantIdTonder,
-            openpayPublicKeyTonder,
-            this.abortController.signal
-          );
-        }
-
-        // Check user
-        const jsonResponseUser = await getCustomer(billingEmail, this.abortController.signal);
-        userKeyTonder = jsonResponseUser.auth_token;
-
-        const total = this.total;
-
-        // Create order
-        var orderItems = {
-          business: apiKeyTonder,
-          client: userKeyTonder,
-          billing_address_id: null,
-          shipping_address_id: null,
-          amount: total,
-          status: "A",
-          reference: referenceTonder,
-          is_oneclick: true,
-          items: cartItemsTonder,
-        };
-        const jsonResponseOrder = await createOrderTonder(
-          baseUrlTonder,
-          apiKeyTonder,
-          orderItems
-        );
-
-        // Create payment
-        const now = new Date();
-        const dateString = now.toISOString();
-        var paymentItems = {
-          business_pk: businessPkTonder,
-          amount: total,
-          date: dateString,
-          order: jsonResponseOrder.id,
-        };
-        const jsonResponsePayment = await createPaymentTonder(
-          baseUrlTonder,
-          apiKeyTonder,
-          paymentItems
-        );
-
-        // Checkout router
-        const routerItems = {
-          card: cardTokensSkyflowTonder,
-          name: cardTokensSkyflowTonder.cardholder_name,
-          last_name: "",
-          email_client: billingEmail,
-          phone_number: billingPhone,
-          return_url: this.returnUrl,
-          id_product: "no_id",
-          quantity_product: 1,
-          id_ship: "0",
-          instance_id_ship: "0",
-          amount: total,
-          title_ship: "shipping",
-          description: "transaction",
-          device_session_id: deviceSessionIdTonder ? deviceSessionIdTonder : null,
-          token_id: "",
-          order_id: jsonResponseOrder.id,
-          business_id: businessPkTonder,
-          payment_id: jsonResponsePayment.pk,
-          source: 'sdk',
-        };
-        const jsonResponseRouter = await createCheckoutRouterTonder(
-          baseUrlTonder,
-          apiKeyTonder,
-          routerItems
-        );
-
-        if (jsonResponseRouter) {
-          document.querySelector("#tonderPayButton").disabled = false;
-          return jsonResponseRouter;
-        } else {
-          var msgErrorDiv = document.getElementById("msgError");
-          msgErrorDiv.classList.add("error-tonder-container-tonder");
-          msgErrorDiv.innerHTML = "No se ha podido procesar el pago";
-          setTimeout(function () {
-            document.querySelector("#tonderPayButton").disabled = false;
-            msgErrorDiv.classList.remove("error-tonder-container-tonder");
-            msgErrorDiv.innerHTML = "";
-          }, 3000);
-          return false;
-        }
-      } catch (error) {
-        console.log(error);
-        var msgErrorDiv = document.getElementById("msgError");
-        msgErrorDiv.classList.add("error-tonder-container-tonder");
-        msgErrorDiv.innerHTML = "Ha ocurrido un error";
-        setTimeout(function () {
-          document.querySelector("#tonderPayButton").disabled = false;
-          msgErrorDiv.classList.remove("error-tonder-container-tonder");
-          msgErrorDiv.innerHTML = "";
-        }, 3000);
-        return false;
-      }
-    };
-
-    // Inline checkout code
+  mountPayButton() {
     const payButton = document.querySelector("#tonderPayButton");
     payButton.addEventListener("click", async (event) => {
       event.preventDefault();
       const prevButtonContent = payButton.innerHTML;
       payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
-      // Start tokenization
-      const response = await getResponseTonder();
-      // Response
+      const response = await this.payment();
       payButton.innerHTML = prevButtonContent;
       if (response) {
         const process3ds = new ThreeDSHandler({payload: response})
@@ -322,7 +109,9 @@ export class InlineCheckout {
         }
       }
     });
+  }
 
+  mountRadioElements() {
     if (!this.radioName) {
       document.querySelector(".container-tonder").classList.add("container-selected");
     } else {
@@ -338,11 +127,51 @@ export class InlineCheckout {
         })
       );
     }
+  }
 
-    // -- Register user --
-    async function getCustomer(email, signal) {
-      return await customerRegister(baseUrlTonder, apiKeyTonder, email, signal);
-    }
+  injectCheckout() {
+    if (InlineCheckout.injected) return
+    this.process3ds.verifyTransactionStatus()
+    const injectInterval = setInterval(() => {
+      if (document.querySelector("#tonder-checkout")) {
+        document.querySelector("#tonder-checkout").innerHTML = cardTemplate;
+        this.mountTonder();
+        clearInterval(injectInterval);
+        InlineCheckout.injected = true
+      }
+    }, 500);
+  }
+
+  async fetchMerchantData() {
+    this.merchantData = await getBusiness(
+      this.baseUrlTonder,
+      this.apiKeyTonder,
+      this.abortController.signal
+    );
+    return this.merchantData
+  }
+
+  async getCustomer(email, signal) {
+    return await customerRegister(this.baseUrlTonder, this.apiKeyTonder, email, signal);
+  }
+
+  async mountTonder() {
+    this.getInfoFromElements();
+    this.mountPayButton()
+    this.mountRadioElements()
+
+    const {
+      vault_id,
+      vault_url,
+    } = await this.fetchMerchantData();
+
+    this.collectContainer = await initSkyflow(
+      vault_id,
+      vault_url,
+      this.baseUrlTonder,
+      this.apiKeyTonder,
+      this.abortController.signal
+    );
   }
 
   removeCheckout() {
@@ -359,4 +188,132 @@ export class InlineCheckout {
     this.radioName = null;
     console.log("InlineCheckout removed from DOM and cleaned up.");
   }
+
+  async payment() {
+    document.querySelector("#tonderPayButton").disabled = true;
+
+    var billingFirstName = this.firstName;
+    var billingLastName = this.lastName;
+    var billingCountry = this.country;
+    var billingAddressOne = this.address;
+    var billingCity = this.city;
+    var billingState = this.state;
+    var billingPostcode = this.postCode;
+    var billingEmail = this.email;
+    var billingPhone = this.phone;
+
+    if (
+      !billingFirstName ||
+      !billingLastName ||
+      !billingCountry ||
+      !billingAddressOne ||
+      !billingCity ||
+      !billingState ||
+      !billingPostcode ||
+      !billingEmail ||
+      !billingPhone
+    ) {
+      showError("Verifica los campos obligatorios")
+      return false;
+    }
+
+    const { openpay_keys, reference, business } = this.merchantData
+    const total = this.total;
+
+    var cardTokensSkyflowTonder = null;
+    try {
+      const collectResponseSkyflowTonder = await this.collectContainer.collect();
+      cardTokensSkyflowTonder = await collectResponseSkyflowTonder["records"][0]["fields"];
+    } catch (error) {
+      showError("Por favor, verifica todos los campos de tu tarjeta")
+      return false;
+    }
+
+    try {
+      let deviceSessionIdTonder;
+      if (openpay_keys.merchant_id && openpay_keys.public_key) {
+        deviceSessionIdTonder = await getOpenpayDeviceSessionID(
+          openpay_keys.merchant_id,
+          openpay_keys.public_key,
+          this.abortController.signal
+        );
+      }
+
+      const { auth_token } = await this.getCustomer(billingEmail, this.abortController.signal);
+
+      var orderItems = {
+        business: this.apiKeyTonder,
+        client: auth_token,
+        billing_address_id: null,
+        shipping_address_id: null,
+        amount: total,
+        status: "A",
+        reference: reference,
+        is_oneclick: true,
+        items: this.cartItemsTonder,
+      };
+      console.log('orderItems: ', orderItems)
+      const jsonResponseOrder = await createOrderTonder(
+        this.baseUrlTonder,
+        this.apiKeyTonder,
+        orderItems
+      );
+
+      // Create payment
+      const now = new Date();
+      const dateString = now.toISOString();
+
+      var paymentItems = {
+        business_pk: business.pk,
+        amount: total,
+        date: dateString,
+        order: jsonResponseOrder.id,
+      };
+      const jsonResponsePayment = await createPaymentTonder(
+        this.baseUrlTonder,
+        this.apiKeyTonder,
+        paymentItems
+      );
+
+      // Checkout router
+      const routerItems = {
+        card: cardTokensSkyflowTonder,
+        name: cardTokensSkyflowTonder.cardholder_name,
+        last_name: "",
+        email_client: billingEmail,
+        phone_number: billingPhone,
+        return_url: this.returnUrl,
+        id_product: "no_id",
+        quantity_product: 1,
+        id_ship: "0",
+        instance_id_ship: "0",
+        amount: total,
+        title_ship: "shipping",
+        description: "transaction",
+        device_session_id: deviceSessionIdTonder ? deviceSessionIdTonder : null,
+        token_id: "",
+        order_id: jsonResponseOrder.id,
+        business_id: business.pk,
+        payment_id: jsonResponsePayment.pk,
+        source: 'sdk',
+      };
+      const jsonResponseRouter = await createCheckoutRouterTonder(
+        this.baseUrlTonder,
+        this.apiKeyTonder,
+        routerItems
+      );
+
+      if (jsonResponseRouter) {
+        document.querySelector("#tonderPayButton").disabled = false;
+        return jsonResponseRouter;
+      } else {
+        showError("No se ha podido procesar el pago")
+        return false;
+      }
+    } catch (error) {
+      console.log(error);
+      showError("Ha ocurrido un error")
+      return false;
+    }
+  };
 }
