@@ -108,76 +108,53 @@ export async function initSkyflow(
   );
 
   // Custom styles for collect elements.
-  const collectStylesOptionsTonder = {
+  var collectStylesOptionsTonder = {
     inputStyles: {
       base: {
-        border: "3px solid #eae8ee !important",
-        padding: "10px 16px !important",
-        borderRadius: "10px !important",
-        color: "#1d1d1d !important",
-        marginTop: "0px !important",
-        backgroundColor: "white !important",
+        border: "1px solid #e0e0e0",
+        padding: "10px 9px",
+        borderRadius: "5px",
+        color: "#1d1d1d",
+        marginTop: "2px",
+        backgroundColor: "white",
+        fontFamily: '"Inter", sans-serif',
+      },
+      cardIcon: {
+        position: 'absolute',
+        left: '6px',
+        bottom: 'calc(50% - 12px)',
       },
       complete: {
-        color: "#4caf50 !important",
+        color: "#4caf50",
       },
       empty: {},
       focus: {},
       invalid: {
-        color: "red !important",
-        backgroundColor: "#FFDBDB !important",
+        border: "1px solid #f44336",
       },
+      global: {
+        '@import': 'url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap")',
+      }
     },
     labelStyles: {
       base: {
-        fontSize: "16px !important",
-        fontWeight: "bold !important",
+        fontSize: '12px',
+        fontWeight: '500',
+        fontFamily: '"Inter", sans-serif'
       },
     },
     errorTextStyles: {
       base: {
-        color: "red !important",
-        fontSize: "0px !important",
+        fontSize: '11px',
+        fontWeight: '500',
+        color: "#f44336",
+        fontFamily: '"Inter", sans-serif'
       },
     },
   };
 
-// Create collect elements.
-  const cardNumberElementTonder = await collectContainerTonder.create({
-    table: "cards",
-    column: "card_number",
-    ...collectStylesOptionsTonder,
-    label: "",
-    placeholder: "Número de tarjeta",
-    type: Skyflow.ElementType.CARD_NUMBER,
-  });
-
-  const cvvElementTonder = await collectContainerTonder.create({
-    table: "cards",
-    column: "cvv",
-    ...collectStylesOptionsTonder,
-    label: "",
-    placeholder: "CVC",
-    type: Skyflow.ElementType.CVV,
-  });
-
-  const expiryMonthElementTonder = await collectContainerTonder.create({
-    table: "cards",
-    column: "expiration_month",
-    ...collectStylesOptionsTonder,
-    label: "",
-    placeholder: "MM",
-    type: Skyflow.ElementType.EXPIRATION_MONTH,
-  });
-
-  const expiryYearElementTonder = await collectContainerTonder.create({
-    table: "cards",
-    column: "expiration_year",
-    ...collectStylesOptionsTonder,
-    label: "",
-    placeholder: "AA",
-    type: Skyflow.ElementType.EXPIRATION_YEAR,
-  });
+  const stylesForCardNumber = { ...collectStylesOptionsTonder.inputStyles.base };
+  stylesForCardNumber.textIndent = '44px';
 
   const lengthMatchRule = {
     type: Skyflow.ValidationRuleType.LENGTH_MATCH_RULE,
@@ -186,117 +163,55 @@ export async function initSkyflow(
     },
   };
 
-  const cardHolderNameElementTonder =
-    await collectContainerTonder.create({
-      table: "cards",
-      column: "cardholder_name",
-      ...collectStylesOptionsTonder,
-      label: "",
-      placeholder: "Nombre como aparece en la tarjeta",
-      type: Skyflow.ElementType.CARDHOLDER_NAME,
-      validations: [lengthMatchRule],
-    });
-
-
-  cardNumberElementTonder.on(Skyflow.EventName.BLUR, (state) => {
-    var tonderContainerNumber = document.getElementById(
-      "collectCardNumberTonder"
-    );
-    var existingErrorLabelCarHolderTonder =
-      document.getElementById("errorNumberTonder");
-
-    if (existingErrorLabelCarHolderTonder) {
-      existingErrorLabelCarHolderTonder.remove();
-    }
-
-    if (!state.isValid) {
-      var errorLabel = document.createElement("p");
-      errorLabel.classList.add("error-custom-inputs-tonder");
-      errorLabel.id = "errorNumberTonder";
-      errorLabel.textContent = "No válido";
-      tonderContainerNumber.appendChild(errorLabel);
-    }
+  const cardHolderNameElementTonder = await collectContainerTonder.create({
+    table: "cards",
+    column: "cardholder_name",
+    ...collectStylesOptionsTonder,
+    label: "Titular de la tarjeta",
+    placeholder: "Nombre como aparece en la tarjeta",
+    type: Skyflow.ElementType.CARDHOLDER_NAME,
+    validations: [lengthMatchRule],
   });
 
-  cvvElementTonder.on(Skyflow.EventName.BLUR, (state) => {
-    var tonderContainerNumber =
-      document.getElementById("collectCvvTonder");
-    var existingErrorCVVTonder =
-      document.getElementById("errorCVVTonder");
-
-    if (existingErrorCVVTonder) {
-      existingErrorCVVTonder.remove();
-    }
-
-    if (!state.isValid) {
-      var errorLabel = document.createElement("p");
-      errorLabel.classList.add("error-custom-inputs-little-tonder");
-      errorLabel.id = "errorCVVTonder";
-      errorLabel.textContent = "No válido";
-      tonderContainerNumber.appendChild(errorLabel);
-    }
+  // Create collect elements.
+  const cardNumberElementTonder = await collectContainerTonder.create({
+    table: "cards",
+    column: "card_number",
+    ...collectStylesOptionsTonder,
+    inputStyles: {
+      ...collectStylesOptionsTonder.inputStyles,
+      base: stylesForCardNumber
+    },
+    label: "Número de tarjeta",
+    placeholder: "1234 1234 1234 1234",
+    type: Skyflow.ElementType.CARD_NUMBER,
   });
 
-  expiryMonthElementTonder.on(Skyflow.EventName.BLUR, (state) => {
-    var tonderContainerNumber = document.getElementById(
-      "collectExpirationMonthTonder"
-    );
-    var existingErrorExpMonthTonder = document.getElementById(
-      "errorExpMonthTonder"
-    );
-
-    if (existingErrorExpMonthTonder) {
-      existingErrorExpMonthTonder.remove();
-    }
-
-    if (!state.isValid) {
-      var errorLabel = document.createElement("p");
-      errorLabel.classList.add("error-custom-inputs-little-tonder");
-      errorLabel.id = "errorExpMonthTonder";
-      errorLabel.textContent = "No válido";
-      tonderContainerNumber.appendChild(errorLabel);
-    }
+  const cvvElementTonder = await collectContainerTonder.create({
+    table: "cards",
+    column: "cvv",
+    ...collectStylesOptionsTonder,
+    label: "CVC/CVV",
+    placeholder: "3-4 dígitos",
+    type: Skyflow.ElementType.CVV,
   });
 
-  expiryYearElementTonder.on(Skyflow.EventName.BLUR, (state) => {
-    var tonderContainerNumber = document.getElementById(
-      "collectExpirationYearTonder"
-    );
-    var existingErrorExpYearTonder =
-      document.getElementById("errorExpYearTonder");
-
-    if (existingErrorExpYearTonder) {
-      existingErrorExpYearTonder.remove();
-    }
-
-    if (!state.isValid) {
-      var errorLabel = document.createElement("p");
-      errorLabel.classList.add("error-custom-inputs-little-tonder");
-      errorLabel.id = "errorExpYearTonder";
-      errorLabel.textContent = "No válido";
-      tonderContainerNumber.appendChild(errorLabel);
-    }
+  const expiryMonthElementTonder = await collectContainerTonder.create({
+    table: "cards",
+    column: "expiration_month",
+    ...collectStylesOptionsTonder,
+    label: "Fecha de expiración",
+    placeholder: "MM",
+    type: Skyflow.ElementType.EXPIRATION_MONTH,
   });
 
-  cardHolderNameElementTonder.on(Skyflow.EventName.BLUR, (state) => {
-    var tonderContainerCardHolder = document.getElementById(
-      "collectCardholderNameTonder"
-    );
-    var existingErrorLabelCarHolderTonder = document.getElementById(
-      "errorCardHolderIdTonder"
-    );
-
-    if (existingErrorLabelCarHolderTonder) {
-      existingErrorLabelCarHolderTonder.remove();
-    }
-
-    if (!state.isValid) {
-      var errorLabel = document.createElement("p");
-      errorLabel.classList.add("error-custom-inputs-tonder");
-      errorLabel.id = "errorCardHolderIdTonder";
-      errorLabel.textContent = "No válido";
-      tonderContainerCardHolder.appendChild(errorLabel);
-    }
+  const expiryYearElementTonder = await collectContainerTonder.create({
+    table: "cards",
+    column: "expiration_year",
+    ...collectStylesOptionsTonder,
+    label: "Año",
+    placeholder: "AA",
+    type: Skyflow.ElementType.EXPIRATION_YEAR,
   });
 
   await mountElements(

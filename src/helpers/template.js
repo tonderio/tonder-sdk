@@ -1,8 +1,6 @@
 export const cardTemplate = `
 <div class="container-tonder">
-  <p class="p-card-tonder">Titular de la tarjeta</p>
   <div id="collectCardholderNameTonder" class="empty-div-tonder"></div>
-  <p class="p-card-tonder"> Información de la tarjeta</p>
   <div id="collectCardNumberTonder" class="empty-div-tonder"></div>
   <div class="collect-row-tonder">
     <div id="collectExpirationMonthTonder" class="empty-div-dates-tonder"></div>
@@ -29,38 +27,6 @@ export const cardTemplate = `
   max-height: 100vh;
 }
 
-.p-card-tonder {
-  font-weight: bold !important;
-  font-size: 13px !important;
-  text-align: left;
-}
-
-.payment_method_zplit {
-  font-size: 16px !important;
-  width: 100% !important;
-}
-
-.payment_method_zplit  label img {
-  width: 68px !important;
-  padding-left: 1px !important;
-}
-
-.container-politics-tonder {
-  display: flex !important;
-  align-items: center !important;
-  margin-bottom: 2rem;
-}
-
-.politics-p-tonder {
-  font-size: 13px !important;
-  margin: 0 !important;
-}
-
-.terms-label-tonder {
-  font-size: 14px !important;
-  margin: 0 0 0 10px !important;
-}
-
 .collect-row-tonder {
   display: flex !important;
   justify-content: space-between !important;
@@ -76,11 +42,13 @@ export const cardTemplate = `
 }
 
 .empty-div-tonder {
-  height: 65px !important;
+  height: 80px !important;
+  margin-top: 2px;
+  margin-bottom: 4px;
 }
 
 .empty-div-dates-tonder {
-  height: 90px !important;
+  height: 140px !important;
 }
 
 .empty-div-cvc-tonder {
@@ -170,13 +138,6 @@ export const cardTemplate = `
 
 
 @media screen and (max-width: 600px) {
-.p-card-tonder {
-  font-weight: bold !important;
-  font-size: 13px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
 .payment_method_zplit {
   font-size: 16px !important;
   width: 100% !important;
