@@ -9,8 +9,6 @@ import {
 } from '../data/api';
 
 import {
-  toCurrency,
-  filtrarNumeros,
   showError
 } from '../helpers/utils';
 
@@ -25,12 +23,13 @@ export class InlineCheckout {
     form,
     radioName,
     apiKey,
-    totalElementId,
     customer,
     items,
     returnUrl,
     // TODO: Fix this
     baseUrl = "https://stage.tonder.io",
+    // baseUrl = "http://localhost:8000",
+    cartTotal,
     cb=()=>{},
   }) {
     this.abortController = new AbortController()
@@ -38,7 +37,7 @@ export class InlineCheckout {
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
     this.email = "customer@mail.com";
-    this.cartItemsTonder = items || [
+    this.cartItems = items || [
       {
         description: "Example",
         quantity: 1,
@@ -50,7 +49,6 @@ export class InlineCheckout {
         amount_total: 1,
       },
     ];
-    this.totalElementId = totalElementId;
     this.firstName = customer?.firstName || "Unknown";
     this.lastName = customer?.lastName || "Customer";
     this.country = customer?.country || "Mexico";
@@ -65,31 +63,13 @@ export class InlineCheckout {
     this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl});
     this.collectContainer = null;
     this.merchantData = {}
+    this.cartTotal = cartTotal
     this.cb = cb
-  }
-
-  getInfoFromElements() {
-    const payButton = document.querySelector("#tonderPayButton");
-    const totalElement = document.getElementById("cart-total");
-    this.total = filtrarNumeros(totalElement.textContent);
-    payButton.textContent = `Pagar $${this.total}`;
-    const mutationObserver = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === "characterData") {
-          this.total = filtrarNumeros(totalElement.textContent);
-          payButton.textContent = `Pagar ${toCurrency(this.total)}`;
-        }
-      });
-    });
-
-    mutationObserver.observe(totalElement, {
-      subtree: true,
-      characterData: true,
-    });
   }
 
   mountPayButton() {
     const payButton = document.querySelector("#tonderPayButton");
+    payButton.textContent = `Pagar $${this.cartTotal}`;
     payButton.addEventListener("click", async (event) => {
       event.preventDefault();
       const prevButtonContent = payButton.innerHTML;
@@ -153,7 +133,6 @@ export class InlineCheckout {
   }
 
   async mountTonder() {
-    this.getInfoFromElements();
     this.mountPayButton()
     this.mountRadioElements()
 
@@ -215,7 +194,7 @@ export class InlineCheckout {
     }
 
     const { openpay_keys, reference, business } = this.merchantData
-    const total = this.total;
+    const total = this.cartTotal;
 
     var cardTokensSkyflowTonder = null;
     try {
@@ -247,7 +226,7 @@ export class InlineCheckout {
         status: "A",
         reference: reference,
         is_oneclick: true,
-        items: this.cartItemsTonder,
+        items: this.cartItems,
       };
       console.log('orderItems: ', orderItems)
       const jsonResponseOrder = await createOrderTonder(

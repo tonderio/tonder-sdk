@@ -31,9 +31,9 @@ const returnUrl = "http://localhost:8080/"
 const inlineCheckout = new InlineCheckout({
   form: form,
   apiKey: apiKey,
-  totalElementId: "cart-total",
   customer: customer,
   items: items,
-  returnUrl: returnUrl
+  returnUrl: returnUrl,
+  cartTotal: 399
 });
 inlineCheckout.injectCheckout();

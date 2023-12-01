@@ -29,20 +29,6 @@ export async function addScripts() {
   }
 }
 
-export function filtrarNumeros(cadena) {
-  const numerosValidos = "0123456789.";
-  let numerosFiltrados = "";
-
-  for (let i = 0; i < cadena.length; i++) {
-    const caracter = cadena[i];
-    if (numerosValidos.includes(caracter)) {
-      numerosFiltrados += caracter;
-    }
-  }
-
-  return parseFloat(numerosFiltrados);
-}
-
 export function toCurrency(value) {
   if (isNaN(parseFloat(value))) {
     return value;
