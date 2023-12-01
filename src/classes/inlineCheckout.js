@@ -155,10 +155,6 @@ export class InlineCheckout {
     // Cancel all requests
     this.abortController.abort(); 
 
-    const formElement = document.querySelector("#tonder-checkout");
-    if (formElement) {
-      formElement.parentNode.removeChild(formElement);
-    }
     clearInterval(this.injectInterval);
     this.form = null;
     this.radioName = null;
