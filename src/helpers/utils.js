@@ -46,7 +46,9 @@ export function showError(message) {
   msgErrorDiv.classList.add("error-tonder-container-tonder");
   msgErrorDiv.innerHTML = message;
   setTimeout(function () {
-    document.querySelector("#tonderPayButton").disabled = false;
+    try {
+      document.querySelector("#tonderPayButton").disabled = false;
+    } catch (error) {}
     msgErrorDiv.classList.remove("error-tonder-container-tonder");
     msgErrorDiv.innerHTML = "";
   }, 3000);

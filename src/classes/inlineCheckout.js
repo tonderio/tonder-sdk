@@ -101,6 +101,56 @@ export class InlineCheckout {
     }
   }
 
+  async payment(data) {
+    this.handleFormData(data)
+    const response = await this.checkout()
+    if (response) {
+      const process3ds = new ThreeDSHandler({payload: response})
+      this.cb(response)
+      if (!process3ds.redirectTo3DS()) {
+        return response
+      }
+      return response
+    }
+  }
+
+  handleFormData(customer) {
+    console.log('customer: ', customer)
+    if (customer) {
+      this.firstName = customer?.firstName
+      this.lastName = customer?.lastName
+      this.country = customer?.country
+      this.address = customer?.street
+      this.city = customer?.city
+      this.state = customer?.state
+      this.postCode = customer?.postCode
+      this.email = customer?.email
+      this.phone = customer?.phone
+    }
+  }
+
+  setCartItems (items) {
+    console.log('items: ', items)
+    this.cartItems = items
+  }
+
+  setCartTotal (total) {
+    console.log('total: ', total)
+    this.cartTotal = total
+    this.updatePayButton()
+  }
+
+  updatePayButton() {
+    const payButton = document.querySelector("#tonderPayButton");
+    if (payButton) {
+      payButton.textContent = `Pagar $${this.cartTotal}`;
+    }
+  }
+
+  setCallback (cb) {
+    this.cb = cb
+  }
+
   injectCheckout() {
     if (InlineCheckout.injected) return
     this.process3ds.verifyTransactionStatus()
