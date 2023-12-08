@@ -199,6 +199,7 @@ export class InlineCheckout {
     InlineCheckout.injected = false
     // Cancel all requests
     this.abortController.abort(); 
+    this.abortController = new AbortController();
 
     clearInterval(this.injectInterval);
     this.form = null;
@@ -238,7 +239,7 @@ export class InlineCheckout {
     }
 
     const { openpay_keys, reference, business } = this.merchantData
-    const total = this.cartTotal;
+    const total = Number(this.cartTotal)
 
     var cardTokensSkyflowTonder = null;
     try {
