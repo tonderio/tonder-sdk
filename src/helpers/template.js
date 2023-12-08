@@ -48,7 +48,7 @@ export const cardTemplate = `
 }
 
 .empty-div-dates-tonder {
-  height: 140px !important;
+  height: 120px !important;
 }
 
 .empty-div-cvc-tonder {
@@ -95,6 +95,7 @@ export const cardTemplate = `
   background-color: #000;
   color: #fff;
   margin-bottom: 10px;
+  display: none;
 }
 
 .error-custom-inputs-tonder{

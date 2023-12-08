@@ -7,14 +7,12 @@ import {
   createCheckoutRouterTonder,
   getOpenpayDeviceSessionID
 } from '../data/api';
-
 import {
   showError
 } from '../helpers/utils';
-
 import { initSkyflow } from '../helpers/skyflow'
-
 import { ThreeDSHandler } from './3dsHandler.js';
+
 
 export class InlineCheckout {
   static injected = false;
@@ -30,6 +28,7 @@ export class InlineCheckout {
     baseUrl = "https://stage.tonder.io",
     // baseUrl = "http://localhost:8000",
     cartTotal,
+    renderPaymentButton=false,
     cb=()=>{},
   }) {
     this.abortController = new AbortController()
@@ -58,6 +57,8 @@ export class InlineCheckout {
     this.postCode = customer?.postCode || "00000";
     this.email = customer?.email || "customer@mail.com";
     this.phone = customer?.phone || "9999999999";
+    this.customer = customer
+    this.renderPaymentButton = renderPaymentButton
     this.form = form;
     this.radioName = radioName;
     this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl});
@@ -68,24 +69,18 @@ export class InlineCheckout {
   }
 
   mountPayButton() {
-    const payButton = document.querySelector("#tonderPayButton");
-    payButton.textContent = `Pagar $${this.cartTotal}`;
-    payButton.addEventListener("click", async (event) => {
-      event.preventDefault();
-      const prevButtonContent = payButton.innerHTML;
-      payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
-      const response = await this.payment();
-      payButton.innerHTML = prevButtonContent;
-      if (response) {
-        const process3ds = new ThreeDSHandler({payload: response})
-        this.cb(response)
-        if (!process3ds.redirectTo3DS()) {
-          if (this.form) {
-            this.form.submit()
-          }
-        }
-      }
-    });
+    if (this.renderPaymentButton) {
+      const payButton = document.querySelector("#tonderPayButton");
+      payButton.style.display = "block";
+      payButton.textContent = `Pagar $${this.cartTotal}`;
+      payButton.addEventListener("click", async (event) => {
+        event.preventDefault();
+        const prevButtonContent = payButton.innerHTML;
+        payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
+        await this.payment(this.customer);
+        payButton.innerHTML = prevButtonContent;
+      });
+    }
   }
 
   mountRadioElements() {
@@ -161,8 +156,11 @@ export class InlineCheckout {
     console.log("InlineCheckout removed from DOM and cleaned up.");
   }
 
-  async payment() {
-    document.querySelector("#tonderPayButton").disabled = true;
+  async checkout() {
+    try {
+      document.querySelector("#tonderPayButton").disabled = true;
+    } catch (error) {
+    }
 
     var billingFirstName = this.firstName;
     var billingLastName = this.lastName;
@@ -276,7 +274,9 @@ export class InlineCheckout {
       );
 
       if (jsonResponseRouter) {
-        document.querySelector("#tonderPayButton").disabled = false;
+        try {
+          document.querySelector("#tonderPayButton").disabled = false;
+        } catch {}
         return jsonResponseRouter;
       } else {
         showError("No se ha podido procesar el pago")
