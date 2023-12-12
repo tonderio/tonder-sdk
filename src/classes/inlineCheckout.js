@@ -101,18 +101,25 @@ export class InlineCheckout {
     }
   }
 
-  async payment(data) {
-    this.handleFormData(data)
-    const response = await this.checkout()
-    if (response) {
-      const process3ds = new ThreeDSHandler({payload: response})
-      this.cb(response)
-      if (!process3ds.redirectTo3DS()) {
-        return response
+payment(data) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      this.handleFormData(data);
+      const response = await this.checkout();
+      if (response) {
+        const process3ds = new ThreeDSHandler({ payload: response });
+        this.cb(response);
+        if (!process3ds.redirectTo3DS()) {
+          resolve(response);
+        } else {
+          resolve(response);
+        }
       }
-      return response
+    } catch (error) {
+      reject(error);
     }
-  }
+  });
+}
 
   handleFormData(customer) {
     console.log('customer: ', customer)

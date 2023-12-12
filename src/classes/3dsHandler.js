@@ -37,9 +37,9 @@ export class ThreeDSHandler {
     }
   }
 
-// Returns an object
-// https://example.com/?name=John&age=30&city=NewYork
-// { name: "John", age: "30", city: "NewYork" }
+  // Returns an object
+  // https://example.com/?name=John&age=30&city=NewYork
+  // { name: "John", age: "30", city: "NewYork" }
   getURLParameters() {
     const parameters = {};
     const urlParams = new URLSearchParams(window.location.search);
