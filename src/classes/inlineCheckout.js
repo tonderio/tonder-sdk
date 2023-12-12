@@ -220,31 +220,6 @@ payment(data) {
     } catch (error) {
     }
 
-    var billingFirstName = this.firstName;
-    var billingLastName = this.lastName;
-    var billingCountry = this.country;
-    var billingAddressOne = this.address;
-    var billingCity = this.city;
-    var billingState = this.state;
-    var billingPostcode = this.postCode;
-    var billingEmail = this.email;
-    var billingPhone = this.phone;
-
-    if (
-      !billingFirstName ||
-      !billingLastName ||
-      !billingCountry ||
-      !billingAddressOne ||
-      !billingCity ||
-      !billingState ||
-      !billingPostcode ||
-      !billingEmail ||
-      !billingPhone
-    ) {
-      showError("Verifica los campos obligatorios")
-      return false;
-    }
-
     const { openpay_keys, reference, business } = this.merchantData
     const total = Number(this.cartTotal)
 
@@ -267,7 +242,7 @@ payment(data) {
         );
       }
 
-      const { auth_token } = await this.getCustomer(billingEmail, this.abortController.signal);
+      const { auth_token } = await this.getCustomer(this.email, this.abortController.signal);
 
       var orderItems = {
         business: this.apiKeyTonder,
@@ -308,8 +283,8 @@ payment(data) {
         card: cardTokensSkyflowTonder,
         name: cardTokensSkyflowTonder.cardholder_name,
         last_name: "",
-        email_client: billingEmail,
-        phone_number: billingPhone,
+        email_client: this.email,
+        phone_number: this.phone,
         return_url: this.returnUrl,
         id_product: "no_id",
         quantity_product: 1,
