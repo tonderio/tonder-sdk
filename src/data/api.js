@@ -42,7 +42,7 @@ export async function customerRegister(baseUrlTonder, apiKeyTonder, email, signa
   }
 }
 
-export async function createOrderTonder(baseUrlTonder, apiKeyTonder, orderItems) {
+export async function createOrder(baseUrlTonder, apiKeyTonder, orderItems) {
   const url = `${baseUrlTonder}/api/v1/orders/`;
   const data = orderItems;
   const response = await fetch(url, {
@@ -61,7 +61,7 @@ export async function createOrderTonder(baseUrlTonder, apiKeyTonder, orderItems)
   }
 }
 
-export async function createPaymentTonder(baseUrlTonder, apiKeyTonder, paymentItems) {
+export async function createPayment(baseUrlTonder, apiKeyTonder, paymentItems) {
   const url = `${baseUrlTonder}/api/v1/business/${paymentItems.business_pk}/payments/`;
   const data = paymentItems;
   const response = await fetch(url, {
@@ -80,21 +80,25 @@ export async function createPaymentTonder(baseUrlTonder, apiKeyTonder, paymentIt
   }
 }
 
-export async function createCheckoutRouterTonder(baseUrlTonder, apiKeyTonder, routerItems) {
-  const url = `${baseUrlTonder}/api/v1/checkout-router/`;
-  const data = routerItems;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Token ${apiKeyTonder}`,
-    },
-    body: JSON.stringify(data),
-  });
-  if (response.status >= 200 && response.status <= 299) {
-    const jsonResponse = await response.json();
-    return jsonResponse;
-  } else {
-    return false;
+export async function startCheckoutRouter(baseUrlTonder, apiKeyTonder, routerItems) {
+  try {
+    const url = `${baseUrlTonder}/api/v1/checkout-router/`;
+    const data = routerItems;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${apiKeyTonder}`,
+      },
+      body: JSON.stringify(data),
+    });
+    if (response.status >= 200 && response.status <= 299) {
+      const jsonResponse = await response.json();
+      return jsonResponse;
+    } else {
+      throw new Error("Failed to start checkout router")
+    }
+  } catch (error) {
+    throw error
   }
 }

@@ -2,9 +2,9 @@ import { cardTemplate } from '../helpers/template.js'
 import {
   getBusiness,
   customerRegister,
-  createOrderTonder,
-  createPaymentTonder,
-  createCheckoutRouterTonder,
+  createOrder,
+  createPayment,
+  startCheckoutRouter,
   getOpenpayDeviceSessionID
 } from '../data/api';
 import {
@@ -256,7 +256,7 @@ payment(data) {
         items: this.cartItems,
       };
       console.log('orderItems: ', orderItems)
-      const jsonResponseOrder = await createOrderTonder(
+      const jsonResponseOrder = await createOrder(
         this.baseUrlTonder,
         this.apiKeyTonder,
         orderItems
@@ -272,7 +272,7 @@ payment(data) {
         date: dateString,
         order: jsonResponseOrder.id,
       };
-      const jsonResponsePayment = await createPaymentTonder(
+      const jsonResponsePayment = await createPayment(
         this.baseUrlTonder,
         this.apiKeyTonder,
         paymentItems
@@ -300,7 +300,7 @@ payment(data) {
         payment_id: jsonResponsePayment.pk,
         source: 'sdk',
       };
-      const jsonResponseRouter = await createCheckoutRouterTonder(
+      const jsonResponseRouter = await startCheckoutRouter(
         this.baseUrlTonder,
         this.apiKeyTonder,
         routerItems
@@ -318,7 +318,7 @@ payment(data) {
     } catch (error) {
       console.log(error);
       showError("Ha ocurrido un error")
-      return false;
+      throw error;
     }
   };
 }
