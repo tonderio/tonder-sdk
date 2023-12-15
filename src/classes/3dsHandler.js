@@ -3,10 +3,12 @@ export class ThreeDSHandler {
     payload = null,
     apiKey,
     baseUrl,
+    successUrl
   }) {
     this.baseUrl = baseUrl,
     this.apiKey = apiKey,
-    this.payload = payload;
+    this.payload = payload,
+    this.successUrl = successUrl
   }
 
   saveVerifyTransactionUrl() {
@@ -67,8 +69,9 @@ export class ThreeDSHandler {
         });
 
         if (response.status === 200) {
-          console.log('La transacción se verificó con éxito.');
           this.removeVerifyTransactionUrl();
+          window.location = this.successUrl
+          console.log('La transacción se verificó con éxito.');
           return response;
         } else {
           console.error('La verificación de la transacción falló.');

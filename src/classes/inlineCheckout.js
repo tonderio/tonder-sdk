@@ -24,6 +24,7 @@ export class InlineCheckout {
     customer,
     items,
     returnUrl,
+    successUrl,
     // TODO: Fix this
     baseUrl = "https://stage.tonder.io",
     // baseUrl = "http://localhost:8000",
@@ -61,7 +62,9 @@ export class InlineCheckout {
     this.renderPaymentButton = renderPaymentButton
     this.form = form;
     this.radioName = radioName;
-    this.process3ds = new ThreeDSHandler({apiKey: apiKey, baseUrl: baseUrl});
+    this.process3ds = new ThreeDSHandler(
+      { apiKey: apiKey, baseUrl: baseUrl, successUrl: successUrl }
+    )
     this.collectContainer = null;
     this.merchantData = {}
     this.cartTotal = cartTotal
