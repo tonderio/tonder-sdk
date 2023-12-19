@@ -1,11 +1,11 @@
 export const cardTemplate = `
 <div class="container-tonder">
-  <div id="collectCardholderNameTonder" class="empty-div-tonder"></div>
-  <div id="collectCardNumberTonder" class="empty-div-tonder"></div>
-  <div class="collect-row-tonder">
-    <div id="collectExpirationMonthTonder" class="empty-div-dates-tonder"></div>
-    <div id="collectExpirationYearTonder" class="empty-div-dates-tonder"></div>
-    <div id="collectCvvTonder" class="empty-div-cvc-tonder"></div>
+  <div id="collectCardholderNameTonder" class="empty-div"></div>
+  <div id="collectCardNumberTonder" class="empty-div"></div>
+  <div class="collect-row">
+    <div id="collectExpirationMonthTonder" class="empty-div"></div>
+    <div id="collectExpirationYearTonder" class="expiration-year"></div>
+    <div id="collectCvvTonder" class="empty-div"></div>
   </div>
   <div id="msgError"></div>
   <button id="tonderPayButton" class="payButton">Pagar</button>
@@ -15,7 +15,7 @@ export const cardTemplate = `
 .container-tonder {
   background-color: #F9F9F9;
   margin: 0 auto !important;
-  padding: 30px;
+  padding: 30px 10px 30px 10px;
   max-height: 0px;
   overflow: hidden;
   transition: max-height 0.5s ease-out;
@@ -27,39 +27,33 @@ export const cardTemplate = `
   max-height: 100vh;
 }
 
-.collect-row-tonder {
+.collect-row {
   display: flex !important;
   justify-content: space-between !important;
   width: 100% !important;
 }
 
-.collect-row-tonder > div {
-  width: calc(25% - 10px) !important;
+.collect-row > :first-child {
+  min-width: 120px; !important
 }
 
-.collect-row-tonder > div:last-child {
-  width: 50% !important;
+.expiration-year {
+  padding-top: 25px !important;
 }
 
-.empty-div-tonder {
+.empty-div {
   height: 80px !important;
   margin-top: 2px;
   margin-bottom: 4px;
-}
-
-.empty-div-dates-tonder {
-  height: 120px !important;
-}
-
-.empty-div-cvc-tonder {
-  height: 90px !important;
+  margin-left: 10px !important;
+  margin-right: 10px !important;
 }
 
 .reveal-view {
   margin-top: 0px !important;
 }
 
-.error-tonder-container-tonder{
+.error-container{
   color: red !important;
   background-color: #FFDBDB !important;
   margin-bottom: 13px !important;
@@ -69,16 +63,16 @@ export const cardTemplate = `
   text-align: left !important;
 }
 
-.image-error-tonder {
+.image-error {
   width: 14px !important;
   margin: -2px 5px !important;
 }
 
-.link-terms-tonder {
+.link-terms {
   color: black !important;
 }
 
-.link-terms-tonder:hover {
+.link-terms:hover {
   text-decoration: None !important;
   color: black !important;
 }
@@ -98,7 +92,7 @@ export const cardTemplate = `
   display: none;
 }
 
-.error-custom-inputs-tonder{
+.error-custom-inputs{
   margin-left: 4px !important;
   margin-top: -22px !important;
   font-size: 11px !important;
@@ -106,7 +100,7 @@ export const cardTemplate = `
   text-align: left;
 }
 
-.error-custom-inputs-little-tonder{
+.error-custom-inputs-little{
   margin-left: 4px !important;
   margin-top: -46px !important;
   font-size: 11px !important;
@@ -147,16 +141,6 @@ export const cardTemplate = `
 
 .payment_method_zplit  label img {
   display: none !important;
-}
-
-.empty-div-dates-tonder {
-  height: 90px !important;
-  width: 60px !important;
-}
-
-.empty-div-cvc-tonder {
-  height: 90px !important;
-  width: 130px !important;
 }
 }
 

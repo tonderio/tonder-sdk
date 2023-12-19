@@ -43,13 +43,13 @@ export function toCurrency(value) {
 
 export function showError(message) {
   var msgErrorDiv = document.getElementById("msgError");
-  msgErrorDiv.classList.add("error-tonder-container-tonder");
+  msgErrorDiv.classList.add("error-container");
   msgErrorDiv.innerHTML = message;
   setTimeout(function () {
     try {
       document.querySelector("#tonderPayButton").disabled = false;
     } catch (error) {}
-    msgErrorDiv.classList.remove("error-tonder-container-tonder");
+    msgErrorDiv.classList.remove("error-container");
     msgErrorDiv.innerHTML = "";
   }, 3000);
 }

@@ -142,7 +142,7 @@ export async function initSkyflow(
     table: "cards",
     column: "expiration_year",
     ...collectStylesOptionsTonder,
-    label: "Año",
+    label: "",
     placeholder: "AA",
     type: Skyflow.ElementType.EXPIRATION_YEAR,
   });
