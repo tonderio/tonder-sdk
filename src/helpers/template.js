@@ -1,5 +1,5 @@
 export const cardTemplate = `
-<div class="container-tonder">
+<div class="container-tonder form-tonder">
   <div id="collectCardholderNameTonder" class="empty-div"></div>
   <div id="collectCardNumberTonder" class="empty-div"></div>
   <div class="collect-row">
@@ -7,14 +7,18 @@ export const cardTemplate = `
     <div id="collectExpirationYearTonder" class="expiration-year"></div>
     <div id="collectCvvTonder" class="empty-div"></div>
   </div>
+  <label for="saveCardCheckbox" class="checkbox-label">
+    <input type="checkbox" id="saveCardCheckbox" class="checkbox-input"> 
+    <strong>Guardar tarjeta para pagos futuros</strong>
+  </label>
   <div id="msgError"></div>
   <button id="tonderPayButton" class="payButton">Pagar</button>
 </div>
 
 <style>
-.container-tonder {
+.form-tonder .container-tonder {
   background-color: #F9F9F9;
-  margin: 0 auto !important;
+  margin: 0 auto;
   padding: 30px 10px 30px 10px;
   max-height: 0px;
   overflow: hidden;
@@ -23,60 +27,53 @@ export const cardTemplate = `
   border: solid 1px #e3e3e3;
 }
 
-.container-selected {
+.form-tonder .container-tonder label {
+  display: flex !important;
+  align-items: center !important
+  margin-bottom: 10px !important;
+}
+
+.form-tonder .container-selected {
   max-height: 100vh;
 }
 
-.collect-row {
-  display: flex !important;
-  justify-content: space-between !important;
-  width: 100% !important;
+.form-tonder .collect-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
-.collect-row > :first-child {
-  min-width: 120px; !important
+.form-tonder .collect-row > :first-child {
+  min-width: 120px;
 }
 
-.expiration-year {
-  padding-top: 25px !important;
+.form-tonder .expiration-year {
+  padding-top: 25px;
 }
 
-.empty-div {
-  height: 80px !important;
+.form-tonder .empty-div {
+  height: 80px;
   margin-top: 2px;
   margin-bottom: 4px;
-  margin-left: 10px !important;
-  margin-right: 10px !important;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
-.reveal-view {
-  margin-top: 0px !important;
+.form-tonder .reveal-view {
+  margin-top: 0px;
 }
 
-.error-container{
-  color: red !important;
-  background-color: #FFDBDB !important;
-  margin-bottom: 13px !important;
-  font-size: 80% !important;
-  padding: 8px 10px !important;
-  border-radius: 10px !important;
-  text-align: left !important;
+.form-tonder .error-container {
+  color: red;
+  background-color: #FFDBDB;
+  margin-bottom: 13px;
+  font-size: 80%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-align: left;
 }
 
-.image-error {
-  width: 14px !important;
-  margin: -2px 5px !important;
-}
-
-.link-terms {
-  color: black !important;
-}
-
-.link-terms:hover {
-  text-decoration: None !important;
-  color: black !important;
-}
-.payButton {
+.form-tonder .payButton {
   font-size: 16px;
   font-weight: bold;
   min-height: 2.3rem;
@@ -92,28 +89,12 @@ export const cardTemplate = `
   display: none;
 }
 
-.error-custom-inputs{
-  margin-left: 4px !important;
-  margin-top: -22px !important;
-  font-size: 11px !important;
-  color: red !important;
-  text-align: left;
-}
-
-.error-custom-inputs-little{
-  margin-left: 4px !important;
-  margin-top: -46px !important;
-  font-size: 11px !important;
-  color: red !important;
-  text-align: left;
-}
-
-.lds-dual-ring {
+.form-tonder .lds-dual-ring {
   display: inline-block;
   width: 14px;
   height: 14px;
 }
-.lds-dual-ring:after {
+.form-tonder .lds-dual-ring:after {
   content: " ";
   display: block;
   width: 14px;
@@ -131,18 +112,5 @@ export const cardTemplate = `
     transform: rotate(360deg);
   }
 }
-
-
-@media screen and (max-width: 600px) {
-.payment_method_zplit {
-  font-size: 16px !important;
-  width: 100% !important;
-}
-
-.payment_method_zplit  label img {
-  display: none !important;
-}
-}
-
 </style>
 `
