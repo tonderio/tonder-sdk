@@ -248,7 +248,7 @@ export class InlineCheckout {
       cardTokensSkyflowTonder = await collectResponseSkyflowTonder["records"][0]["fields"];
     } catch (error) {
       showError("Por favor, verifica todos los campos de tu tarjeta")
-      return false;
+      throw error;
     }
 
     try {
