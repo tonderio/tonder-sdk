@@ -8,7 +8,7 @@ export const cardTemplate = `
     <div id="collectCvvTonder" class="empty-div"></div>
   </div>
   <div id="msgError"></div>
-  <button id="tonderPayButton" class="payButton">Pagar</button>
+  <button id="tonderPayButton" class="pay-button">Pagar</button>
 </div>
 
 <style>
@@ -16,14 +16,10 @@ export const cardTemplate = `
   background-color: #F9F9F9;
   margin: 0 auto !important;
   padding: 30px 10px 30px 10px;
-  max-height: 0px;
   overflow: hidden;
   transition: max-height 0.5s ease-out;
   max-width: 600px;
   border: solid 1px #e3e3e3;
-}
-
-.container-selected {
   max-height: 100vh;
 }
 
@@ -49,10 +45,6 @@ export const cardTemplate = `
   margin-right: 10px !important;
 }
 
-.reveal-view {
-  margin-top: 0px !important;
-}
-
 .error-container{
   color: red !important;
   background-color: #FFDBDB !important;
@@ -63,20 +55,7 @@ export const cardTemplate = `
   text-align: left !important;
 }
 
-.image-error {
-  width: 14px !important;
-  margin: -2px 5px !important;
-}
-
-.link-terms {
-  color: black !important;
-}
-
-.link-terms:hover {
-  text-decoration: None !important;
-  color: black !important;
-}
-.payButton {
+.pay-button {
   font-size: 16px;
   font-weight: bold;
   min-height: 2.3rem;
@@ -92,27 +71,12 @@ export const cardTemplate = `
   display: none;
 }
 
-.error-custom-inputs{
-  margin-left: 4px !important;
-  margin-top: -22px !important;
-  font-size: 11px !important;
-  color: red !important;
-  text-align: left;
-}
-
-.error-custom-inputs-little{
-  margin-left: 4px !important;
-  margin-top: -46px !important;
-  font-size: 11px !important;
-  color: red !important;
-  text-align: left;
-}
-
 .lds-dual-ring {
   display: inline-block;
   width: 14px;
   height: 14px;
 }
+
 .lds-dual-ring:after {
   content: " ";
   display: block;
@@ -134,14 +98,14 @@ export const cardTemplate = `
 
 
 @media screen and (max-width: 600px) {
-.payment_method_zplit {
-  font-size: 16px !important;
-  width: 100% !important;
-}
+  .payment_method_zplit {
+    font-size: 16px !important;
+    width: 100% !important;
+  }
 
-.payment_method_zplit  label img {
-  display: none !important;
-}
+  .payment_method_zplit  label img {
+    display: none !important;
+  }
 }
 
 </style>

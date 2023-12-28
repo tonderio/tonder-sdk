@@ -17,27 +17,63 @@ import { ThreeDSHandler } from './3dsHandler.js';
 export class InlineCheckout {
   static injected = false;
 
-  constructor({
-    form,
-    radioName,
+  constructor  ({
+    apiKey,
+    customer = {},
+    items = [],
+    returnUrl,
+    successUrl,
+    baseUrl = "https://stage.tonder.io",
+    // baseUrl = "http://localhost:8000",
+    cartTotal,
+    renderPaymentButton = false,
+    callBack = () => {},
+  }) {
+    this.#initProperties({
+      apiKey,
+      customer,
+      items,
+      returnUrl,
+      successUrl,
+      baseUrl,
+      cartTotal,
+      renderPaymentButton,
+      callBack
+    });
+    this.abortController = new AbortController()
+    this.process3ds = new ThreeDSHandler(
+      { apiKey: apiKey, baseUrl: baseUrl, successUrl: successUrl }
+    )
+  }
+
+  #initProperties({
     apiKey,
     customer,
     items,
     returnUrl,
     successUrl,
-    // TODO: Fix this
-    baseUrl = "https://stage.tonder.io",
-    // baseUrl = "http://localhost:8000",
+    baseUrl,
     cartTotal,
-    renderPaymentButton=false,
-    cb=()=>{},
+    renderPaymentButton,
+    callBack
   }) {
-    this.abortController = new AbortController()
+    const defaultCustomer = {
+      firstName: "Unknown",
+      lastName: "Customer",
+      country: "Mexico",
+      address: "Unknown street",
+      city: "Unknown",
+      state: "Unknown",
+      postCode: "00000",
+      email: "customer@mail.com",
+      phone: "9999999999",
+    };
+
     this.baseUrlTonder = baseUrl;
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
-    this.email = "customer@mail.com";
-    this.cartItems = items || [
+    this.email = customer.email || defaultCustomer.email;
+    this.cartItems = items.length ? items : [
       {
         description: "Example",
         quantity: 1,
@@ -49,94 +85,78 @@ export class InlineCheckout {
         amount_total: 1,
       },
     ];
-    this.firstName = customer?.firstName || "Unknown";
-    this.lastName = customer?.lastName || "Customer";
-    this.country = customer?.country || "Mexico";
-    this.address = customer?.address || "Unkown street";
-    this.city = customer?.city || "Unkown";
-    this.state = customer?.state || "Unkown";
-    this.postCode = customer?.postCode || "00000";
-    this.email = customer?.email || "customer@mail.com";
-    this.phone = customer?.phone || "9999999999";
-    this.customer = customer
-    this.renderPaymentButton = renderPaymentButton
-    this.form = form;
-    this.radioName = radioName;
-    this.process3ds = new ThreeDSHandler(
-      { apiKey: apiKey, baseUrl: baseUrl, successUrl: successUrl }
-    )
+    this.customer = { ...defaultCustomer, ...customer };
+    this.renderPaymentButton = renderPaymentButton;
+    this.cartTotal = cartTotal;
+    this.callBack = callBack;
+    this.successUrl = successUrl;
     this.collectContainer = null;
     this.merchantData = {}
-    this.cartTotal = cartTotal
-    this.cb = cb
   }
 
   mountPayButton() {
-    if (this.renderPaymentButton) {
-      const payButton = document.querySelector("#tonderPayButton");
-      payButton.style.display = "block";
-      payButton.textContent = `Pagar $${this.cartTotal}`;
-      payButton.addEventListener("click", async (event) => {
-        event.preventDefault();
-        const prevButtonContent = payButton.innerHTML;
-        payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
-        await this.payment(this.customer);
-        payButton.innerHTML = prevButtonContent;
-      });
+    if (!this.renderPaymentButton) return;
+
+    const payButton = document.querySelector("#tonderPayButton");
+    if (!payButton) {
+      console.error("Pay button not found");
+      return;
     }
+
+    payButton.style.display = "block";
+    payButton.textContent = `Pagar $${this.cartTotal}`;
+    payButton.onclick = async (event) => {
+      event.preventDefault();
+      await this.#handlePaymentClick(payButton);
+    };
   }
 
-  mountRadioElements() {
-    if (!this.radioName) {
-      document.querySelector(".container-tonder").classList.add("container-selected");
-    } else {
-      const radios = document.querySelectorAll(`input[type=radio][name=${this.radioName}]`);
-      radios.forEach((radio) =>
-        radio.addEventListener("change", () => {
-          console.log(radio);
-          if (radio.id === "tonder-pay") {
-            document.querySelector(".container-tonder").classList.add("container-selected");
-          } else {
-            document.querySelector(".container-tonder").classList.remove("container-selected");
-          }
-        })
-      );
-    }
-  }
-
-payment(data) {
-  return new Promise(async (resolve, reject) => {
+  async #handlePaymentClick(payButton) {
+    const prevButtonContent = payButton.innerHTML;
+    payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
     try {
-      this.handleFormData(data);
-      const response = await this.checkout();
-      if (response) {
-        const process3ds = new ThreeDSHandler({ payload: response });
-        this.cb(response);
-        if (!process3ds.redirectTo3DS()) {
-          resolve(response);
-        } else {
-          resolve(response);
-        }
-      }
+      const response = await this.payment(this.customer);
+      this.callBack(response);
     } catch (error) {
-      reject(error);
+      console.error("Payment error:", error);
+    } finally {
+      payButton.innerHTML = prevButtonContent;
     }
-  });
-}
+  }
 
-  handleFormData(customer) {
+  payment(data) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        this.#handleFormData(data);
+        const response = await this.checkout();
+        if (response) {
+          const process3ds = new ThreeDSHandler({ payload: response });
+          this.callBack(response);
+          if (!process3ds.redirectTo3DS()) {
+            resolve(response);
+          } else {
+            resolve(response);
+          }
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  #handleFormData(customer) {
     console.log('customer: ', customer)
-    if (customer) {
-      this.firstName = customer?.firstName
-      this.lastName = customer?.lastName
-      this.country = customer?.country
-      this.address = customer?.street
-      this.city = customer?.city
-      this.state = customer?.state
-      this.postCode = customer?.postCode
-      this.email = customer?.email
-      this.phone = customer?.phone
-    }
+    if (!customer) return
+
+    this.firstName = customer?.firstName
+    this.lastName = customer?.lastName
+    this.country = customer?.country
+    this.address = customer?.street
+    this.city = customer?.city
+    this.state = customer?.state
+    this.postCode = customer?.postCode
+    this.email = customer?.email
+    this.phone = customer?.phone
   }
 
   setCartItems (items) {
@@ -147,14 +167,13 @@ payment(data) {
   setCartTotal (total) {
     console.log('total: ', total)
     this.cartTotal = total
-    this.updatePayButton()
+    this.#updatePayButton()
   }
 
-  updatePayButton() {
+  #updatePayButton() {
     const payButton = document.querySelector("#tonderPayButton");
-    if (payButton) {
-      payButton.textContent = `Pagar $${this.cartTotal}`;
-    }
+    if (!payButton) return
+    payButton.textContent = `Pagar $${this.cartTotal}`;
   }
 
   setCallback (cb) {
@@ -167,14 +186,14 @@ payment(data) {
     const injectInterval = setInterval(() => {
       if (document.querySelector("#tonder-checkout")) {
         document.querySelector("#tonder-checkout").innerHTML = cardTemplate;
-        this.mountTonder();
+        this.#mountTonder();
         clearInterval(injectInterval);
         InlineCheckout.injected = true
       }
     }, 500);
   }
 
-  async fetchMerchantData() {
+  async #fetchMerchantData() {
     this.merchantData = await getBusiness(
       this.baseUrlTonder,
       this.apiKeyTonder,
@@ -187,14 +206,13 @@ payment(data) {
     return await customerRegister(this.baseUrlTonder, this.apiKeyTonder, email, signal);
   }
 
-  async mountTonder() {
+  async #mountTonder() {
     this.mountPayButton()
-    this.mountRadioElements()
 
     const {
       vault_id,
       vault_url,
-    } = await this.fetchMerchantData();
+    } = await this.#fetchMerchantData();
 
     this.collectContainer = await initSkyflow(
       vault_id,
@@ -212,8 +230,6 @@ payment(data) {
     this.abortController = new AbortController();
 
     clearInterval(this.injectInterval);
-    this.form = null;
-    this.radioName = null;
     console.log("InlineCheckout removed from DOM and cleaned up.");
   }
 

@@ -25,11 +25,9 @@ const items = [
   },
 ];
 
-const form = document.querySelector("#payment-form");
 const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
 const returnUrl = "http://localhost:8080/"
 const inlineCheckout = new InlineCheckout({
-  form: form,
   apiKey: apiKey,
   customer: customer,
   items: items,

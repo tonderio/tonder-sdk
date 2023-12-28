@@ -15,10 +15,11 @@
         font-size: 3rem;
         font-weight: bold;
         display: flex;
-        border: 1px solid rgba(0, 0, 0, 0.5);
         padding: 2rem;
         justify-content: center;
         align-content: center;
+        margin-left: 20px;
+        margin-right: 20px;
       }
     </style>
     <title>Tonder SDK Demo</title>
@@ -29,14 +30,8 @@
     <div class="checkout-container">
       <form id="payment-form">
         <div style="margin-bottom: 2rem;">
-          <input name="payment" type="radio" id="tonder-pay" value="1" checked/>
-          <label for="tonder-pay">Pago con tarjeta de credito o debito</label>
           <div style="margin-top: 2rem;" id="tonder-checkout">
           </div>
-        </div>
-        <div style="margin-bottom: 2rem;" value="2">
-          <input name="payment" type="radio" id="other" />
-          <label for="other">Otra opcion</label>
         </div>
       </form>
       <div class="right">
