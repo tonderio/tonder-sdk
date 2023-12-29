@@ -28,6 +28,7 @@ export class InlineCheckout {
     cartTotal,
     renderPaymentButton = false,
     callBack = () => {},
+    styles,
   }) {
     this.#initProperties({
       apiKey,
@@ -38,7 +39,8 @@ export class InlineCheckout {
       baseUrl,
       cartTotal,
       renderPaymentButton,
-      callBack
+      callBack,
+      styles,
     });
     this.abortController = new AbortController()
     this.process3ds = new ThreeDSHandler(
@@ -55,7 +57,8 @@ export class InlineCheckout {
     baseUrl,
     cartTotal,
     renderPaymentButton,
-    callBack
+    callBack,
+    styles
   }) {
     const defaultCustomer = {
       firstName: "Unknown",
@@ -92,9 +95,10 @@ export class InlineCheckout {
     this.successUrl = successUrl;
     this.collectContainer = null;
     this.merchantData = {}
+    this.customStyles = styles
   }
 
-  mountPayButton() {
+  #mountPayButton() {
     if (!this.renderPaymentButton) return;
 
     const payButton = document.querySelector("#tonderPayButton");
@@ -128,7 +132,7 @@ export class InlineCheckout {
     return new Promise(async (resolve, reject) => {
       try {
         this.#handleFormData(data);
-        const response = await this.checkout();
+        const response = await this.#checkout();
         if (response) {
           const process3ds = new ThreeDSHandler({ payload: response });
           this.callBack(response);
@@ -207,7 +211,7 @@ export class InlineCheckout {
   }
 
   async #mountTonder() {
-    this.mountPayButton()
+    this.#mountPayButton()
 
     const {
       vault_id,
@@ -219,7 +223,8 @@ export class InlineCheckout {
       vault_url,
       this.baseUrlTonder,
       this.apiKeyTonder,
-      this.abortController.signal
+      this.abortController.signal,
+      this.customStyles,
     );
   }
 
@@ -233,7 +238,7 @@ export class InlineCheckout {
     console.log("InlineCheckout removed from DOM and cleaned up.");
   }
 
-  async checkout() {
+  async #checkout() {
     try {
       document.querySelector("#tonderPayButton").disabled = true;
     } catch (error) {

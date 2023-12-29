@@ -1,19 +1,22 @@
+import { defaultStyles } from "./styles";
+
 export async function initSkyflow(
-  vaultIdTonder,
-  vaultUrlTonder,
-  baseUrlTonder,
-  apiKeyTonder,
-  signal
+  vaultId,
+  vaultUrl,
+  baseUrl,
+  apiKey,
+  signal,
+  customStyles = {}
 ) {
-  const skyflowTonder = await Skyflow.init({
-    vaultID: vaultIdTonder,
-    vaultURL: vaultUrlTonder,
+  const skyflow = await Skyflow.init({
+    vaultID: vaultId,
+    vaultURL: vaultUrl,
     getBearerToken: async () => {
       // Pass the signal to the fetch call
-      const response = await fetch(`${baseUrlTonder}/api/v1/vault-token/`, {
+      const response = await fetch(`${baseUrl}/api/v1/vault-token/`, {
         method: 'GET',
         headers: {
-          'Authorization': `Token ${apiKeyTonder}`,
+          'Authorization': `Token ${apiKey}`,
         },
         signal: signal,
       });
@@ -32,61 +35,14 @@ export async function initSkyflow(
   });
 
   // Create collect Container.
-  const collectContainerTonder = await skyflowTonder.container(
+  const collectContainer = await skyflow.container(
     Skyflow.ContainerType.COLLECT
   );
 
   // Custom styles for collect elements.
-  var collectStylesOptionsTonder = {
-    inputStyles: {
-      base: {
-        border: "1px solid #e0e0e0",
-        padding: "10px 7px",
-        borderRadius: "5px",
-        color: "#1d1d1d",
-        marginTop: "2px",
-        backgroundColor: "white",
-        fontFamily: '"Inter", sans-serif',
-        fontSize: '16px',
-        '&::placeholder': {
-          color: "#ccc",
-        },
-      },
-      cardIcon: {
-        position: 'absolute',
-        left: '6px',
-        bottom: 'calc(50% - 12px)',
-      },
-      complete: {
-        color: "#4caf50",
-      },
-      empty: {},
-      focus: {},
-      invalid: {
-        border: "1px solid #f44336",
-      },
-      global: {
-        '@import': 'url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap")',
-      }
-    },
-    labelStyles: {
-      base: {
-        fontSize: '12px',
-        fontWeight: '500',
-        fontFamily: '"Inter", sans-serif'
-      },
-    },
-    errorTextStyles: {
-      base: {
-        fontSize: '12px',
-        fontWeight: '500',
-        color: "#f44336",
-        fontFamily: '"Inter", sans-serif'
-      },
-    },
-  };
+  var collectStylesOptions = Object.keys(customStyles).length === 0 ? defaultStyles : customStyles
 
-  const stylesForCardNumber = { ...collectStylesOptionsTonder.inputStyles.base };
+  const stylesForCardNumber = { ...collectStylesOptions.inputStyles.base };
   stylesForCardNumber.textIndent = '44px';
 
   const lengthMatchRule = {
@@ -96,10 +52,10 @@ export async function initSkyflow(
     },
   };
 
-  const cardHolderNameElementTonder = await collectContainerTonder.create({
+  const cardHolderNameElement = await collectContainer.create({
     table: "cards",
     column: "cardholder_name",
-    ...collectStylesOptionsTonder,
+    ...collectStylesOptions,
     label: "Titular de la tarjeta",
     placeholder: "Nombre como aparece en la tarjeta",
     type: Skyflow.ElementType.CARDHOLDER_NAME,
@@ -107,12 +63,12 @@ export async function initSkyflow(
   });
 
   // Create collect elements.
-  const cardNumberElementTonder = await collectContainerTonder.create({
+  const cardNumberElement = await collectContainer.create({
     table: "cards",
     column: "card_number",
-    ...collectStylesOptionsTonder,
+    ...collectStylesOptions,
     inputStyles: {
-      ...collectStylesOptionsTonder.inputStyles,
+      ...collectStylesOptions.inputStyles,
       base: stylesForCardNumber
     },
     label: "Número de tarjeta",
@@ -120,54 +76,54 @@ export async function initSkyflow(
     type: Skyflow.ElementType.CARD_NUMBER,
   });
 
-  const cvvElementTonder = await collectContainerTonder.create({
+  const cvvElement = await collectContainer.create({
     table: "cards",
     column: "cvv",
-    ...collectStylesOptionsTonder,
+    ...collectStylesOptions,
     label: "CVC/CVV",
     placeholder: "3-4 dígitos",
     type: Skyflow.ElementType.CVV,
   });
 
-  const expiryMonthElementTonder = await collectContainerTonder.create({
+  const expiryMonthElement = await collectContainer.create({
     table: "cards",
     column: "expiration_month",
-    ...collectStylesOptionsTonder,
+    ...collectStylesOptions,
     label: "Fecha de expiración",
     placeholder: "MM",
     type: Skyflow.ElementType.EXPIRATION_MONTH,
   });
 
-  const expiryYearElementTonder = await collectContainerTonder.create({
+  const expiryYearElement = await collectContainer.create({
     table: "cards",
     column: "expiration_year",
-    ...collectStylesOptionsTonder,
+    ...collectStylesOptions,
     label: "",
     placeholder: "AA",
     type: Skyflow.ElementType.EXPIRATION_YEAR,
   });
 
   await mountElements(
-    cardNumberElementTonder,
-    cvvElementTonder,
-    expiryMonthElementTonder,
-    expiryYearElementTonder,
-    cardHolderNameElementTonder,
+    cardNumberElement,
+    cvvElement,
+    expiryMonthElement,
+    expiryYearElement,
+    cardHolderNameElement,
   )
 
-  return collectContainerTonder
+  return collectContainer
 }
 
 async function mountElements(
-  cardNumberElementTonder,
-  cvvElementTonder,
-  expiryMonthElementTonder,
-  expiryYearElementTonder,
-  cardHolderNameElementTonder,
+  cardNumberElement,
+  cvvElement,
+  expiryMonthElement,
+  expiryYearElement,
+  cardHolderNameElement,
 ) {
-  cardNumberElementTonder.mount("#collectCardNumberTonder");
-  cvvElementTonder.mount("#collectCvvTonder");
-  expiryMonthElementTonder.mount("#collectExpirationMonthTonder");
-  expiryYearElementTonder.mount("#collectExpirationYearTonder");
-  cardHolderNameElementTonder.mount("#collectCardholderNameTonder");
+  cardNumberElement.mount("#collectCardNumber");
+  cvvElement.mount("#collectCvv");
+  expiryMonthElement.mount("#collectExpirationMonth");
+  expiryYearElement.mount("#collectExpirationYear");
+  cardHolderNameElement.mount("#collectCardholderName");
 }

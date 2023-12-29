@@ -1,11 +1,11 @@
 export const cardTemplate = `
 <div class="container-tonder">
-  <div id="collectCardholderNameTonder" class="empty-div"></div>
-  <div id="collectCardNumberTonder" class="empty-div"></div>
+  <div id="collectCardholderName" class="empty-div"></div>
+  <div id="collectCardNumber" class="empty-div"></div>
   <div class="collect-row">
-    <div id="collectExpirationMonthTonder" class="empty-div"></div>
-    <div id="collectExpirationYearTonder" class="expiration-year"></div>
-    <div id="collectCvvTonder" class="empty-div"></div>
+    <div id="collectExpirationMonth" class="empty-div"></div>
+    <div id="collectExpirationYear" class="expiration-year"></div>
+    <div id="collectCvv" class="empty-div"></div>
   </div>
   <div id="msgError"></div>
   <button id="tonderPayButton" class="pay-button">Pagar</button>
