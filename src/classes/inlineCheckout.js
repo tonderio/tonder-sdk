@@ -18,8 +18,8 @@ export class InlineCheckout {
   static injected = false;
   customer = {}
   items = []
-  baseUrl = "http://localhost:8000"
-  // baseUrl = "https://stage.tonder.io",
+  // baseUrl = "http://localhost:8000"
+  baseUrl = "https://stage.tonder.io"
   collectContainer = null
   merchantData = {}
   cartTotal = null
