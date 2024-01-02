@@ -107,11 +107,14 @@ document.addEventListener('DOMContentLoaded', function() {
   const payButton = document.getElementById('pay-button');
   payButton.addEventListener('click', async function() {
     try {
+      payButton.textContent = 'Procesando...';
       const response = await inlineCheckout.payment(checkoutData);
       console.log(response)
       alert('Pago realizado con éxito');
     } catch (error) {
       alert('Error al realizar el pago')
+    } finally {
+      payButton.textContent = 'Pagar';
     }
   });
 });
