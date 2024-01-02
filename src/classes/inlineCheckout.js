@@ -16,86 +16,33 @@ import { ThreeDSHandler } from './3dsHandler.js';
 
 export class InlineCheckout {
   static injected = false;
+  customer = {}
+  items = []
+  baseUrl = "http://localhost:8000"
+  // baseUrl = "https://stage.tonder.io",
+  collectContainer = null
+  merchantData = {}
+  cartTotal = null
 
   constructor  ({
     apiKey,
-    customer = {},
-    items = [],
     returnUrl,
     successUrl,
-    baseUrl = "https://stage.tonder.io",
-    // baseUrl = "http://localhost:8000",
-    cartTotal,
     renderPaymentButton = false,
     callBack = () => {},
     styles,
   }) {
-    this.#initProperties({
-      apiKey,
-      customer,
-      items,
-      returnUrl,
-      successUrl,
-      baseUrl,
-      cartTotal,
-      renderPaymentButton,
-      callBack,
-      styles,
-    });
-    this.abortController = new AbortController()
-    this.process3ds = new ThreeDSHandler(
-      { apiKey: apiKey, baseUrl: baseUrl, successUrl: successUrl }
-    )
-  }
-
-  #initProperties({
-    apiKey,
-    customer,
-    items,
-    returnUrl,
-    successUrl,
-    baseUrl,
-    cartTotal,
-    renderPaymentButton,
-    callBack,
-    styles
-  }) {
-    const defaultCustomer = {
-      firstName: "Unknown",
-      lastName: "Customer",
-      country: "Mexico",
-      address: "Unknown street",
-      city: "Unknown",
-      state: "Unknown",
-      postCode: "00000",
-      email: "customer@mail.com",
-      phone: "9999999999",
-    };
-
-    this.baseUrlTonder = baseUrl;
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
-    this.email = customer.email || defaultCustomer.email;
-    this.cartItems = items.length ? items : [
-      {
-        description: "Example",
-        quantity: 1,
-        price_unit: 1,
-        discount: 0,
-        taxes: 0,
-        product_reference: 1,
-        name: "Producto",
-        amount_total: 1,
-      },
-    ];
-    this.customer = { ...defaultCustomer, ...customer };
-    this.renderPaymentButton = renderPaymentButton;
-    this.cartTotal = cartTotal;
-    this.callBack = callBack;
     this.successUrl = successUrl;
-    this.collectContainer = null;
-    this.merchantData = {}
+    this.renderPaymentButton = renderPaymentButton;
+    this.callBack = callBack;
     this.customStyles = styles
+
+    this.abortController = new AbortController()
+    this.process3ds = new ThreeDSHandler(
+      { apiKey: apiKey, baseUrl: this.baseUrl, successUrl: successUrl }
+    )
   }
 
   #mountPayButton() {
@@ -131,8 +78,10 @@ export class InlineCheckout {
   payment(data) {
     return new Promise(async (resolve, reject) => {
       try {
-        this.#handleFormData(data);
-        const response = await this.#checkout();
+        this.#handleCustomer(data.customer)
+        this.setCartTotal(data.cart?.total)
+        this.setCartItems(data.cart?.items)
+        const response = await this.#checkout()
         if (response) {
           const process3ds = new ThreeDSHandler({ payload: response });
           this.callBack(response);
@@ -148,7 +97,7 @@ export class InlineCheckout {
     });
   }
 
-  #handleFormData(customer) {
+  #handleCustomer(customer) {
     console.log('customer: ', customer)
     if (!customer) return
 
@@ -199,7 +148,7 @@ export class InlineCheckout {
 
   async #fetchMerchantData() {
     this.merchantData = await getBusiness(
-      this.baseUrlTonder,
+      this.baseUrl,
       this.apiKeyTonder,
       this.abortController.signal
     );
@@ -207,7 +156,7 @@ export class InlineCheckout {
   }
 
   async getCustomer(email, signal) {
-    return await customerRegister(this.baseUrlTonder, this.apiKeyTonder, email, signal);
+    return await customerRegister(this.baseUrl, this.apiKeyTonder, email, signal);
   }
 
   async #mountTonder() {
@@ -221,7 +170,7 @@ export class InlineCheckout {
     this.collectContainer = await initSkyflow(
       vault_id,
       vault_url,
-      this.baseUrlTonder,
+      this.baseUrl,
       this.apiKeyTonder,
       this.abortController.signal,
       this.customStyles,
@@ -281,7 +230,7 @@ export class InlineCheckout {
       };
       console.log('orderItems: ', orderItems)
       const jsonResponseOrder = await createOrder(
-        this.baseUrlTonder,
+        this.baseUrl,
         this.apiKeyTonder,
         orderItems
       );
@@ -297,7 +246,7 @@ export class InlineCheckout {
         order: jsonResponseOrder.id,
       };
       const jsonResponsePayment = await createPayment(
-        this.baseUrlTonder,
+        this.baseUrl,
         this.apiKeyTonder,
         paymentItems
       );
@@ -325,7 +274,7 @@ export class InlineCheckout {
         source: 'sdk',
       };
       const jsonResponseRouter = await startCheckoutRouter(
-        this.baseUrlTonder,
+        this.baseUrl,
         this.apiKeyTonder,
         routerItems
       );

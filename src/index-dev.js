@@ -1,30 +1,5 @@
 import { InlineCheckout } from './classes/inlineCheckout'
 
-const customer = {
-  firstName: "name",
-  lastName: "of customer",
-  country: "Mexico",
-  address: "street address",
-  city: "city",
-  state: "state",
-  postCode: "00000",
-  email: "123123123123123131123@mail.com",
-  phone: "9999999999",
-};
-
-const items = [
-  {
-    description: "Example",
-    quantity: 1,
-    price_unit: 1,
-    discount: 0,
-    taxes: 0,
-    product_reference: 1,
-    name: "Producto",
-    amount_total: 1,
-  },
-];
-
 const customStyles = {
   inputStyles: {
     base: {
@@ -86,15 +61,57 @@ const customStyles = {
   }
 }
 
+const checkoutData = {
+  customer: {
+    firstName: "Adrian",
+    lastName: "Martinez",
+    country: "Mexico",
+    address: "Pinos 507, Col El Tecuan",
+    city: "Durango",
+    state: "Durango",
+    postCode: "34105",
+    email: "adrian@email.com",
+    phone: "8161234567",
+  },
+  currency: 'mxn',
+  cart: {
+    total: 399,
+    items: [
+      {
+        description: "Black T-Shirt",
+        quantity: 1,
+        price_unit: 1,
+        discount: 0,
+        taxes: 0,
+        product_reference: 1,
+        name: "T-Shirt",
+        amount_total: 399,
+      },
+    ]
+  }
+};
+
 const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
 const returnUrl = "http://localhost:8080/"
+const successUrl = "http://localhost:8080/sucess"
 const inlineCheckout = new InlineCheckout({
-  apiKey: apiKey,
-  customer: customer,
-  items: items,
-  returnUrl: returnUrl,
-  cartTotal: 399,
+  apiKey,
+  returnUrl,
+  successUrl,
   styles: customStyles
 });
 
 inlineCheckout.injectCheckout();
+
+document.addEventListener('DOMContentLoaded', function() {
+  const payButton = document.getElementById('pay-button');
+  payButton.addEventListener('click', async function() {
+    try {
+      const response = await inlineCheckout.payment(checkoutData);
+      console.log(response)
+      alert('Pago realizado con éxito');
+    } catch (error) {
+      alert('Error al realizar el pago')
+    }
+  });
+});
