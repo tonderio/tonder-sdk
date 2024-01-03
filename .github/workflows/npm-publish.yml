@@ -4,34 +4,18 @@ on:
     branches:
       - master # Change this to your default branch
 jobs:
-  # npm-publish:
-  #   name: Publish to npm
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Checkout repository
-  #     uses: actions/checkout@v2
-  #   - name: Publish if version has been updated
-  #     uses: pascalgn/npm-publish-action@1.3.9
-  #     with: # All of theses inputs are optional
-  #       tag_name: "v%s"
-  #       tag_message: "v%s"
-  #       create_tag: "true"
-  #       commit_pattern: "^Release (\\S+)"
-  #       workspace: "."
-  #       publish_command: "npm"
-  #       publish_args: "--non-interactive"
-  #     env: # More info about the environment variables in the README
-  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Leave this as is, it's automatically generated
-  #       NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }} # You need to set this in your repo settings
-
-    - name: Upload to Amazon S3
-      use: Noelware/s3-action@2 # this can be `master` or a tagged release
-      with:
-          directories: |
-              ./v1,
-          access-key-id: ${{ secrets.S3_ACCESS_KEY_ID }}
-          # path-format: '/$(tag)'
-          secret-key: ${{ secrets.S3_SECRET_KEY }}
-          prefix: /v1
-          # region: us-east-1
-          bucket: ${{ secrets.S3_BUCKET_NAME }}
+  npm-publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload to Amazon S3
+        uses: Noelware/s3-action@master # this can be `master` or a tagged release
+        with:
+            directories: |
+                ./v1,
+            access-key-id: ${{ secrets.S3_ACCESS_KEY_ID }}
+            # path-format: '/$(tag)'
+            secret-key: ${{ secrets.S3_SECRET_KEY }}
+            prefix: /v1
+            # region: us-east-1
+            bucket: ${{ secrets.S3_BUCKET_NAME }}
