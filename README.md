@@ -26,111 +26,128 @@ HTML
     </div>
 </div>
 ```
-Javascript
+## Javascript Example
+```javascript
+import { InlineCheckout } from "tonder-sdk-test" // Not required if using script tag
+```
+
 
 ```javascript
-import { Checkout } from 'tonder-sdk-test';
+const customStyles = {
+  inputStyles: {
+    base: {
+      border: "1px solid #e0e0e0",
+      padding: "10px 7px",
+      borderRadius: "5px",
+      color: "#1d1d1d",
+      marginTop: "2px",
+      backgroundColor: "white",
+      fontFamily: '"Inter", sans-serif',
+      fontSize: '16px',
+      '&::placeholder': {
+        color: "#ccc",
+      },
+    },
+    cardIcon: {
+      position: 'absolute',
+      left: '6px',
+      bottom: 'calc(50% - 12px)',
+    },
+    complete: {
+      color: "#4caf50",
+    },
+    empty: {},
+    focus: {},
+    invalid: {
+      border: "1px solid #f44336",
+    },
+    global: {
+      '@import': 'url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap")',
+    }
+  },
+  labelStyles: {
+    base: {
+      fontSize: '12px',
+      fontWeight: '500',
+      fontFamily: '"Inter", sans-serif'
+    },
+  },
+  errorTextStyles: {
+    base: {
+      fontSize: '12px',
+      fontWeight: '500',
+      color: "#f44336",
+      fontFamily: '"Inter", sans-serif'
+    },
+  },
+  labels: {
+    cardLabel: 'Número de Tarjeta Personalizado',
+    cvvLabel: 'Código de Seguridad',
+    expiryMonthLabel: 'Mes de Expiración',
+    expiryYearLabel: 'Año de Expiración'
+  },
+  placeholders: {
+    cardPlaceholder: '0000 0000 0000 0000',
+    cvvPlaceholder: '123',
+    expiryMonthPlaceholder: 'MM',
+    expiryYearPlaceholder: 'AA'
+  }
+}
 
-// Initialize the checkout
-const config = {
-    apiKey: "Your Tonder API Key",
-    type: "payment",
-};
-const tonderCheckout = new TonderCheckout(config);
-
-// Update the payment value 
-const paymentOptions = {
-    email: "customer@email.com"
-    products: [
-        {
-            name:"Product 1",
-            price_unit: "399.99",
-            image:"https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-            quantity: "1",
-            description: "Test",
-            
-        },
-        {
-            name:"Product 2",
-            price_unit:"599.99",
-        },
+const checkoutData = {
+  customer: {
+    firstName: "Juan",
+    lastName: "Hernández",
+    country: "Mexico",
+    address: "Av. Revolución 356, Col. Roma",
+    city: "Monterrey",
+    state: "Nuevo León",
+    postCode: "64700",
+    email: "juan.hernandez@mail.com",
+    phone: "8187654321",
+  },
+  currency: 'mxn',
+  cart: {
+    total: 399,
+    items: [
+      {
+        description: "Black T-Shirt",
+        quantity: 1,
+        price_unit: 1,
+        discount: 0,
+        taxes: 0,
+        product_reference: 1,
+        name: "T-Shirt",
+        amount_total: 399,
+      },
     ]
-    shippingCost:"150",
-}
-tonderCheckout.setPayment(paymentOptions)
+  }
+};
 
-// Mount the button in the entry point
-const buttonOptions = {
-    buttonText: 'Proceed to payment'
-}
+const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
+const returnUrl = "http://my-website:8080/checkout"
+const successUrl = "http://my-website:8080/sucess"
+const inlineCheckout = new InlineCheckout({
+  apiKey,
+  returnUrl,
+  successUrl,
+  styles: customStyles
+});
 
-tonderCheckout.mountButton(buttonOptions)
+inlineCheckout.injectCheckout();
+
+const response = await inlineCheckout.payment(checkoutData);
 ```
 
 ## React Example
 ```javascript
-import React, { useState, useLayoutEffect, useContext, useEffect } from 'react'
-import { Checkout as TonderCheckout } from 'tonder-sdk-test'
-
-import { CartContext } from '../context/CartContext'
-
-
-export const Checkout = () => {
-    const cart = useContext(CartContext)
-
-    const [checkoutResponse, setCheckoutResponse] = useState({})
-    const receiveResponse = (data) => {
-        setCheckoutResponse(data)
-    }
-    const config = {
-        apiKey: "Your Tonder API Key",
-        type: "payment",
-        cb: receiveResponse,
-    }
-    const tonderCheckout = new TonderCheckout(config)
-    const params = {
-        shippingCost: cart.shippingCost,
-        email: "customer@mail.com"
-    }
-    tonderCheckout.setOrder(params)
-
-    useEffect(()=>{
-        function setOrder() {
-            const _tonderCart = cart.items.map(product => {
-                return {
-                    name: product.title,
-                    price_unit: product.price,
-                    quantity: product.quantity
-                }
-            })
-            tonderCheckout.setOrder({products: _tonderCart})
-        }
-        setOrder()
-    }, [cart.items])
-
-    useLayoutEffect(() => {
-        tonderCheckout.mountButton({ buttonText: 'Proceder al pago' })
-    })
-
-    return (
-        <div>
-            <h1>Checkout</h1>
-            <div id="tonder-checkout">
-            </div>
-            <p>{checkoutResponse?.data?.status}</p>
-        </div>
-    )
-}
 ```
 
 ## Configuration
 | Property        | Type          | Description                                         |
 |:---------------:|:-------------:|:---------------------------------------------------:|
 | apiKey          | string        | You can take this from you Tonder Dashboard         |
-| type            | string        | values: 'payment', 'lite', 'full'                   |
 | backgroundColor | string        | Hex color #000000                                   |
-| color           | string        | Hex color #000000                                   |
-| cb              | function      | Function executed when checkout send a response     |
 
 ## setPayment params
 ### products
@@ -160,7 +177,7 @@ You can import InlineCheckout from the instalation, or use a Script tag to impor
 
 ## Configuration
 
-You only need to initialize the object (or add it in the index.html file of a javascript framework) as the following example
+You only need to initialize the object as the following example
 
 ```javascript
     const customer = {
@@ -188,25 +205,17 @@ You only need to initialize the object (or add it in the index.html file of a ja
       },
     ];
 
-    const form = document.querySelector("#payment-form"); // the node form of the checkout process.
     const apiKey = "f4ab1f9140ce5b17a1bbd0b62b7f949cdd18967b"; //Your tonder API KEY
     const inlineCheckout = new InlineCheckout({
-    form: form,
-    apiKey: apiKey,
-    totalElementId: "cart-total", //the ID of the total element where the total is showing.
-    customer: ,
-    items:
+        apiKey: apiKey,
+        customer: ,
+        items:
     });
     inlineCheckout.injectCheckout();
 ```
-### form
-The form where the checkout is showing, at the end of a successful payment, the sdk will trigger the submit of the form.
 
 ### apiKey
 Your api key getted from Tonder Dashboard
-
-### totalEmenetId
-The ID of the element where the total is showing, the SDK will extract the total.
 
 ### customer (optional)
 The data of the customer to be registered in the transaction
