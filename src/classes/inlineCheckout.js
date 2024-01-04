@@ -18,7 +18,7 @@ export class InlineCheckout {
   static injected = false;
   customer = {}
   items = []
-  baseUrl = process.env.BASE_URL
+  baseUrl = process.env.BASE_URL || "http://localhost:8000";
   collectContainer = null
   merchantData = {}
   cartTotal = null
