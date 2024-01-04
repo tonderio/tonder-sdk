@@ -9,6 +9,11 @@ You can install using NPM
 npm i tonder-sdk-test
 ```
 
+or using an script tag
+```html
+<script src="https://zplit-stage.s3.amazonaws.com/v1/bundle.min.js"></script>
+```
+
 Add dependencies to the root of the app (index.html)
 ```html
 <script src="https://js.skyflow.com/v1/index.js"></script>
@@ -127,6 +132,8 @@ const checkoutData = {
 const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
 const returnUrl = "http://my-website:8080/checkout"
 const successUrl = "http://my-website:8080/sucess"
+// if using script tag, it should be initialized like this
+// new TonderSdk.InlineCheckout
 const inlineCheckout = new InlineCheckout({
   apiKey,
   returnUrl,
@@ -148,6 +155,9 @@ const response = await inlineCheckout.payment(checkoutData);
 |:---------------:|:-------------:|:---------------------------------------------------:|
 | apiKey          | string        | You can take this from you Tonder Dashboard         |
 | backgroundColor | string        | Hex color #000000                                   |
+| returnUrl       | string        |                                                     |
+| successUrl      | string        |                                                     |
+| backgroundColor | string        |                                                     |
 
 ## setPayment params
 ### products
@@ -166,58 +176,11 @@ It is a valid float string, that will be the shipping cost.
 
 ### email
 The email of the customer that is making the purchase.
-# Tonder inline SDK
-
-## Instalation
-
-You can import InlineCheckout from the instalation, or use a Script tag to import with the following URL
-```html
-<script src="https://cdn.jsdelivr.net/gh/fuentesc91/react-example-use-tonder-sdk/public/inlinesdk.js" ></script>
-```
-
-## Configuration
-
-You only need to initialize the object as the following example
-
-```javascript
-    const customer = {
-        firstName: "name";
-        lastName: "of customer";
-        country: "Mexico";
-        address: "street address";
-        city: "city";
-        state: "state";
-        postCode: "00000";
-        email: "customer@mail.com";
-        phone: "9999999999";
-    }
-
-    const items = [
-      {
-        description: "Example",
-        quantity: 1,
-        price_unit: 1,
-        discount: 0,
-        taxes: 0,
-        product_reference: 1,
-        name: "Producto",
-        amount_total: 1,
-      },
-    ];
-
-    const apiKey = "f4ab1f9140ce5b17a1bbd0b62b7f949cdd18967b"; //Your tonder API KEY
-    const inlineCheckout = new InlineCheckout({
-        apiKey: apiKey,
-        customer: ,
-        items:
-    });
-    inlineCheckout.injectCheckout();
-```
 
 ### apiKey
 Your api key getted from Tonder Dashboard
 
-### customer (optional)
+### customer
 The data of the customer to be registered in the transaction
 
 ### items
