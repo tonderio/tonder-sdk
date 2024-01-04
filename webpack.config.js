@@ -1,11 +1,16 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
 
-  const plugins = [];
+  const plugins = [
+    new webpack.DefinePlugin({
+      'process.env.BASE_URL': JSON.stringify(process.env.BASE_URL),
+    })
+  ];
   if (!isProduction) {
     plugins.push(new HtmlWebpackPlugin({
       template: 'src/index.html'
