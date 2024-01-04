@@ -62,6 +62,8 @@ export async function initSkyflow(
     validations: [lengthMatchRule],
   });
 
+  cardHolderNameElement.setError('Inválido')
+
   // Create collect elements.
   const cardNumberElement = await collectContainer.create({
     table: "cards",
@@ -76,6 +78,8 @@ export async function initSkyflow(
     type: Skyflow.ElementType.CARD_NUMBER,
   });
 
+  cardNumberElement.setError('Inválido')
+
   const cvvElement = await collectContainer.create({
     table: "cards",
     column: "cvv",
@@ -84,6 +88,8 @@ export async function initSkyflow(
     placeholder: "3-4 dígitos",
     type: Skyflow.ElementType.CVV,
   });
+
+  cvvElement.setError('Inválido')
 
   const expiryMonthElement = await collectContainer.create({
     table: "cards",
@@ -94,6 +100,8 @@ export async function initSkyflow(
     type: Skyflow.ElementType.EXPIRATION_MONTH,
   });
 
+  expiryMonthElement.setError('Inválido')
+
   const expiryYearElement = await collectContainer.create({
     table: "cards",
     column: "expiration_year",
@@ -102,6 +110,8 @@ export async function initSkyflow(
     placeholder: "AA",
     type: Skyflow.ElementType.EXPIRATION_YEAR,
   });
+
+  expiryYearElement.setError('Inválido')
 
   await mountElements(
     cardNumberElement,

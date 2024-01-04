@@ -18,6 +18,9 @@ module.exports = (env, argv) => {
     output: {
       path: path.resolve(__dirname, 'v1'),
       filename: isProduction ? 'bundle.min.js' : 'bundle.js',
+      library: 'TonderSdk',
+      libraryTarget: 'umd',
+      globalObject: 'this',
     },
     devtool: isProduction ? false : 'inline-source-map',
     devServer: {
