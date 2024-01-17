@@ -46,15 +46,16 @@ export const defaultStyles = {
     },
   },
   labels: {
-    cardLabel: '',
-    cvvLabel: '',
-    expiryMonthLabel: '',
-    expiryYearLabel: ''
+    nameLabel: 'Titular de la tarjeta',
+    cardLabel: 'Número de tarjeta',
+    cvvLabel: 'CVC/CVV',
+    expiryDateLabel: 'Fecha de expiración',
   },
   placeholders: {
-    cardPlaceholder: '',
-    cvvPlaceholder: '',
-    expiryMonthPlaceholder: '',
-    expiryYearPlaceholder: ''
+    namePlaceholder: 'Nombre como aparece en la tarjeta',
+    cardPlaceholder: '1234 1234 1234 1234',
+    cvvPlaceholder: '3-4 dígitos',
+    expiryMonthPlaceholder: 'MM',
+    expiryYearPlaceholder: 'AA'
   }
 }
