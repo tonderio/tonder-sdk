@@ -86,14 +86,15 @@ const customStyles = {
     },
   },
   labels: {
-    cardLabel: 'Número de Tarjeta Personalizado',
-    cvvLabel: 'Código de Seguridad',
-    expiryMonthLabel: 'Mes de Expiración',
-    expiryYearLabel: 'Año de Expiración'
+    nameLabel: 'Titular de la tarjeta',
+    cardLabel: 'Número de tarjeta',
+    cvvLabel: 'CVC/CVV',
+    expiryDateLabel: 'Fecha de expiración',
   },
   placeholders: {
-    cardPlaceholder: '0000 0000 0000 0000',
-    cvvPlaceholder: '123',
+    namePlaceholder: 'Nombre como aparece en la tarjeta',
+    cardPlaceholder: '1234 1234 1234 1234',
+    cvvPlaceholder: '3-4 dígitos',
     expiryMonthPlaceholder: 'MM',
     expiryYearPlaceholder: 'AA'
   }

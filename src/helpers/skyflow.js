@@ -56,8 +56,8 @@ export async function initSkyflow(
     table: "cards",
     column: "cardholder_name",
     ...collectStylesOptions,
-    label: "Titular de la tarjeta",
-    placeholder: "Nombre como aparece en la tarjeta",
+    label: collectStylesOptions.labels?.nameLabel,
+    placeholder: collectStylesOptions.placeholders?.namePlaceholder,
     type: Skyflow.ElementType.CARDHOLDER_NAME,
     validations: [lengthMatchRule],
   });
@@ -73,8 +73,8 @@ export async function initSkyflow(
       ...collectStylesOptions.inputStyles,
       base: stylesForCardNumber
     },
-    label: "Número de tarjeta",
-    placeholder: "1234 1234 1234 1234",
+    label: collectStylesOptions.labels?.cardLabel,
+    placeholder: collectStylesOptions.placeholders?.cardPlaceholder,
     type: Skyflow.ElementType.CARD_NUMBER,
   });
 
@@ -84,8 +84,8 @@ export async function initSkyflow(
     table: "cards",
     column: "cvv",
     ...collectStylesOptions,
-    label: "CVC/CVV",
-    placeholder: "3-4 dígitos",
+    label: collectStylesOptions.labels?.cvvLabel,
+    placeholder: collectStylesOptions.placeholders?.cvvPlaceholder,
     type: Skyflow.ElementType.CVV,
   });
 
@@ -95,8 +95,8 @@ export async function initSkyflow(
     table: "cards",
     column: "expiration_month",
     ...collectStylesOptions,
-    label: "Fecha de expiración",
-    placeholder: "MM",
+    label: collectStylesOptions.labels?.expiryDateLabel,
+    placeholder: collectStylesOptions.placeholders?.expiryMonthPlaceholder,
     type: Skyflow.ElementType.EXPIRATION_MONTH,
   });
 
@@ -107,7 +107,7 @@ export async function initSkyflow(
     column: "expiration_year",
     ...collectStylesOptions,
     label: "",
-    placeholder: "AA",
+    placeholder: collectStylesOptions.placeholders?.expiryYearPlaceholder,
     type: Skyflow.ElementType.EXPIRATION_YEAR,
   });
 
