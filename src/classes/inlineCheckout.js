@@ -253,8 +253,8 @@ export class InlineCheckout {
       // Checkout router
       const routerItems = {
         card: cardTokensSkyflowTonder,
-        name: cardTokensSkyflowTonder.cardholder_name,
-        last_name: "",
+        name: this.firstName || "",
+        last_name: this.lastName || "",
         email_client: this.email,
         phone_number: this.phone,
         return_url: this.returnUrl,
