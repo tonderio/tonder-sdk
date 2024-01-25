@@ -127,6 +127,9 @@ const checkoutData = {
         amount_total: 399,
       },
     ]
+  },
+  metadata: {
+    order_id: 123456
   }
 };
 
