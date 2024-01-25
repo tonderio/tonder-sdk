@@ -8,7 +8,8 @@ import {
   getOpenpayDeviceSessionID
 } from '../data/api';
 import {
-  showError
+  showError,
+  getBrowserInfo,
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
 import { ThreeDSHandler } from './3dsHandler.js';
@@ -277,7 +278,8 @@ export class InlineCheckout {
         business_id: business.pk,
         payment_id: jsonResponsePayment.pk,
         source: 'sdk',
-        metadata: this.metadata
+        metadata: this.metadata,
+        browser_info: getBrowserInfo(),
       };
       const jsonResponseRouter = await startCheckoutRouter(
         this.baseUrl,
