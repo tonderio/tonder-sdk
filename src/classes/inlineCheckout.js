@@ -22,6 +22,7 @@ export class InlineCheckout {
   collectContainer = null
   merchantData = {}
   cartTotal = null
+  metadata = {}
 
   constructor  ({
     apiKey,
@@ -80,6 +81,7 @@ export class InlineCheckout {
         this.#handleCustomer(data.customer)
         this.setCartTotal(data.cart?.total)
         this.setCartItems(data.cart?.items)
+        this.#handleMetadata(data)
         const response = await this.#checkout()
         if (response) {
           const process3ds = new ThreeDSHandler({ payload: response });
@@ -109,6 +111,10 @@ export class InlineCheckout {
     this.postCode = customer?.postCode
     this.email = customer?.email
     this.phone = customer?.phone
+  }
+
+  #handleMetadata(data) {
+    this.metadata = data?.metadata
   }
 
   setCartItems (items) {
@@ -271,6 +277,7 @@ export class InlineCheckout {
         business_id: business.pk,
         payment_id: jsonResponsePayment.pk,
         source: 'sdk',
+        metadata: this.metadata
       };
       const jsonResponseRouter = await startCheckoutRouter(
         this.baseUrl,
