@@ -15,6 +15,13 @@ export class ThreeDSHandler {
     const url = this.payload?.next_action?.redirect_to_url?.verify_transaction_status_url
     if (url) {
       localStorage.setItem("verify_transaction_status_url", url)
+    } else {
+      const url = this.payload?.next_action?.iframe_resources?.verify_transaction_status_url
+      if (url) {
+        localStorage.setItem("verify_transaction_status_url", url)
+      } else {
+        console.log('No verify_transaction_status_url found');
+      }
     }
   }
 
@@ -138,14 +145,12 @@ export class ThreeDSHandler {
           // body: JSON.stringify(data),
         });
 
-        if (response.status === 200) {
-          this.removeVerifyTransactionUrl();
-          window.location = this.successUrl
-          console.log('La transacción se verificó con éxito.');
-          return response;
-        } else {
+        if (response.status !== 200) {
           console.error('La verificación de la transacción falló.');
+          return
         }
+
+        return await this.handleTransactionResponse(response);
       } catch (error) {
         console.error('Error al verificar la transacción:', error);
         return error;
