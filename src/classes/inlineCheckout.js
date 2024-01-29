@@ -8,7 +8,8 @@ import {
   getOpenpayDeviceSessionID
 } from '../data/api';
 import {
-  showError
+  showError,
+  getBrowserInfo,
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
 import { ThreeDSHandler } from './3dsHandler.js';
@@ -84,12 +85,21 @@ export class InlineCheckout {
         this.#handleMetadata(data)
         const response = await this.#checkout()
         if (response) {
-          const process3ds = new ThreeDSHandler({ payload: response });
+          const process3ds = new ThreeDSHandler({ 
+            baseUrl: this.baseUrl,
+            apiKey: this.apiKeyTonder,
+            payload: response,
+          });
           this.callBack(response);
-          if (!process3ds.redirectTo3DS()) {
-            resolve(response);
+
+          if (process3ds.loadIframe()) {
+            await process3ds.verifyTransactionStatus();
           } else {
-            resolve(response);
+            if (!process3ds.redirectTo3DS()) {
+              resolve(response);
+            } else {
+              resolve(response);
+            }
           }
         }
       } catch (error) {
@@ -277,7 +287,8 @@ export class InlineCheckout {
         business_id: business.pk,
         payment_id: jsonResponsePayment.pk,
         source: 'sdk',
-        metadata: this.metadata
+        metadata: this.metadata,
+        browser_info: getBrowserInfo(),
       };
       const jsonResponseRouter = await startCheckoutRouter(
         this.baseUrl,
