@@ -83,6 +83,7 @@ export class InlineCheckout {
         this.setCartTotal(data.cart?.total)
         this.setCartItems(data.cart?.items)
         this.#handleMetadata(data)
+        this.#handleCurrency(data)
         const response = await this.#checkout()
         if (response) {
           const process3ds = new ThreeDSHandler({ 
@@ -125,6 +126,10 @@ export class InlineCheckout {
 
   #handleMetadata(data) {
     this.metadata = data?.metadata
+  }
+
+  #handleCurrency(data) {
+    this.currency = data?.currency
   }
 
   setCartItems (items) {
@@ -289,6 +294,7 @@ export class InlineCheckout {
         source: 'sdk',
         metadata: this.metadata,
         browser_info: getBrowserInfo(),
+        currency: this.currency,
       };
       const jsonResponseRouter = await startCheckoutRouter(
         this.baseUrl,
