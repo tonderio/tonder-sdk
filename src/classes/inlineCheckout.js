@@ -25,12 +25,12 @@ export class InlineCheckout {
   cartTotal = null
   metadata = {}
 
-  constructor  ({
+  constructor({
     apiKey,
     returnUrl,
     successUrl,
     renderPaymentButton = false,
-    callBack = () => {},
+    callBack = () => { },
     styles,
   }) {
     this.apiKeyTonder = apiKey;
@@ -86,15 +86,27 @@ export class InlineCheckout {
         this.#handleCurrency(data)
         const response = await this.#checkout()
         if (response) {
-          const process3ds = new ThreeDSHandler({ 
+          const process3ds = new ThreeDSHandler({
             baseUrl: this.baseUrl,
             apiKey: this.apiKeyTonder,
             payload: response,
           });
           this.callBack(response);
 
-          if (process3ds.loadIframe()) {
-            await process3ds.verifyTransactionStatus();
+          const iframe = response?.next_action?.iframe_resources?.iframe
+
+          if (iframe) {
+            process3ds.loadIframe().then(() => {
+              //TODO: Check if this will be necessary on the frontend side
+              // after some the tests in production, since the 3DS process
+              // doesn't works properly on the sandbox environment
+              // setTimeout(() => {
+              //   process3ds.verifyTransactionStatus();
+              // }, 10000);
+              process3ds.verifyTransactionStatus();
+            }).catch((error) => {
+              console.log('Error loading iframe:', error)
+            })
           } else {
             if (!process3ds.redirectTo3DS()) {
               resolve(response);
@@ -132,12 +144,12 @@ export class InlineCheckout {
     this.currency = data?.currency
   }
 
-  setCartItems (items) {
+  setCartItems(items) {
     console.log('items: ', items)
     this.cartItems = items
   }
 
-  setCartTotal (total) {
+  setCartTotal(total) {
     console.log('total: ', total)
     this.cartTotal = total
     this.#updatePayButton()
@@ -149,7 +161,7 @@ export class InlineCheckout {
     payButton.textContent = `Pagar $${this.cartTotal}`;
   }
 
-  setCallback (cb) {
+  setCallback(cb) {
     this.cb = cb
   }
 
@@ -200,7 +212,7 @@ export class InlineCheckout {
   removeCheckout() {
     InlineCheckout.injected = false
     // Cancel all requests
-    this.abortController.abort(); 
+    this.abortController.abort();
     this.abortController = new AbortController();
 
     clearInterval(this.injectInterval);
@@ -305,7 +317,7 @@ export class InlineCheckout {
       if (jsonResponseRouter) {
         try {
           document.querySelector("#tonderPayButton").disabled = false;
-        } catch {}
+        } catch { }
         return jsonResponseRouter;
       } else {
         showError("No se ha podido procesar el pago")
