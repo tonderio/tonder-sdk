@@ -37,16 +37,29 @@ export class ThreeDSHandler {
     const iframe = this.payload?.next_action?.iframe_resources?.iframe
 
     if (iframe) {
-      this.saveVerifyTransactionUrl()
-      const container = document.createElement('div')
-      container.innerHTML = iframe
-      document.body.appendChild(container)
-      return true
-    } else {
-      console.log('No redirection found');
-      return false
-    }
+      return new Promise((resolve, reject) => {
+        const iframe = this.payload?.next_action?.iframe_resources?.iframe
 
+        if (iframe) {
+          this.saveVerifyTransactionUrl()
+          const container = document.createElement('div')
+          container.innerHTML = iframe
+          document.body.appendChild(container)
+
+          // Create and append the script tag manually
+          const script = document.createElement('script')
+          script.textContent = 'document.getElementById("tdsMmethodForm").submit();'
+          container.appendChild(script)
+
+          // Resolve the promise when the iframe is loaded
+          const iframeElement = document.getElementById('tdsMmethodTgtFrame')
+          iframeElement.onload = () => resolve(true)
+        } else {
+          console.log('No redirection found');
+          reject(false)
+        }
+      })
+    }
   }
 
   redirectTo3DS() {
