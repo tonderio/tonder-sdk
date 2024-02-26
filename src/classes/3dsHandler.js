@@ -62,16 +62,13 @@ export class ThreeDSHandler {
     }
   }
 
-  redirectTo3DS() {
+  redirectToChallenge() {
     const url = this.payload?.next_action?.redirect_to_url?.url
     if (url) {
       this.saveVerifyTransactionUrl()
       window.location = url;
-      // window.open(url, '_blank');
-      return true
     } else {
       console.log('No redirection found');
-      return false
     }
   }
 
