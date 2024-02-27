@@ -108,8 +108,9 @@ export class InlineCheckout {
               console.log('Error loading iframe:', error)
             })
           } else {
-            if (!process3ds.redirectTo3DS()) {
-              resolve(response);
+            const redirectUrl = process3ds.getRedirectUrl()
+            if (redirectUrl) {
+              process3ds.redirectToChallenge()
             } else {
               resolve(response);
             }
