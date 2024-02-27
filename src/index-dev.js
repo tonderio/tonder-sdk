@@ -98,7 +98,7 @@ const checkoutData = {
 // localhost
 const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
 const returnUrl = "http://127.0.0.1:8080/"
-const successUrl = "http://127.0.0.1:8080/sucess"
+const successUrl = "http://127.0.0.1:8080/success"
 // stage
 // const apiKey = "8365683bdc33dd6d50fe2397188d79f1a6765852";
 
