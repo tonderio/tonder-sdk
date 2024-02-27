@@ -135,7 +135,7 @@ const checkoutData = {
 
 const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
 const returnUrl = "http://my-website:8080/checkout"
-const successUrl = "http://my-website:8080/sucess"
+const successUrl = "http://my-website:8080/success"
 // if using script tag, it should be initialized like this
 // new TonderSdk.InlineCheckout
 const inlineCheckout = new InlineCheckout({

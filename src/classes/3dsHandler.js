@@ -14,23 +14,50 @@ export class ThreeDSHandler {
   saveVerifyTransactionUrl() {
     const url = this.payload?.next_action?.redirect_to_url?.verify_transaction_status_url
     if (url) {
-      localStorage.setItem("verify_transaction_status_url", url)
+      this.saveUrlWithExpiration(url)
     } else {
       const url = this.payload?.next_action?.iframe_resources?.verify_transaction_status_url
       if (url) {
-        localStorage.setItem("verify_transaction_status_url", url)
+        this.saveUrlWithExpiration(url)
       } else {
         console.log('No verify_transaction_status_url found');
       }
     }
   }
 
+  saveUrlWithExpiration(url) {
+    try {
+      const now = new Date()
+      const item = {
+        url: url,
+        // Expires after 20 minutes
+        expires: now.getTime() + 20 * 60 * 1000
+      }
+      localStorage.setItem('verify_transaction_status', JSON.stringify(item))
+    } catch (error) {
+     console.log('error: ', error)
+    }
+  }
+
+  getUrlWithExpiration() {
+    const item = JSON.parse(localStorage.getItem("verify_transaction_status"))
+    if (!item) return
+
+    const now = new Date()
+    if (now.getTime() > item.expires) {
+      this.removeVerifyTransactionUrl()
+      return null
+    } else {
+      return item.url
+    }
+  }
+
   removeVerifyTransactionUrl() {
-    localStorage.removeItem("verify_transaction_status_url")
+    localStorage.removeItem("verify_transaction_status")
   }
 
   getVerifyTransactionUrl() {
-    return localStorage.getItem("verify_transaction_status_url") 
+    return localStorage.getItem("verify_transaction_status") 
   }
 
   loadIframe() {
@@ -62,8 +89,12 @@ export class ThreeDSHandler {
     }
   }
 
+  getRedirectUrl() {
+    return this.payload?.next_action?.redirect_to_url?.url
+  }
+
   redirectToChallenge() {
-    const url = this.payload?.next_action?.redirect_to_url?.url
+    const url = this.getRedirectUrl()
     if (url) {
       this.saveVerifyTransactionUrl()
       window.location = url;
@@ -141,7 +172,7 @@ export class ThreeDSHandler {
   }
 
   async verifyTransactionStatus() {
-    const verifyUrl = this.getVerifyTransactionUrl();
+    const verifyUrl = this.getUrlWithExpiration();
 
     if (verifyUrl) {
       const url = `${this.baseUrl}${verifyUrl}`;
