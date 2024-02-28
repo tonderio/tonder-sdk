@@ -1,5 +1,6 @@
 export const cardTemplate = `
 <div class="container-tonder">
+  <div id="collectCvvUpsert" class="empty-div"></div>
   <div id="collectCardholderName" class="empty-div"></div>
   <div id="collectCardNumber" class="empty-div"></div>
   <div class="collect-row">
@@ -9,6 +10,7 @@ export const cardTemplate = `
   </div>
   <div id="msgError"></div>
   <button id="tonderPayButton" class="pay-button">Pagar</button>
+  <button id="tonderCollectCvvButton" class="pay-button">Pagar</button>
 </div>
 
 <style>

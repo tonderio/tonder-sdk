@@ -125,4 +125,16 @@ document.addEventListener('DOMContentLoaded', function() {
       payButton.textContent = 'Pagar';
     }
   });
+
+  const collectCvvButton = document.getElementById('collect-cvv-button');
+  collectCvvButton.addEventListener('click', async function() {
+    try {
+      collectCvvButton.textContent = 'Actualizando cvv...'
+      const response = await inlineCheckout.collectCvv()
+      console.log('collectCvv response', response)
+    } catch (error) {
+    } finally {
+      collectCvvButton.textContent = 'Collect cvv'
+    }
+  });
 });

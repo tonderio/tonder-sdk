@@ -12,6 +12,7 @@ import {
   getBrowserInfo,
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
+import { initUpsertSkyflow } from '../helpers/skyflowUpsert'
 import { ThreeDSHandler } from './3dsHandler.js';
 
 
@@ -208,6 +209,15 @@ export class InlineCheckout {
       this.abortController.signal,
       this.customStyles,
     );
+
+    this.cvvCollectContainer = await initUpsertSkyflow(
+      vault_id,
+      vault_url,
+      this.baseUrl,
+      this.apiKeyTonder,
+      this.abortController.signal,
+      this.customStyles,
+    );
   }
 
   removeCheckout() {
@@ -218,6 +228,25 @@ export class InlineCheckout {
 
     clearInterval(this.injectInterval);
     console.log("InlineCheckout removed from DOM and cleaned up.");
+  }
+
+  async collectCvv() {
+    try {
+      const collectResponseSkyflowTonder = await this.cvvCollectContainer.collect({
+        tokens: true,
+        upsert: [
+          {
+            table: 'cards', 
+            column: 'card_number', 
+          }
+        ]
+      });
+
+      return collectResponseSkyflowTonder;
+    } catch (error) {
+      console.error("Error collecting cvv:", error);
+      throw error;
+    }
   }
 
   async #checkout() {
