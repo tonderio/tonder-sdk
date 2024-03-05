@@ -21,9 +21,14 @@ export async function getBusiness(baseUrlTonder, apiKeyTonder, signal) {
   return response
 }
 
-export async function customerRegister(baseUrlTonder, apiKeyTonder, email, signal) {
+export async function customerRegister(baseUrlTonder, apiKeyTonder, customer, signal) {
   const url = `${baseUrlTonder}/api/v1/customer/`;
-  const data = { email: email };
+  const data = { 
+    email: customer.email,
+    first_name: customer?.firstName,
+    last_name: customer?.lastName,
+    phone: customer?.phone,
+  }
   const response = await fetch(url, {
     method: "POST",
     headers: {
