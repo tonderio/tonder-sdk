@@ -135,6 +135,7 @@ export class InlineCheckout {
     this.postCode = customer?.postCode
     this.email = customer?.email
     this.phone = customer?.phone
+    this.customer = customer
   }
 
   #handleMetadata(data) {
@@ -188,8 +189,8 @@ export class InlineCheckout {
     return this.merchantData
   }
 
-  async getCustomer(email, signal) {
-    return await customerRegister(this.baseUrl, this.apiKeyTonder, email, signal);
+  async getCustomer(customer, signal) {
+    return await customerRegister(this.baseUrl, this.apiKeyTonder, customer, signal);
   }
 
   async #mountTonder() {
@@ -248,7 +249,10 @@ export class InlineCheckout {
         );
       }
 
-      const { auth_token } = await this.getCustomer(this.email, this.abortController.signal);
+      const { id, auth_token } = await this.getCustomer(
+        this.customer, 
+        this.abortController.signal
+      )
 
       var orderItems = {
         business: this.apiKeyTonder,
@@ -274,6 +278,7 @@ export class InlineCheckout {
 
       var paymentItems = {
         business_pk: business.pk,
+        client: id,
         amount: total,
         date: dateString,
         order: jsonResponseOrder.id,
