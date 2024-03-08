@@ -130,6 +130,9 @@ const checkoutData = {
   },
   metadata: {
     order_id: 123456
+  },
+  card: {
+    skyflow_id: "12340120349123049",
   }
 };
 

@@ -24,6 +24,7 @@ export class InlineCheckout {
   merchantData = {}
   cartTotal = null
   metadata = {}
+  card = {}
 
   constructor({
     apiKey,
@@ -84,6 +85,7 @@ export class InlineCheckout {
         this.setCartItems(data.cart?.items)
         this.#handleMetadata(data)
         this.#handleCurrency(data)
+        this.#handleCard(data)
         const response = await this.#checkout()
         if (response) {
           const process3ds = new ThreeDSHandler({
@@ -144,6 +146,10 @@ export class InlineCheckout {
 
   #handleCurrency(data) {
     this.currency = data?.currency
+  }
+
+  #handleCard(data) {
+    this.card = data?.card
   }
 
   setCartItems(items) {
@@ -221,6 +227,18 @@ export class InlineCheckout {
     console.log("InlineCheckout removed from DOM and cleaned up.");
   }
 
+  async #getCardTokens() {
+    if (this.card?.skyflow_id) return this.card
+    try {
+      const collectResponse = await this.collectContainer.collect();
+      const cardTokens = await collectResponse["records"][0]["fields"];
+      return cardTokens;
+    } catch (error) {
+      showError("Por favor, verifica todos los campos de tu tarjeta")
+      throw error;
+    }
+  }
+
   async #checkout() {
     try {
       document.querySelector("#tonderPayButton").disabled = true;
@@ -230,14 +248,7 @@ export class InlineCheckout {
     const { openpay_keys, reference, business } = this.merchantData
     const total = Number(this.cartTotal)
 
-    var cardTokensSkyflowTonder = null;
-    try {
-      const collectResponseSkyflowTonder = await this.collectContainer.collect();
-      cardTokensSkyflowTonder = await collectResponseSkyflowTonder["records"][0]["fields"];
-    } catch (error) {
-      showError("Por favor, verifica todos los campos de tu tarjeta")
-      throw error;
-    }
+    const cardTokens = await this.#getCardTokens();
 
     try {
       let deviceSessionIdTonder;
@@ -291,7 +302,7 @@ export class InlineCheckout {
 
       // Checkout router
       const routerItems = {
-        card: cardTokensSkyflowTonder,
+        card: cardTokens,
         name: this.firstName || "",
         last_name: this.lastName || "",
         email_client: this.email,
