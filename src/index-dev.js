@@ -90,6 +90,7 @@ const checkoutData = {
       },
     ]
   },
+  card: { "skyflow_id": "53ca875c-16fd-4395-8ac9-c756613dbaf9" },
   metadata: {
     order_id: 123456
   }
