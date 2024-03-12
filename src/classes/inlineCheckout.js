@@ -289,10 +289,10 @@ export class InlineCheckout {
 
       var paymentItems = {
         business_pk: business.pk,
-        client: id,
+        client_id: id,
         amount: total,
         date: dateString,
-        order: jsonResponseOrder.id,
+        order_id: jsonResponseOrder.id,
       };
       const jsonResponsePayment = await createPayment(
         this.baseUrl,
