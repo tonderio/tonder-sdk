@@ -160,6 +160,7 @@ const response = await inlineCheckout.payment(checkoutData);
 ## Configuration
 | Property        | Type          | Description                                         |
 |:---------------:|:-------------:|:---------------------------------------------------:|
+| mode            | string        | 'stage' 'production' 'sandbox', default 'stage'     |
 | apiKey          | string        | You can take this from you Tonder Dashboard         |
 | backgroundColor | string        | Hex color #000000                                   |
 | returnUrl       | string        |                                                     |

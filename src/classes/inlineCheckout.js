@@ -19,7 +19,7 @@ export class InlineCheckout {
   static injected = false;
   customer = {}
   items = []
-  baseUrl = process.env.BASE_URL || "http://localhost:8000";
+  baseUrl = null
   collectContainer = null
   merchantData = {}
   cartTotal = null
@@ -27,6 +27,7 @@ export class InlineCheckout {
   card = {}
 
   constructor({
+    mode = "stage",
     apiKey,
     returnUrl,
     successUrl,
@@ -40,11 +41,24 @@ export class InlineCheckout {
     this.renderPaymentButton = renderPaymentButton;
     this.callBack = callBack;
     this.customStyles = styles
+    this.mode = mode
+    this.baseUrl = this.#getBaseUrl()
 
     this.abortController = new AbortController()
     this.process3ds = new ThreeDSHandler(
       { apiKey: apiKey, baseUrl: this.baseUrl, successUrl: successUrl }
     )
+  }
+
+  #getBaseUrl() {
+    const modeUrls = {
+      'production': 'https://app.tonder.io',
+      'sandbox': 'https://sandbox.tonder.io',
+      'stage': 'https://stage.tonder.io',
+      'development': 'http://localhost:8000',
+    };
+ 
+    return modeUrls[this.mode] || modeUrls['stage']
   }
 
   #mountPayButton() {
