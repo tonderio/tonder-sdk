@@ -6,7 +6,7 @@ Tonder SDK helps to integrate the services Tonder offers in your own website
 
 You can install using NPM
 ```bash
-npm i tonder-sdk-test
+npm i tonder-web-sdk
 ```
 
 or using an script tag
@@ -33,7 +33,7 @@ HTML
 ```
 ## Javascript Example
 ```javascript
-import { InlineCheckout } from "tonder-sdk-test" // Not required if using script tag
+import { InlineCheckout } from "tonder-web-sdk" // Not required if using script tag
 ```
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { InlineCheckout } from 'tonder-sdk-test'
+import { InlineCheckout } from 'tonder-web-sdk'
 
 import sdkIcons from "../assets/img/sdk-icons.png";
 
