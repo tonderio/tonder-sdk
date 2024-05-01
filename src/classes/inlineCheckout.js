@@ -265,8 +265,10 @@ export class InlineCheckout {
         this.#removeGlobalLoader()
       }, 800)
     }catch(e){
-      this.#removeGlobalLoader()
-      showError("No se pudieron cargar los datos del comercio.")
+      if (e && e.name !== 'AbortError') {
+        this.#removeGlobalLoader()
+        showError("No se pudieron cargar los datos del comercio.")
+      }
     }
   }
 
