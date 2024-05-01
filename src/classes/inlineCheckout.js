@@ -1,4 +1,5 @@
 import { cardTemplate } from '../helpers/template.js'
+import { cardTemplateSkeleton } from '../helpers/template-skeleton.js'
 import {
   getBusiness,
   customerRegister,
@@ -190,14 +191,45 @@ export class InlineCheckout {
   injectCheckout() {
     if (InlineCheckout.injected) return
     this.process3ds.verifyTransactionStatus()
-    const injectInterval = setInterval(() => {
-      if (document.querySelector("#tonder-checkout")) {
-        document.querySelector("#tonder-checkout").innerHTML = cardTemplate;
-        this.#mountTonder();
-        clearInterval(injectInterval);
-        InlineCheckout.injected = true
+    const containerTonderCheckout = document.querySelector("#tonder-checkout");
+    if (containerTonderCheckout) {
+      this.#mount(containerTonderCheckout)
+      return;
+    }
+    const observer = new MutationObserver((mutations, obs) => {
+      const containerTonderCheckout = document.querySelector("#tonder-checkout");
+      if (containerTonderCheckout) {
+        this.#mount(containerTonderCheckout)
+        obs.disconnect();
       }
-    }, 500);
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributeFilter: ['id']
+  });
+  }
+
+
+  #addGlobalLoader() {
+    let checkoutContainer = document.querySelector("#global-loader");
+    if (checkoutContainer) {
+        checkoutContainer.innerHTML = cardTemplateSkeleton;
+    }
+  }
+
+  #removeGlobalLoader() {
+    const loader = document.querySelector('#global-loader');
+    if (loader) {
+      loader.remove();
+    }
+  }
+
+  #mount(containerTonderCheckout){
+    containerTonderCheckout.innerHTML = cardTemplate;
+    this.#addGlobalLoader();
+    this.#mountTonder();
+    InlineCheckout.injected = true;
   }
 
   async #fetchMerchantData() {
@@ -215,20 +247,29 @@ export class InlineCheckout {
 
   async #mountTonder() {
     this.#mountPayButton()
+    try{    
+      const {
+        vault_id,
+        vault_url,
+      } = await this.#fetchMerchantData();
 
-    const {
-      vault_id,
-      vault_url,
-    } = await this.#fetchMerchantData();
-
-    this.collectContainer = await initSkyflow(
-      vault_id,
-      vault_url,
-      this.baseUrl,
-      this.apiKeyTonder,
-      this.abortController.signal,
-      this.customStyles,
-    );
+      this.collectContainer = await initSkyflow(
+        vault_id,
+        vault_url,
+        this.baseUrl,
+        this.apiKeyTonder,
+        this.abortController.signal,
+        this.customStyles,
+      );
+      setTimeout(() => {
+        this.#removeGlobalLoader()
+      }, 800)
+    }catch(e){
+      if (e && e.name !== 'AbortError') {
+        this.#removeGlobalLoader()
+        showError("No se pudieron cargar los datos del comercio.")
+      }
+    }
   }
 
   removeCheckout() {

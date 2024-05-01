@@ -1,5 +1,6 @@
 export const cardTemplate = `
 <div class="container-tonder">
+  <div id="global-loader" class="global-loader"></div>
   <div id="collectCardholderName" class="empty-div"></div>
   <div id="collectCardNumber" class="empty-div"></div>
   <div class="collect-row">
@@ -21,6 +22,7 @@ export const cardTemplate = `
   max-width: 600px;
   border: solid 1px #e3e3e3;
   max-height: 100vh;
+  position: relative;
 }
 
 .collect-row {
@@ -96,6 +98,13 @@ export const cardTemplate = `
   }
 }
 
+.global-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%
+}
 
 @media screen and (max-width: 600px) {
   .payment_method_zplit {
