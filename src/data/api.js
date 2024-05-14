@@ -1,3 +1,5 @@
+import { buildErrorResponse, buildErrorResponseFromCatch } from "../helpers/utils";
+
 export async function getOpenpayDeviceSessionID(merchant_id, public_key, signal) {
   let openpay = await window.OpenPay;
   openpay.setId(merchant_id);
@@ -105,5 +107,66 @@ export async function startCheckoutRouter(baseUrlTonder, apiKeyTonder, routerIte
     }
   } catch (error) {
     throw error
+  }
+}
+
+export async function registerCard(baseUrlTonder, customerToken, data) {
+  try {
+    const response = await fetch(`${baseUrlTonder}/api/v1/cards/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${customerToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (response.ok) return await response.json();
+    if (response.status === 409){
+      const res_json = await response.json()
+      if(res_json.error = 'Card number already exists.'){
+        return {
+          code: 200,
+          body: res_json,
+          name: '',
+          message: res_json.error,
+        }
+      }
+    }
+    throw await buildErrorResponse(response);
+  } catch (error) {
+    throw buildErrorResponseFromCatch(error);
+  }
+}
+export async function deleteCustomerCard(baseUrlTonder, customerToken, skyflowId = "") {
+  try {
+    const response = await fetch(`${baseUrlTonder}/api/v1/cards/${skyflowId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Token ${customerToken}`,
+        'Content-Type': 'application/json'
+      },
+    });
+
+    if (response.ok) return true;
+    throw await buildErrorResponse(response);
+  } catch (error) {
+    throw buildErrorResponseFromCatch(error);
+  }
+}
+export async function getCustomerCards(baseUrlTonder, customerToken, query = "") {
+  try {
+    const response = await fetch(`${baseUrlTonder}/api/v1/cards/${query}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Token ${customerToken}`,
+        'Content-Type': 'application/json'
+      },
+    });
+
+    if (response.ok) return await response.json();
+    throw await buildErrorResponse(response);
+  } catch (error) {
+    throw buildErrorResponseFromCatch(error);
   }
 }

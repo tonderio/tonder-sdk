@@ -6,7 +6,8 @@ export async function initSkyflow(
   baseUrl,
   apiKey,
   signal,
-  customStyles = {}
+  customStyles = {},
+  collectorIds,
 ) {
   const skyflow = await Skyflow.init({
     vaultID: vaultId,
@@ -121,7 +122,16 @@ export async function initSkyflow(
     cardHolderNameElement,
   )
 
-  return collectContainer
+  return {
+    container: collectContainer,
+    elements: { 
+      cardHolderNameElement, 
+      cardNumberElement, 
+      cvvElement, 
+      expiryMonthElement, 
+      expiryYearElement 
+    } 
+  }
 }
 
 async function mountElements(
