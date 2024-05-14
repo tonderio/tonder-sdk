@@ -1,4 +1,4 @@
-import { cardTemplate } from '../helpers/template.js'
+import { cardItemsTemplate, cardTemplate } from '../helpers/template.js'
 import { cardTemplateSkeleton } from '../helpers/template-skeleton.js'
 import {
   getBusiness,
@@ -6,11 +6,16 @@ import {
   createOrder,
   createPayment,
   startCheckoutRouter,
-  getOpenpayDeviceSessionID
+  getOpenpayDeviceSessionID,
+  getCustomerCards,
+  registerCard,
+  deleteCustomerCard
 } from '../data/api';
 import {
   showError,
   getBrowserInfo,
+  mapCards,
+  showMessage,
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
 import { ThreeDSHandler } from './3dsHandler.js';
@@ -18,6 +23,7 @@ import { ThreeDSHandler } from './3dsHandler.js';
 
 export class InlineCheckout {
   static injected = false;
+  static cardsInjected = false
   customer = {}
   items = []
   baseUrl = null
@@ -26,6 +32,18 @@ export class InlineCheckout {
   cartTotal = null
   metadata = {}
   card = {}
+  collectorIds = {
+    cardsListContainer: "cardsListContainer",
+    holderName: "collectCardholderName",
+    cardNumber: "collectCardNumber",
+    expirationMonth: "collectExpirationMonth",
+    expirationYear: "collectExpirationYear",
+    cvv: "collectCvv",
+    tonderPayButton: "tonderPayButton",
+    msgError: "msgError",
+    msgNotification: "msgNotification"
+
+  }
 
   constructor({
     mode = "stage",
@@ -34,7 +52,7 @@ export class InlineCheckout {
     successUrl,
     renderPaymentButton = false,
     callBack = () => { },
-    styles,
+    styles
   }) {
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
@@ -172,6 +190,9 @@ export class InlineCheckout {
     this.cartItems = items
   }
 
+  setCustomerEmail (email) {
+    this.email = email
+  }
   setCartTotal(total) {
     console.log('total: ', total)
     this.cartTotal = total
@@ -215,13 +236,14 @@ export class InlineCheckout {
     let checkoutContainer = document.querySelector("#global-loader");
     if (checkoutContainer) {
         checkoutContainer.innerHTML = cardTemplateSkeleton;
+        checkoutContainer.style.display = 'block';
     }
   }
 
   #removeGlobalLoader() {
     const loader = document.querySelector('#global-loader');
     if (loader) {
-      loader.remove();
+      loader.style.display = 'none';
     }
   }
 
@@ -245,13 +267,25 @@ export class InlineCheckout {
     return await customerRegister(this.baseUrl, this.apiKeyTonder, customer, signal);
   }
 
-  async #mountTonder() {
+  async #mountTonder(getCards = true) {
     this.#mountPayButton()
     try{    
       const {
         vault_id,
         vault_url,
       } = await this.#fetchMerchantData();
+      if(this.email && getCards){
+        const customerResponse = await this.getCustomer({email: this.email});
+        if("auth_token" in customerResponse) {
+          const { auth_token } = customerResponse
+          const cards = await getCustomerCards(this.baseUrl, auth_token);
+
+          if("cards" in cards) {
+            const cardsMapped = cards.cards.map(mapCards)
+            this.#loadCardsList(cardsMapped, auth_token)
+          }
+        }
+      }
 
       this.collectContainer = await initSkyflow(
         vault_id,
@@ -274,6 +308,7 @@ export class InlineCheckout {
 
   removeCheckout() {
     InlineCheckout.injected = false
+    InlineCheckout.cardsInjected = false
     // Cancel all requests
     this.abortController.abort();
     this.abortController = new AbortController();
@@ -285,7 +320,7 @@ export class InlineCheckout {
   async #getCardTokens() {
     if (this.card?.skyflow_id) return this.card
     try {
-      const collectResponse = await this.collectContainer.collect();
+      const collectResponse = await this.collectContainer.container.collect();
       const cardTokens = await collectResponse["records"][0]["fields"];
       return cardTokens;
     } catch (error) {
@@ -319,7 +354,23 @@ export class InlineCheckout {
         this.customer, 
         this.abortController.signal
       )
+      if(auth_token && this.email){
+        const saveCard = document.getElementById("save-checkout-card");
+        if(saveCard && "checked" in saveCard && saveCard.checked){
+          await registerCard(this.baseUrl, auth_token, { skyflow_id: cardTokens.skyflow_id });
+                
+          this.cardsInjected = false;
 
+          const cards = await getCustomerCards(this.baseUrl, auth_token);
+          if("cards" in cards) {
+            const cardsMapped = cards.cards.map((card) => mapCards(card))
+            this.#loadCardsList(cardsMapped, auth_token)
+          }
+
+          showMessage("Tarjeta registrada con éxito", this.collectorIds.msgNotification);
+          
+        }
+      }
       var orderItems = {
         business: this.apiKeyTonder,
         client: auth_token,
@@ -401,4 +452,81 @@ export class InlineCheckout {
       throw error;
     }
   };
+
+  #loadCardsList (cards, token) {
+    if(this.cardsInjected) return;
+    const injectInterval = setInterval(() => {
+      const queryElement = document.querySelector(`#${this.collectorIds.cardsListContainer}`);
+      if (queryElement && InlineCheckout.injected) {
+        queryElement.innerHTML = cardItemsTemplate(cards)
+        clearInterval(injectInterval)
+        this.#mountRadioButtons(token)
+        this.cardsInjected = true
+      }
+    }, 500);
+  }
+
+  #mountRadioButtons (token) {
+    const radioButtons = document.getElementsByName(`card_selected`);
+    for (const radio of radioButtons) {
+      radio.style.display = "block";
+      radio.onclick = async (event) => {
+        await this.#handleRadioButtonClick(radio);
+      };
+    }
+    const cardsButtons = document.getElementsByClassName("card-delete-button");
+    for (const cardButton of cardsButtons) {
+      cardButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        this.#handleDeleteCardButtonClick(token, cardButton)
+      }, false);
+    }
+  }
+
+  async #handleRadioButtonClick (radio) {
+    if(radio.id === this.radioChecked ||  ( radio.id === "new" && this.radioChecked === undefined)) return;
+    const containerForm = document.querySelector(".container-form");
+    if(containerForm) {
+      containerForm.style.display = radio.id === "new" ? "block" : "none";
+    }
+    if(radio.id === "new") {
+      if(this.radioChecked !== radio.id) {
+        this.#addGlobalLoader()
+        this.#mountTonder(false);
+        InlineCheckout.injected = true;
+      }
+    } else {
+      this.#unmountForm();
+    }
+    this.radioChecked = radio.id;
+  }
+
+  async #handleDeleteCardButtonClick (customerToken, button) {
+    const id = button.attributes.getNamedItem("id")
+    const skyflow_id = id?.value?.split("_")?.[2]
+    if(skyflow_id) {
+      const cardClicked = document.querySelector(`#card_container-${skyflow_id}`);
+      if(cardClicked) {
+        cardClicked.style.display = "none"
+      }
+      await deleteCustomerCard(this.baseUrl, customerToken, skyflow_id)
+      this.cardsInjected = false
+      const cards = await getCustomerCards(this.baseUrl, customerToken)
+      if("cards" in cards) {
+        const cardsMapped = cards.cards.map(mapCards)
+        this.#loadCardsList(cardsMapped, customerToken)
+      }
+    }
+  }
+
+  #unmountForm () {
+    InlineCheckout.injected = false
+    if(this.collectContainer) {
+      if("unmount" in this.collectContainer.elements.cardHolderNameElement) this.collectContainer.elements.cardHolderNameElement.unmount() 
+      if("unmount" in this.collectContainer.elements.cardNumberElement) this.collectContainer.elements.cardNumberElement.unmount()
+      if("unmount" in this.collectContainer.elements.expiryYearElement) this.collectContainer.elements.expiryYearElement.unmount()
+      if("unmount" in this.collectContainer.elements.expiryMonthElement) this.collectContainer.elements.expiryMonthElement.unmount()
+      if("unmount" in this.collectContainer.elements.cvvElement) this.collectContainer.elements.cvvElement.unmount()
+    }
+  }
 }
