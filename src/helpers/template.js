@@ -55,10 +55,12 @@ export const cardTemplate = `
 }
 
 .expiration-year {
+  position: relative !important;
   padding-top: 25px !important;
 }
 
 .empty-div {
+  position: relative;
   height: 80px !important;
   margin-top: 2px;
   margin-bottom: 4px;
@@ -280,6 +282,26 @@ export const cardTemplate = `
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
   opacity: 10;
+}
+
+.error-custom-inputs-tonder {
+  background-color: white;
+  position: absolute;
+  left: 0px;
+  bottom: -4px;
+  width: 100%;
+  font-size: 12px;
+  color: red;
+}
+
+.expiration-year .error-custom-inputs-tonder {
+  background-color: white;
+  position: absolute;
+  left: 0px;
+  bottom: 3px;
+  width: 100%;
+  font-size: 12px;
+  color: red;
 }
 </style>
 `
