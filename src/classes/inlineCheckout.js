@@ -294,6 +294,7 @@ export class InlineCheckout {
         this.apiKeyTonder,
         this.abortController.signal,
         this.customStyles,
+        this.collectorIds
       );
       setTimeout(() => {
         this.#removeGlobalLoader()
@@ -338,8 +339,14 @@ export class InlineCheckout {
     const { openpay_keys, reference, business } = this.merchantData
     const total = Number(this.cartTotal)
 
-    const cardTokens = await this.#getCardTokens();
-
+    let cardTokens = null;
+    if(this.radioChecked === "new"){
+      cardTokens = await this.#getCardTokens();
+    }else{
+      cardTokens = {
+        skyflow_id: this.radioChecked
+      }
+    }
     try {
       let deviceSessionIdTonder;
       if (openpay_keys.merchant_id && openpay_keys.public_key) {

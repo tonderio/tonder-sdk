@@ -52,6 +52,15 @@ export async function initSkyflow(
       max: 70,
     },
   };
+  const regexEmpty = RegExp("^(?!\s*$).+");
+
+  const regexMatchRule = {
+    type: Skyflow.ValidationRuleType.REGEX_MATCH_RULE,
+    params: {
+      regex: regexEmpty,
+      error: "El campo es requerido" // Optional, default error is 'VALIDATION FAILED'.
+    }
+  }
 
   const cardHolderNameElement = await collectContainer.create({
     table: "cards",
@@ -60,10 +69,15 @@ export async function initSkyflow(
     label: collectStylesOptions.labels?.nameLabel,
     placeholder: collectStylesOptions.placeholders?.namePlaceholder,
     type: Skyflow.ElementType.CARDHOLDER_NAME,
-    validations: [lengthMatchRule],
+    validations: [lengthMatchRule, regexMatchRule],
   });
 
-  cardHolderNameElement.setError('Inválido')
+  handleSkyflowElementEvents(
+    cardHolderNameElement,
+    collectorIds.holderName,
+    "errorCardHolderIdTonder",
+    "titular de la tarjeta"
+  );
 
   // Create collect elements.
   const cardNumberElement = await collectContainer.create({
@@ -77,9 +91,16 @@ export async function initSkyflow(
     label: collectStylesOptions.labels?.cardLabel,
     placeholder: collectStylesOptions.placeholders?.cardPlaceholder,
     type: Skyflow.ElementType.CARD_NUMBER,
+    validations: [regexMatchRule],
   });
 
-  cardNumberElement.setError('Inválido')
+  handleSkyflowElementEvents(
+    cardNumberElement,
+    collectorIds.cardNumber,
+    "errorCardNumberIdTonder",
+    "número de tarjeta"
+  );
+
 
   const cvvElement = await collectContainer.create({
     table: "cards",
@@ -88,9 +109,14 @@ export async function initSkyflow(
     label: collectStylesOptions.labels?.cvvLabel,
     placeholder: collectStylesOptions.placeholders?.cvvPlaceholder,
     type: Skyflow.ElementType.CVV,
+    validations: [regexMatchRule],
   });
 
-  cvvElement.setError('Inválido')
+  handleSkyflowElementEvents(
+    cvvElement,
+    collectorIds.cvv,
+    "errorCvvIdTonder"
+  );
 
   const expiryMonthElement = await collectContainer.create({
     table: "cards",
@@ -99,9 +125,14 @@ export async function initSkyflow(
     label: collectStylesOptions.labels?.expiryDateLabel,
     placeholder: collectStylesOptions.placeholders?.expiryMonthPlaceholder,
     type: Skyflow.ElementType.EXPIRATION_MONTH,
+    validations: [regexMatchRule],
   });
 
-  expiryMonthElement.setError('Inválido')
+  handleSkyflowElementEvents(
+    expiryMonthElement,
+    collectorIds.expirationMonth,
+    "errorExpiryMonthIdTonder"
+  );
 
   const expiryYearElement = await collectContainer.create({
     table: "cards",
@@ -110,9 +141,14 @@ export async function initSkyflow(
     label: "",
     placeholder: collectStylesOptions.placeholders?.expiryYearPlaceholder,
     type: Skyflow.ElementType.EXPIRATION_YEAR,
+    validations: [regexMatchRule],
   });
 
-  expiryYearElement.setError('Inválido')
+  handleSkyflowElementEvents(
+    expiryYearElement,
+    collectorIds.expirationYear,
+    "errorExpiryYearIdTonder"
+  );
 
   await mountElements(
     cardNumberElement,
@@ -146,4 +182,31 @@ async function mountElements(
   expiryMonthElement.mount("#collectExpirationMonth");
   expiryYearElement.mount("#collectExpirationYear");
   cardHolderNameElement.mount("#collectCardholderName");
+}
+
+
+function handleSkyflowElementEvents(element, elementId, errorElementId, fieldMessage= "", requiredMessage = "El campo es requerido", invalidMessage= "El campo es inválido") {
+  if ("on" in element) {
+    element.on(Skyflow.EventName.CHANGE, (state) => {
+      let errorElement = document.getElementById(errorElementId);
+      if (errorElement && state.isValid && !state.isEmpty) {
+        errorElement.remove();
+      }
+    });
+
+    element.on(Skyflow.EventName.BLUR, (state) => {
+      let container = document.getElementById(elementId);
+      let errorElement = document.getElementById(errorElementId);
+      if (errorElement) {
+        errorElement.remove();
+      }
+      if (!state.isValid) {
+        let errorLabel = document.createElement("div");
+        errorLabel.classList.add("error-custom-inputs-tonder");
+        errorLabel.id = errorElementId;
+        errorLabel.textContent = state.isEmpty ? requiredMessage : fieldMessage != "" ?`El campo ${fieldMessage} es inválido`: invalidMessage;
+        container?.appendChild(errorLabel);
+      }
+    });
+  }
 }
