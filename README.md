@@ -11,7 +11,7 @@ npm i tonder-web-sdk
 
 or using an script tag
 ```html
-<script src="https://zplit-stage.s3.amazonaws.com/v1/bundle.min.js"></script>
+<script src="https://zplit-prod.s3.amazonaws.com/v1/bundle.min.js"></script>
 ```
 
 Add dependencies to the root of the app (index.html)
