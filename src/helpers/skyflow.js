@@ -74,7 +74,8 @@ export async function initSkyflow(
 
   handleSkyflowElementEvents(
     cardHolderNameElement,
-    "titular de la tarjeta"
+    "titular de la tarjeta",
+    collectStylesOptions.errorTextStyles
   );
 
   // Create collect elements.
@@ -94,7 +95,8 @@ export async function initSkyflow(
 
   handleSkyflowElementEvents(
     cardNumberElement,
-    "número de tarjeta"
+    "número de tarjeta",
+    collectStylesOptions.errorTextStyles
   );
 
   const cvvElement = await collectContainer.create({
@@ -107,6 +109,12 @@ export async function initSkyflow(
     validations: [regexMatchRule],
   });
 
+  handleSkyflowElementEvents(
+    cvvElement,
+    "",
+    collectStylesOptions.errorTextStyles
+  );
+
   const expiryMonthElement = await collectContainer.create({
     table: "cards",
     column: "expiration_month",
@@ -117,6 +125,12 @@ export async function initSkyflow(
     validations: [regexMatchRule],
   });
 
+  handleSkyflowElementEvents(
+    expiryMonthElement,
+    "",
+    collectStylesOptions.errorTextStyles
+  );
+
   const expiryYearElement = await collectContainer.create({
     table: "cards",
     column: "expiration_year",
@@ -126,6 +140,12 @@ export async function initSkyflow(
     type: Skyflow.ElementType.EXPIRATION_YEAR,
     validations: [regexMatchRule],
   });
+
+  handleSkyflowElementEvents(
+    expiryYearElement,
+    "",
+    collectStylesOptions.errorTextStyles
+  );
 
   await mountElements(
     cardNumberElement,
@@ -162,12 +182,10 @@ async function mountElements(
 }
 
 
-function handleSkyflowElementEvents(element, fieldMessage= "", requiredMessage = "El campo es requerido", invalidMessage= "El campo es inválido") {
+function handleSkyflowElementEvents(element, fieldMessage= "", error_styles = {}, resetOnFocus = true, requiredMessage = "El campo es requerido", invalidMessage= "El campo es inválido") {
   if ("on" in element) {
     element.on(Skyflow.EventName.CHANGE, (state) => {
-      if (state.isValid && !state.isEmpty) {
-        element.resetError();
-      }
+      updateErrorLabel(element, error_styles, "transparent")
     });
 
     element.on(Skyflow.EventName.BLUR, (state) => {
@@ -175,10 +193,26 @@ function handleSkyflowElementEvents(element, fieldMessage= "", requiredMessage =
         const msj_error = state.isEmpty ? requiredMessage : fieldMessage != "" ?`El campo ${fieldMessage} es inválido`: invalidMessage;
         element.setError(msj_error);
       }
+      updateErrorLabel(element, error_styles)
     });
 
     element.on(Skyflow.EventName.FOCUS, (state) => {
+      updateErrorLabel(element, error_styles, "transparent")
       element.resetError();
     });
+  }
+}
+
+function updateErrorLabel(element, errorStyles, color = "" ){
+  if(Object.keys(errorStyles).length > 0){
+    element.update({
+      errorTextStyles: {
+        ...errorStyles,
+        base: {
+          ...(errorStyles.base && {...errorStyles.base}),
+          ...(color != "" && {color})
+        }
+      }
+    })
   }
 }
