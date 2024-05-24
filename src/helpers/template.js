@@ -35,7 +35,7 @@ export const cardTemplate = `
 .container-tonder {
   background-color: #F9F9F9;
   margin: 0 auto !important;
-  padding: 30px 10px 30px 10px;
+  padding: 30px 25px;
   overflow: hidden;
   transition: max-height 0.5s ease-out;
   max-width: 600px;
@@ -134,7 +134,8 @@ export const cardTemplate = `
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%
+  height: 100%;
+  z-index: 1;
 }
 
 @media screen and (max-width: 600px) {
@@ -174,12 +175,13 @@ export const cardTemplate = `
   justify-content: start;
   align-items: center;
   color: #1D1D1D;
-  gap: 33% 20px;
+  gap: 33% 15px;
   margin-top: 10px;
   margin-bottom: 10px;
   padding-left: 10px;
   padding-right: 10px;
-  width: 90%;
+  width: 100%;
+  position: relative;
 }
 
 .pay-new-card .card-number {
@@ -199,15 +201,14 @@ export const cardTemplate = `
   gap: 33% 20px;
   margin-top: 10px;
   margin-bottom: 10px;
-  padding-left: 10px;
-  padding-right: 10px;
-  width: 90%;
+  width: 100%;
 }
 
 .card_selected {
   position: relative;
   width: 16px;
   height: 16px;
+  min-width: 16px;
   appearance: none;
   cursor: pointer;
   border-radius: 100%;
@@ -240,6 +241,7 @@ export const cardTemplate = `
   position: relative;
   width: 16px;
   height: 16px;
+  min-width: 16px;
   appearance: none;
   cursor: pointer;
   border-radius: 100%;
@@ -283,6 +285,7 @@ export const cardTemplate = `
   transition-duration: 150ms;
   opacity: 10;
 }
+
 
 .error-custom-inputs-tonder {
   background-color: white;
@@ -337,16 +340,15 @@ export const cardItemsTemplate = (cards) => {
         gap: 33% 20px;
         margin-top: 10px;
         margin-bottom: 10px;
-        padding-left: 10px;
-        padding-right: 10px;
-        width: 90%;
+        width: 100%;
       }
 
       .card-item {
+        position: relative;
         display: flex;
         justify-content: start;
         align-items: center;
-        gap: 33% 20px;
+        gap: 33% 15px;
       }
 
       .card-item .card-number {
@@ -373,10 +375,10 @@ export const cardItemsTemplate = (cards) => {
         background-color: transparent !important;
         color: #D91C1C !important;
       }
-
       .card_selected {
         position: relative;
         width: 16px;
+        min-width: 16px;
         height: 16px;
         appearance: none;
         cursor: pointer;
@@ -410,6 +412,7 @@ export const cardItemsTemplate = (cards) => {
         position: relative;
         width: 16px;
         height: 16px;
+        min-width: 16px;
         appearance: none;
         cursor: pointer;
         border-radius: 100%;
