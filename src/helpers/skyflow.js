@@ -74,8 +74,6 @@ export async function initSkyflow(
 
   handleSkyflowElementEvents(
     cardHolderNameElement,
-    collectorIds.holderName,
-    "errorCardHolderIdTonder",
     "titular de la tarjeta"
   );
 
@@ -96,11 +94,8 @@ export async function initSkyflow(
 
   handleSkyflowElementEvents(
     cardNumberElement,
-    collectorIds.cardNumber,
-    "errorCardNumberIdTonder",
     "número de tarjeta"
   );
-
 
   const cvvElement = await collectContainer.create({
     table: "cards",
@@ -112,12 +107,6 @@ export async function initSkyflow(
     validations: [regexMatchRule],
   });
 
-  handleSkyflowElementEvents(
-    cvvElement,
-    collectorIds.cvv,
-    "errorCvvIdTonder"
-  );
-
   const expiryMonthElement = await collectContainer.create({
     table: "cards",
     column: "expiration_month",
@@ -128,12 +117,6 @@ export async function initSkyflow(
     validations: [regexMatchRule],
   });
 
-  handleSkyflowElementEvents(
-    expiryMonthElement,
-    collectorIds.expirationMonth,
-    "errorExpiryMonthIdTonder"
-  );
-
   const expiryYearElement = await collectContainer.create({
     table: "cards",
     column: "expiration_year",
@@ -143,12 +126,6 @@ export async function initSkyflow(
     type: Skyflow.ElementType.EXPIRATION_YEAR,
     validations: [regexMatchRule],
   });
-
-  handleSkyflowElementEvents(
-    expiryYearElement,
-    collectorIds.expirationYear,
-    "errorExpiryYearIdTonder"
-  );
 
   await mountElements(
     cardNumberElement,
@@ -185,28 +162,23 @@ async function mountElements(
 }
 
 
-function handleSkyflowElementEvents(element, elementId, errorElementId, fieldMessage= "", requiredMessage = "El campo es requerido", invalidMessage= "El campo es inválido") {
+function handleSkyflowElementEvents(element, fieldMessage= "", requiredMessage = "El campo es requerido", invalidMessage= "El campo es inválido") {
   if ("on" in element) {
     element.on(Skyflow.EventName.CHANGE, (state) => {
-      let errorElement = document.getElementById(errorElementId);
-      if (errorElement && state.isValid && !state.isEmpty) {
-        errorElement.remove();
+      if (state.isValid && !state.isEmpty) {
+        element.resetError();
       }
     });
 
     element.on(Skyflow.EventName.BLUR, (state) => {
-      let container = document.getElementById(elementId);
-      let errorElement = document.getElementById(errorElementId);
-      if (errorElement) {
-        errorElement.remove();
-      }
       if (!state.isValid) {
-        let errorLabel = document.createElement("div");
-        errorLabel.classList.add("error-custom-inputs-tonder");
-        errorLabel.id = errorElementId;
-        errorLabel.textContent = state.isEmpty ? requiredMessage : fieldMessage != "" ?`El campo ${fieldMessage} es inválido`: invalidMessage;
-        container?.appendChild(errorLabel);
+        const msj_error = state.isEmpty ? requiredMessage : fieldMessage != "" ?`El campo ${fieldMessage} es inválido`: invalidMessage;
+        element.setError(msj_error);
       }
+    });
+
+    element.on(Skyflow.EventName.FOCUS, (state) => {
+      element.resetError();
     });
   }
 }

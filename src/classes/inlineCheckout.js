@@ -340,7 +340,7 @@ export class InlineCheckout {
     const total = Number(this.cartTotal)
 
     let cardTokens = null;
-    if(this.radioChecked === "new"){
+    if(this.radioChecked === "new" || this.radioChecked === undefined){
       cardTokens = await this.#getCardTokens();
     }else{
       cardTokens = {
