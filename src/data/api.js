@@ -145,7 +145,7 @@ export async function deleteCustomerCard(baseUrlTonder, customerToken, skyflowId
       headers: {
         'Authorization': `Token ${customerToken}`,
         'Content-Type': 'application/json'
-      },
+      }
     });
 
     if (response.ok) return true;
@@ -154,7 +154,7 @@ export async function deleteCustomerCard(baseUrlTonder, customerToken, skyflowId
     throw buildErrorResponseFromCatch(error);
   }
 }
-export async function getCustomerCards(baseUrlTonder, customerToken, query = "") {
+export async function getCustomerCards(baseUrlTonder, customerToken, query = "", signal) {
   try {
     const response = await fetch(`${baseUrlTonder}/api/v1/cards/${query}`, {
       method: 'GET',
@@ -162,6 +162,7 @@ export async function getCustomerCards(baseUrlTonder, customerToken, query = "")
         'Authorization': `Token ${customerToken}`,
         'Content-Type': 'application/json'
       },
+      signal
     });
 
     if (response.ok) return await response.json();

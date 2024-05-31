@@ -24,6 +24,7 @@ import { ThreeDSHandler } from './3dsHandler.js';
 export class InlineCheckout {
   static injected = false;
   static cardsInjected = false
+  deletingCards = [];
   customer = {}
   items = []
   baseUrl = null
@@ -64,6 +65,7 @@ export class InlineCheckout {
     this.baseUrl = this.#getBaseUrl()
 
     this.abortController = new AbortController()
+    this.abortRefreshCardsController = new AbortController()
     this.process3ds = new ThreeDSHandler(
       { apiKey: apiKey, baseUrl: this.baseUrl, successUrl: successUrl }
     )
@@ -516,16 +518,29 @@ export class InlineCheckout {
       if(cardClicked) {
         cardClicked.style.display = "none"
       }
-      await deleteCustomerCard(this.baseUrl, customerToken, skyflow_id)
-      this.cardsInjected = false
-      const cards = await getCustomerCards(this.baseUrl, customerToken)
-      if("cards" in cards) {
-        const cardsMapped = cards.cards.map(mapCards)
-        this.#loadCardsList(cardsMapped, customerToken)
+      try{
+      this.deletingCards.push(skyflow_id);
+      if (this.abortRefreshCardsController) {
+        this.abortRefreshCardsController.abort();
+        this.abortRefreshCardsController = new AbortController();
       }
+      await deleteCustomerCard(this.baseUrl, customerToken, skyflow_id)
+    }catch{
+    } finally {
+      this.deletingCards = this.deletingCards.filter(id => id !== skyflow_id);
+      this.#refreshCardOnDelete(customerToken)
+    }
     }
   }
-
+  async #refreshCardOnDelete(customerToken){
+    if(this.deletingCards.length > 0) return;
+    this.cardsInjected = false
+    const cards = await getCustomerCards(this.baseUrl, customerToken, "", this.abortRefreshCardsController.signal)
+    if("cards" in cards) {
+      const cardsMapped = cards.cards.map(mapCards)
+      this.#loadCardsList(cardsMapped, customerToken)
+    }
+  }
   #unmountForm () {
     InlineCheckout.injected = false
     if(this.collectContainer) {
