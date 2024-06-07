@@ -280,11 +280,17 @@ export class InlineCheckout {
         const customerResponse = await this.getCustomer({email: this.email});
         if("auth_token" in customerResponse) {
           const { auth_token } = customerResponse
-          const cards = await getCustomerCards(this.baseUrl, auth_token);
+          const saveCardCheckbox = document.getElementById('save-card-container');
 
-          if("cards" in cards) {
-            const cardsMapped = cards.cards.map(mapCards)
-            this.#loadCardsList(cardsMapped, auth_token)
+          saveCardCheckbox.style.display = 'none';
+          if (this.mode !== 'production') {
+            const cards = await getCustomerCards(this.baseUrl, auth_token);
+            saveCardCheckbox.style.display = '';
+
+            if ("cards" in cards) {
+              const cardsMapped = cards.cards.map(mapCards)
+              this.#loadCardsList(cardsMapped, auth_token)
+            }
           }
         }
       }
