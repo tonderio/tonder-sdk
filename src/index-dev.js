@@ -112,6 +112,11 @@ const inlineCheckout = new InlineCheckout({
 });
 inlineCheckout.setCustomerEmail(checkoutData.customer.email)
 inlineCheckout.injectCheckout();
+//
+// ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
+inlineCheckout.verify3dsTransaction().then(response => {
+  console.log('Verify 3ds response', response)
+})
 
 document.addEventListener('DOMContentLoaded', function() {
   const payButton = document.getElementById('pay-button');
