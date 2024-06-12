@@ -139,6 +139,7 @@ const checkoutData = {
 const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
 const returnUrl = "http://my-website:8080/checkout"
 const successUrl = "http://my-website:8080/success"
+
 // if using script tag, it should be initialized like this
 // new TonderSdk.InlineCheckout
 const inlineCheckout = new InlineCheckout({
@@ -149,6 +150,15 @@ const inlineCheckout = new InlineCheckout({
 });
 
 inlineCheckout.injectCheckout();
+
+// To verify a 3ds transaction you can use the following method
+// It should be called after the injectCheckout method
+// The response status will be one of the following
+// ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
+
+inlineCheckout.verify3dsTransaction().then(response => {
+  console.log('Verify 3ds response', response)
+})
 
 const response = await inlineCheckout.payment(checkoutData);
 ```
@@ -163,7 +173,7 @@ const response = await inlineCheckout.payment(checkoutData);
 | mode            | string        | 'stage' 'production' 'sandbox', default 'stage'     |
 | apiKey          | string        | You can take this from you Tonder Dashboard         |
 | backgroundColor | string        | Hex color #000000                                   |
-| returnUrl       | string        |                                                     |
+| returnUrl       | string        | url where the checkout form is mounted (3ds)         |
 | successUrl      | string        |                                                     |
 | backgroundColor | string        |                                                     |
 
