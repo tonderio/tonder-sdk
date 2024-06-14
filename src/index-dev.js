@@ -97,7 +97,7 @@ const checkoutData = {
 };
 
 // localhost
-const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
+const apiKey = "11e3d3c3e95e0eaabbcae61ebad34ee5f93c3d27";
 const returnUrl = "http://127.0.0.1:8080/"
 const successUrl = "http://127.0.0.1:8080/success"
 // stage
@@ -108,7 +108,8 @@ const inlineCheckout = new InlineCheckout({
   apiKey,
   returnUrl,
   successUrl,
-  styles: customStyles
+  styles: customStyles,
+  renderPaymentButton: true
 });
 inlineCheckout.setCustomerEmail(checkoutData.customer.email)
 inlineCheckout.injectCheckout();

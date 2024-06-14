@@ -171,3 +171,24 @@ export async function getCustomerCards(baseUrlTonder, customerToken, query = "",
     throw buildErrorResponseFromCatch(error);
   }
 }
+
+export async function getCustomerAPMs(baseUrlTonder, customerToken, query = "", signal) {
+  try {
+    const response = await fetch(
+      // `${baseUrlTonder}/api/v1/cards/${query}`,
+      'http://demo1106857.mockable.io/api/v1/payment_methods', // TODO: CHANGE WITH REAL API
+      {
+      method: 'GET',
+      headers: {
+        'Authorization': `Token ${customerToken}`,
+        'Content-Type': 'application/json'
+      },
+      signal
+    });
+
+    if (response.ok) return await response.json();
+    throw await buildErrorResponse(response);
+  } catch (error) {
+    throw buildErrorResponseFromCatch(error);
+  }
+}
