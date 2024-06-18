@@ -43,7 +43,6 @@ export class InlineCheckout {
     tonderPayButton: "tonderPayButton",
     msgError: "msgError",
     msgNotification: "msgNotification"
-
   }
 
   constructor({
@@ -112,6 +111,31 @@ export class InlineCheckout {
     }
   }
 
+  async handle3dsRedirect(response) {
+    const iframe = response?.next_action?.iframe_resources?.iframe
+
+    if (iframe) {
+      this.process3ds.loadIframe().then(() => {
+        //TODO: Check if this will be necessary on the frontend side
+        // after some the tests in production, since the 3DS process
+        // doesn't works properly on the sandbox environment
+        // setTimeout(() => {
+        //   process3ds.verifyTransactionStatus();
+        // }, 10000);
+        this.process3ds.verifyTransactionStatus();
+      }).catch((error) => {
+        console.log('Error loading iframe:', error)
+      })
+    } else {
+      const redirectUrl = this.process3ds.getRedirectUrl()
+      if (redirectUrl) {
+        this.process3ds.redirectToChallenge()
+      } else {
+        return response;
+      }
+    }
+  }
+
   payment(data) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -122,36 +146,12 @@ export class InlineCheckout {
         this.#handleCurrency(data)
         this.#handleCard(data)
         const response = await this.#checkout()
-        if (response) {
-          const process3ds = new ThreeDSHandler({
-            baseUrl: this.baseUrl,
-            apiKey: this.apiKeyTonder,
-            payload: response,
-          });
-          this.callBack(response);
-
-          const iframe = response?.next_action?.iframe_resources?.iframe
-
-          if (iframe) {
-            process3ds.loadIframe().then(() => {
-              //TODO: Check if this will be necessary on the frontend side
-              // after some the tests in production, since the 3DS process
-              // doesn't works properly on the sandbox environment
-              // setTimeout(() => {
-              //   process3ds.verifyTransactionStatus();
-              // }, 10000);
-              process3ds.verifyTransactionStatus();
-            }).catch((error) => {
-              console.log('Error loading iframe:', error)
-            })
-          } else {
-            const redirectUrl = process3ds.getRedirectUrl()
-            if (redirectUrl) {
-              process3ds.redirectToChallenge()
-            } else {
-              resolve(response);
-            }
-          }
+        this.process3ds.setPayload(response)
+        this.process3ds.saveCheckoutId(response.checkout_id)
+        this.callBack(response);
+        const payload = await this.handle3dsRedirect(response)
+        if (payload) {
+          resolve(response);
         }
       } catch (error) {
         reject(error);
@@ -229,11 +229,31 @@ export class InlineCheckout {
     });
   }
 
-  verify3dsTransaction() {
-    const result = this.process3ds.verifyTransactionStatus()
-    return result
+  async verify3dsTransaction () {
+    const result3ds = await this.process3ds.verifyTransactionStatus()
+    const resultCheckout = await this.resumeCheckout(result3ds)
+    this.process3ds.setPayload(resultCheckout)
+    if (resultCheckout?.is_route_finished && resultCheckout?.provider === 'tonder') {
+      return resultCheckout
+    }
+    return this.handle3dsRedirect(resultCheckout)
   }
 
+  async resumeCheckout(response) {
+    if (["Failed", "Declined", "Cancelled"].includes(response?.status)) {
+      const routerItems = {
+        // TODO: Replace this with reponse.checkout_id
+        checkout_id: this.process3ds.getCurrentCheckoutId(),
+      };
+      const routerResponse = await startCheckoutRouter(
+        this.baseUrl,
+        this.apiKeyTonder,
+        routerItems
+      );
+      return routerResponse
+    }
+    return response
+  }
 
   #addGlobalLoader() {
     let checkoutContainer = document.querySelector("#global-loader");

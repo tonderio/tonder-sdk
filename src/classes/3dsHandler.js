@@ -39,6 +39,18 @@ export class ThreeDSHandler {
     }
   }
 
+  saveCheckoutId(checkoutId) {
+    localStorage.setItem('checkout_id', JSON.stringify(checkoutId))
+  }
+
+  removeCheckoutId() {
+    localStorage.removeItem("checkout_id")
+  }
+
+  getCurrentCheckoutId() {
+    return JSON.parse(localStorage.getItem("checkout_id"));
+  }
+
   getUrlWithExpiration() {
     const item = JSON.parse(localStorage.getItem("verify_transaction_status"))
     if (!item) return
@@ -127,7 +139,6 @@ export class ThreeDSHandler {
 
   handleDeclinedTransaction(response) {
     this.removeVerifyTransactionUrl();
-    console.log('Transacción declinada');
     return response;
   }
 
@@ -191,6 +202,7 @@ export class ThreeDSHandler {
         });
         if (response.status !== 200) {
           console.error('La verificación de la transacción falló.');
+          this.removeVerifyTransactionUrl();
           return response
         }
 
@@ -202,5 +214,9 @@ export class ThreeDSHandler {
     } else {
       console.log('No verify_transaction_status_url found');
     }
+  }
+
+  setPayload = (payload) => {
+    this.payload = payload
   }
 }
