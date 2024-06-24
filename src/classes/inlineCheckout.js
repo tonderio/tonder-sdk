@@ -190,9 +190,11 @@ export class InlineCheckout {
     this.cartItems = items
   }
 
-  setCustomerEmail(email) {
-    this.email = email
+  configureCheckout(data) {
+    if ('customer' in data)
+      this.#handleCustomer(data['customer'])
   }
+  
   setCartTotal(total) {
     this.cartTotal = total
     this.#updatePayButton()
@@ -297,6 +299,7 @@ export class InlineCheckout {
         vault_id,
         vault_url,
       } = await this.#fetchMerchantData();
+      console.log("this.email : ", this.email )
       if (this.email && getCards) {
         const customerResponse = await this.getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
@@ -304,6 +307,7 @@ export class InlineCheckout {
           const saveCardCheckbox = document.getElementById('save-card-container');
 
           saveCardCheckbox.style.display = 'none';
+          console.log("mode: ", this.mode)
           if (this.mode !== 'production') {
             const cards = await getCustomerCards(this.baseUrl, auth_token);
             saveCardCheckbox.style.display = '';
