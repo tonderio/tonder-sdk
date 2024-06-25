@@ -149,6 +149,11 @@ const inlineCheckout = new InlineCheckout({
   styles: customStyles
 });
 
+// The configureCheckout function allows you to set initial information, 
+// such as the customer's email, which is used to retrieve a list of saved cards.
+inlineCheckout.configureCheckout({customer: {email: "example@email.com"}});
+
+
 inlineCheckout.injectCheckout();
 
 // To verify a 3ds transaction you can use the following method

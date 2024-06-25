@@ -104,14 +104,14 @@ const successUrl = "http://127.0.0.1:8080/success"
 // const apiKey = "8365683bdc33dd6d50fe2397188d79f1a6765852";
 
 const inlineCheckout = new InlineCheckout({
-  mode: 'development',
+  mode: 'stage',
   apiKey,
   returnUrl,
   successUrl,
   styles: customStyles,
   renderPaymentButton: true
 });
-inlineCheckout.setCustomerEmail(checkoutData.customer.email)
+inlineCheckout.configureCheckout({customer: checkoutData.customer})
 inlineCheckout.injectCheckout();
 //
 // ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
