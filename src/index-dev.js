@@ -97,21 +97,26 @@ const checkoutData = {
 };
 
 // localhost
-const apiKey = "4c87c36e697e65ddfe288be0afbe7967ea0ab865";
+const apiKey = "11e3d3c3e95e0eaabbcae61ebad34ee5f93c3d27";
 const returnUrl = "http://127.0.0.1:8080/"
 const successUrl = "http://127.0.0.1:8080/success"
 // stage
 // const apiKey = "8365683bdc33dd6d50fe2397188d79f1a6765852";
 
 const inlineCheckout = new InlineCheckout({
-  mode: 'development',
+  mode: 'stage',
   apiKey,
   returnUrl,
   successUrl,
   styles: customStyles
 });
-inlineCheckout.setCustomerEmail(checkoutData.customer.email)
+inlineCheckout.configureCheckout({customer: checkoutData.customer})
 inlineCheckout.injectCheckout();
+//
+// ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
+inlineCheckout.verify3dsTransaction().then(response => {
+  console.log('Verify 3ds response', response)
+})
 
 document.addEventListener('DOMContentLoaded', function() {
   const payButton = document.getElementById('pay-button');

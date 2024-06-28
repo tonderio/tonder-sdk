@@ -39,6 +39,18 @@ export class ThreeDSHandler {
     }
   }
 
+  saveCheckoutId(checkoutId) {
+    localStorage.setItem('checkout_id', JSON.stringify(checkoutId))
+  }
+
+  removeCheckoutId() {
+    localStorage.removeItem("checkout_id")
+  }
+
+  getCurrentCheckoutId() {
+    return JSON.parse(localStorage.getItem("checkout_id"));
+  }
+
   getUrlWithExpiration() {
     const item = JSON.parse(localStorage.getItem("verify_transaction_status"))
     if (!item) return
@@ -117,17 +129,17 @@ export class ThreeDSHandler {
     return parameters;
   }
 
+  // TODO: Remove this duplication
   handleSuccessTransaction(response) {
     this.removeVerifyTransactionUrl();
-    window.location = this.successUrl
-    console.log('Transacción autorizada exitosamente.');
+    // window.location = this.successUrl
+    console.log('Transacción autorizada');
     return response;
   }
 
   handleDeclinedTransaction(response) {
     this.removeVerifyTransactionUrl();
-    console.log('Transacción rechazada.');
-    throw new Error("Transacción rechazada.");
+    return response;
   }
 
   // TODO: the method below needs to be tested with a real 3DS challenge
@@ -159,15 +171,18 @@ export class ThreeDSHandler {
     await this.verifyTransactionStatus();
   }
 
+  // TODO: This method could be removed
   async handleTransactionResponse(response) {
     const response_json = await response.json();
 
-    if (response_json.status === "Pending") {
+    // Azul property
+    if (response_json.status === "Pending" && response_json.redirect_post_url) {
       return await this.handle3dsChallenge(response_json);
     } else if (["Success", "Authorized"].includes(response_json.status)) {
-      return this.handleSuccessTransaction(response);
+      return this.handleSuccessTransaction(response_json);
     } else {
-      return this.handleDeclinedTransaction(response);
+      this.handleDeclinedTransaction();
+      return response_json
     }
   }
 
@@ -185,19 +200,23 @@ export class ThreeDSHandler {
           },
           // body: JSON.stringify(data),
         });
-
         if (response.status !== 200) {
           console.error('La verificación de la transacción falló.');
-          return
+          this.removeVerifyTransactionUrl();
+          return response
         }
 
         return await this.handleTransactionResponse(response);
       } catch (error) {
         console.error('Error al verificar la transacción:', error);
-        return error;
+        this.removeVerifyTransactionUrl();
       }
     } else {
       console.log('No verify_transaction_status_url found');
     }
+  }
+
+  setPayload = (payload) => {
+    this.payload = payload
   }
 }

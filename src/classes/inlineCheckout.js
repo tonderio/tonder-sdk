@@ -24,6 +24,7 @@ import { ThreeDSHandler } from './3dsHandler.js';
 export class InlineCheckout {
   static injected = false;
   static cardsInjected = false
+  deletingCards = [];
   customer = {}
   items = []
   baseUrl = null
@@ -42,7 +43,6 @@ export class InlineCheckout {
     tonderPayButton: "tonderPayButton",
     msgError: "msgError",
     msgNotification: "msgNotification"
-
   }
 
   constructor({
@@ -64,6 +64,7 @@ export class InlineCheckout {
     this.baseUrl = this.#getBaseUrl()
 
     this.abortController = new AbortController()
+    this.abortRefreshCardsController = new AbortController()
     this.process3ds = new ThreeDSHandler(
       { apiKey: apiKey, baseUrl: this.baseUrl, successUrl: successUrl }
     )
@@ -76,7 +77,7 @@ export class InlineCheckout {
       'stage': 'https://stage.tonder.io',
       'development': 'http://localhost:8000',
     };
- 
+
     return modeUrls[this.mode] || modeUrls['stage']
   }
 
@@ -110,6 +111,31 @@ export class InlineCheckout {
     }
   }
 
+  async handle3dsRedirect(response) {
+    const iframe = response?.next_action?.iframe_resources?.iframe
+
+    if (iframe) {
+      this.process3ds.loadIframe().then(() => {
+        //TODO: Check if this will be necessary on the frontend side
+        // after some the tests in production, since the 3DS process
+        // doesn't works properly on the sandbox environment
+        // setTimeout(() => {
+        //   process3ds.verifyTransactionStatus();
+        // }, 10000);
+        this.process3ds.verifyTransactionStatus();
+      }).catch((error) => {
+        console.log('Error loading iframe:', error)
+      })
+    } else {
+      const redirectUrl = this.process3ds.getRedirectUrl()
+      if (redirectUrl) {
+        this.process3ds.redirectToChallenge()
+      } else {
+        return response;
+      }
+    }
+  }
+
   payment(data) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -120,36 +146,12 @@ export class InlineCheckout {
         this.#handleCurrency(data)
         this.#handleCard(data)
         const response = await this.#checkout()
-        if (response) {
-          const process3ds = new ThreeDSHandler({
-            baseUrl: this.baseUrl,
-            apiKey: this.apiKeyTonder,
-            payload: response,
-          });
-          this.callBack(response);
-
-          const iframe = response?.next_action?.iframe_resources?.iframe
-
-          if (iframe) {
-            process3ds.loadIframe().then(() => {
-              //TODO: Check if this will be necessary on the frontend side
-              // after some the tests in production, since the 3DS process
-              // doesn't works properly on the sandbox environment
-              // setTimeout(() => {
-              //   process3ds.verifyTransactionStatus();
-              // }, 10000);
-              process3ds.verifyTransactionStatus();
-            }).catch((error) => {
-              console.log('Error loading iframe:', error)
-            })
-          } else {
-            const redirectUrl = process3ds.getRedirectUrl()
-            if (redirectUrl) {
-              process3ds.redirectToChallenge()
-            } else {
-              resolve(response);
-            }
-          }
+        this.process3ds.setPayload(response)
+        this.process3ds.saveCheckoutId(response.checkout_id)
+        this.callBack(response);
+        const payload = await this.handle3dsRedirect(response)
+        if (payload) {
+          resolve(response);
         }
       } catch (error) {
         reject(error);
@@ -158,7 +160,6 @@ export class InlineCheckout {
   }
 
   #handleCustomer(customer) {
-    console.log('customer: ', customer)
     if (!customer) return
 
     this.firstName = customer?.firstName
@@ -186,15 +187,15 @@ export class InlineCheckout {
   }
 
   setCartItems(items) {
-    console.log('items: ', items)
     this.cartItems = items
   }
 
-  setCustomerEmail (email) {
-    this.email = email
+  configureCheckout(data) {
+    if ('customer' in data)
+      this.#handleCustomer(data['customer'])
   }
+  
   setCartTotal(total) {
-    console.log('total: ', total)
     this.cartTotal = total
     this.#updatePayButton()
   }
@@ -211,7 +212,6 @@ export class InlineCheckout {
 
   injectCheckout() {
     if (InlineCheckout.injected) return
-    this.process3ds.verifyTransactionStatus()
     const containerTonderCheckout = document.querySelector("#tonder-checkout");
     if (containerTonderCheckout) {
       this.#mount(containerTonderCheckout)
@@ -228,15 +228,40 @@ export class InlineCheckout {
       childList: true,
       subtree: true,
       attributeFilter: ['id']
-  });
+    });
   }
 
+  async verify3dsTransaction () {
+    const result3ds = await this.process3ds.verifyTransactionStatus()
+    const resultCheckout = await this.resumeCheckout(result3ds)
+    this.process3ds.setPayload(resultCheckout)
+    if (resultCheckout?.is_route_finished && resultCheckout?.provider === 'tonder') {
+      return resultCheckout
+    }
+    return this.handle3dsRedirect(resultCheckout)
+  }
+
+  async resumeCheckout(response) {
+    if (["Failed", "Declined", "Cancelled"].includes(response?.status)) {
+      const routerItems = {
+        // TODO: Replace this with reponse.checkout_id
+        checkout_id: this.process3ds.getCurrentCheckoutId(),
+      };
+      const routerResponse = await startCheckoutRouter(
+        this.baseUrl,
+        this.apiKeyTonder,
+        routerItems
+      );
+      return routerResponse
+    }
+    return response
+  }
 
   #addGlobalLoader() {
     let checkoutContainer = document.querySelector("#global-loader");
     if (checkoutContainer) {
-        checkoutContainer.innerHTML = cardTemplateSkeleton;
-        checkoutContainer.style.display = 'block';
+      checkoutContainer.innerHTML = cardTemplateSkeleton;
+      checkoutContainer.style.display = 'block';
     }
   }
 
@@ -247,7 +272,7 @@ export class InlineCheckout {
     }
   }
 
-  #mount(containerTonderCheckout){
+  #mount(containerTonderCheckout) {
     containerTonderCheckout.innerHTML = cardTemplate;
     this.#addGlobalLoader();
     this.#mountTonder();
@@ -269,20 +294,28 @@ export class InlineCheckout {
 
   async #mountTonder(getCards = true) {
     this.#mountPayButton()
-    try{    
+    try {
       const {
         vault_id,
         vault_url,
       } = await this.#fetchMerchantData();
-      if(this.email && getCards){
-        const customerResponse = await this.getCustomer({email: this.email});
-        if("auth_token" in customerResponse) {
+      console.log("this.email : ", this.email )
+      if (this.email && getCards) {
+        const customerResponse = await this.getCustomer({ email: this.email });
+        if ("auth_token" in customerResponse) {
           const { auth_token } = customerResponse
-          const cards = await getCustomerCards(this.baseUrl, auth_token);
+          const saveCardCheckbox = document.getElementById('save-card-container');
 
-          if("cards" in cards) {
-            const cardsMapped = cards.cards.map(mapCards)
-            this.#loadCardsList(cardsMapped, auth_token)
+          saveCardCheckbox.style.display = 'none';
+          console.log("mode: ", this.mode)
+          if (this.mode !== 'production') {
+            const cards = await getCustomerCards(this.baseUrl, auth_token);
+            saveCardCheckbox.style.display = '';
+
+            if ("cards" in cards) {
+              const cardsMapped = cards.cards.map(mapCards)
+              this.#loadCardsList(cardsMapped, auth_token)
+            }
           }
         }
       }
@@ -299,7 +332,7 @@ export class InlineCheckout {
       setTimeout(() => {
         this.#removeGlobalLoader()
       }, 800)
-    }catch(e){
+    } catch (e) {
       if (e && e.name !== 'AbortError') {
         this.#removeGlobalLoader()
         showError("No se pudieron cargar los datos del comercio.")
@@ -340,9 +373,9 @@ export class InlineCheckout {
     const total = Number(this.cartTotal)
 
     let cardTokens = null;
-    if(this.radioChecked === "new" || this.radioChecked === undefined){
+    if (this.radioChecked === "new" || this.radioChecked === undefined) {
       cardTokens = await this.#getCardTokens();
-    }else{
+    } else {
       cardTokens = {
         skyflow_id: this.radioChecked
       }
@@ -358,24 +391,24 @@ export class InlineCheckout {
       }
 
       const { id, auth_token } = await this.getCustomer(
-        this.customer, 
+        this.customer,
         this.abortController.signal
       )
-      if(auth_token && this.email){
+      if (auth_token && this.email) {
         const saveCard = document.getElementById("save-checkout-card");
-        if(saveCard && "checked" in saveCard && saveCard.checked){
+        if (saveCard && "checked" in saveCard && saveCard.checked) {
           await registerCard(this.baseUrl, auth_token, { skyflow_id: cardTokens.skyflow_id });
-                
+
           this.cardsInjected = false;
 
           const cards = await getCustomerCards(this.baseUrl, auth_token);
-          if("cards" in cards) {
+          if ("cards" in cards) {
             const cardsMapped = cards.cards.map((card) => mapCards(card))
             this.#loadCardsList(cardsMapped, auth_token)
           }
 
           showMessage("Tarjeta registrada con éxito", this.collectorIds.msgNotification);
-          
+
         }
       }
       var orderItems = {
@@ -389,7 +422,6 @@ export class InlineCheckout {
         is_oneclick: true,
         items: this.cartItems,
       };
-      console.log('orderItems: ', orderItems)
       const jsonResponseOrder = await createOrder(
         this.baseUrl,
         this.apiKeyTonder,
@@ -460,8 +492,8 @@ export class InlineCheckout {
     }
   };
 
-  #loadCardsList (cards, token) {
-    if(this.cardsInjected) return;
+  #loadCardsList(cards, token) {
+    if (this.cardsInjected) return;
     const injectInterval = setInterval(() => {
       const queryElement = document.querySelector(`#${this.collectorIds.cardsListContainer}`);
       if (queryElement && InlineCheckout.injected) {
@@ -473,7 +505,7 @@ export class InlineCheckout {
     }, 500);
   }
 
-  #mountRadioButtons (token) {
+  #mountRadioButtons(token) {
     const radioButtons = document.getElementsByName(`card_selected`);
     for (const radio of radioButtons) {
       radio.style.display = "block";
@@ -490,14 +522,14 @@ export class InlineCheckout {
     }
   }
 
-  async #handleRadioButtonClick (radio) {
-    if(radio.id === this.radioChecked ||  ( radio.id === "new" && this.radioChecked === undefined)) return;
+  async #handleRadioButtonClick(radio) {
+    if (radio.id === this.radioChecked || (radio.id === "new" && this.radioChecked === undefined)) return;
     const containerForm = document.querySelector(".container-form");
-    if(containerForm) {
+    if (containerForm) {
       containerForm.style.display = radio.id === "new" ? "block" : "none";
     }
-    if(radio.id === "new") {
-      if(this.radioChecked !== radio.id) {
+    if (radio.id === "new") {
+      if (this.radioChecked !== radio.id) {
         this.#addGlobalLoader()
         this.#mountTonder(false);
         InlineCheckout.injected = true;
@@ -508,32 +540,45 @@ export class InlineCheckout {
     this.radioChecked = radio.id;
   }
 
-  async #handleDeleteCardButtonClick (customerToken, button) {
+  async #handleDeleteCardButtonClick(customerToken, button) {
     const id = button.attributes.getNamedItem("id")
     const skyflow_id = id?.value?.split("_")?.[2]
-    if(skyflow_id) {
+    if (skyflow_id) {
       const cardClicked = document.querySelector(`#card_container-${skyflow_id}`);
-      if(cardClicked) {
+      if (cardClicked) {
         cardClicked.style.display = "none"
       }
-      await deleteCustomerCard(this.baseUrl, customerToken, skyflow_id)
-      this.cardsInjected = false
-      const cards = await getCustomerCards(this.baseUrl, customerToken)
-      if("cards" in cards) {
-        const cardsMapped = cards.cards.map(mapCards)
-        this.#loadCardsList(cardsMapped, customerToken)
+      try {
+        this.deletingCards.push(skyflow_id);
+        if (this.abortRefreshCardsController) {
+          this.abortRefreshCardsController.abort();
+          this.abortRefreshCardsController = new AbortController();
+        }
+        await deleteCustomerCard(this.baseUrl, customerToken, skyflow_id)
+      } catch {
+      } finally {
+        this.deletingCards = this.deletingCards.filter(id => id !== skyflow_id);
+        this.#refreshCardOnDelete(customerToken)
       }
     }
   }
-
-  #unmountForm () {
+  async #refreshCardOnDelete(customerToken) {
+    if (this.deletingCards.length > 0) return;
+    this.cardsInjected = false
+    const cards = await getCustomerCards(this.baseUrl, customerToken, "", this.abortRefreshCardsController.signal)
+    if ("cards" in cards) {
+      const cardsMapped = cards.cards.map(mapCards)
+      this.#loadCardsList(cardsMapped, customerToken)
+    }
+  }
+  #unmountForm() {
     InlineCheckout.injected = false
-    if(this.collectContainer) {
-      if("unmount" in this.collectContainer.elements.cardHolderNameElement) this.collectContainer.elements.cardHolderNameElement.unmount() 
-      if("unmount" in this.collectContainer.elements.cardNumberElement) this.collectContainer.elements.cardNumberElement.unmount()
-      if("unmount" in this.collectContainer.elements.expiryYearElement) this.collectContainer.elements.expiryYearElement.unmount()
-      if("unmount" in this.collectContainer.elements.expiryMonthElement) this.collectContainer.elements.expiryMonthElement.unmount()
-      if("unmount" in this.collectContainer.elements.cvvElement) this.collectContainer.elements.cvvElement.unmount()
+    if (this.collectContainer) {
+      if ("unmount" in this.collectContainer.elements.cardHolderNameElement) this.collectContainer.elements.cardHolderNameElement.unmount()
+      if ("unmount" in this.collectContainer.elements.cardNumberElement) this.collectContainer.elements.cardNumberElement.unmount()
+      if ("unmount" in this.collectContainer.elements.expiryYearElement) this.collectContainer.elements.expiryYearElement.unmount()
+      if ("unmount" in this.collectContainer.elements.expiryMonthElement) this.collectContainer.elements.expiryMonthElement.unmount()
+      if ("unmount" in this.collectContainer.elements.cvvElement) this.collectContainer.elements.cvvElement.unmount()
     }
   }
 }
