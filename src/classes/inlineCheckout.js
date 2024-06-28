@@ -292,7 +292,7 @@ export class InlineCheckout {
     return await customerRegister(this.baseUrl, this.apiKeyTonder, customer, signal);
   }
 
-  async #mountTonder(getCards = true) {
+  async #mountTonder(getCards = false) {
     this.#mountPayButton()
     try {
       const {
@@ -304,18 +304,11 @@ export class InlineCheckout {
         const customerResponse = await this.getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
           const { auth_token } = customerResponse
-          const saveCardCheckbox = document.getElementById('save-card-container');
+          const cards = await getCustomerCards(this.baseUrl, auth_token);
 
-          saveCardCheckbox.style.display = 'none';
-          console.log("mode: ", this.mode)
-          if (this.mode !== 'production') {
-            const cards = await getCustomerCards(this.baseUrl, auth_token);
-            saveCardCheckbox.style.display = '';
-
-            if ("cards" in cards) {
-              const cardsMapped = cards.cards.map(mapCards)
-              this.#loadCardsList(cardsMapped, auth_token)
-            }
+          if ("cards" in cards) {
+            const cardsMapped = cards.cards.map(mapCards)
+            this.#loadCardsList(cardsMapped, auth_token)
           }
         }
       }

@@ -19,12 +19,6 @@ export const cardTemplate = `
       <div id="collectExpirationYear" class="expiration-year"></div>
       <div id="collectCvv" class="empty-div"></div>
     </div>
-    <div class="checkbox" id="save-card-container">
-      <input id="save-checkout-card" type="checkbox">
-      <label for="save-checkout-card">
-        Guardar tarjeta para futuros pagos
-      </label>
-    </div>
     <div id="msgError"></div>
     <div id="msgNotification"></div>
   </div>
