@@ -147,7 +147,6 @@ export class InlineCheckout {
         this.#handleCard(data)
         const response = await this.#checkout()
         this.process3ds.setPayload(response)
-        this.process3ds.saveCheckoutId(response.checkout_id)
         this.callBack(response);
         const payload = await this.handle3dsRedirect(response)
         if (payload) {
@@ -245,8 +244,7 @@ export class InlineCheckout {
     if (["Failed", "Declined", "Cancelled"].includes(response?.status)) {
       globalLoader.show()
       const routerItems = {
-        // TODO: Replace this with reponse.checkout_id
-        checkout_id: this.process3ds.getCurrentCheckoutId(),
+        checkout_id: response.checkout?.id,
       };
       const routerResponse = await startCheckoutRouter(
         this.baseUrl,
