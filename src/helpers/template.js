@@ -19,12 +19,6 @@ export const cardTemplate = (data) => `
       <div id="collectExpirationYear" class="expiration-year"></div>
       <div id="collectCvv" class="empty-div"></div>
     </div>
-    <div class="checkbox" id="save-card-container">
-      <input id="save-checkout-card" type="checkbox">
-      <label for="save-checkout-card">
-        Guardar tarjeta para pagos futuros
-      </label>
-    </div>
     <div id="msgError"></div>
     <div id="msgNotification"></div>
   </div>
@@ -487,7 +481,7 @@ export const cardItemsTemplate = (cards) => {
 }
 
 export const apmItemsTemplate = (apms) => {
-  
+
   const apmItemsHTML = apms.reduce((total, apm) => {
     const apm_data = getAPMType(apm.payment_method);
     return `${total}

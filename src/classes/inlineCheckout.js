@@ -21,6 +21,7 @@ import {
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
 import { ThreeDSHandler } from './3dsHandler.js';
+import { globalLoader } from './globalLoader.js';
 
 
 export class InlineCheckout {
@@ -152,7 +153,6 @@ export class InlineCheckout {
         this.#handleCard(data)
         const response = await this.#checkout()
         this.process3ds.setPayload(response)
-        this.process3ds.saveCheckoutId(response.checkout_id)
         this.callBack(response);
         const payload = await this.handle3dsRedirect(response)
         if (payload) {
@@ -248,38 +248,24 @@ export class InlineCheckout {
 
   async resumeCheckout(response) {
     if (["Failed", "Declined", "Cancelled"].includes(response?.status)) {
+      globalLoader.show()
       const routerItems = {
-        // TODO: Replace this with reponse.checkout_id
-        checkout_id: this.process3ds.getCurrentCheckoutId(),
+        checkout_id: response.checkout?.id,
       };
       const routerResponse = await startCheckoutRouter(
         this.baseUrl,
         this.apiKeyTonder,
         routerItems
       );
+      globalLoader.remove()
       return routerResponse
     }
     return response
   }
 
-  #addGlobalLoader() {
-    let checkoutContainer = document.querySelector("#global-loader");
-    if (checkoutContainer) {
-      checkoutContainer.innerHTML = cardTemplateSkeleton;
-      checkoutContainer.style.display = 'block';
-    }
-  }
-
-  #removeGlobalLoader() {
-    const loader = document.querySelector('#global-loader');
-    if (loader) {
-      loader.style.display = 'none';
-    }
-  }
-
   #mount(containerTonderCheckout) {
     containerTonderCheckout.innerHTML = cardTemplate({renderPaymentButton: this.renderPaymentButton, customStyles: this.customStyles});
-    this.#addGlobalLoader();
+    globalLoader.show()
     this.#mountTonder();
     InlineCheckout.injected = true;
   }
@@ -308,7 +294,8 @@ export class InlineCheckout {
       console.warn("Error getting APMS")
     }
   }
-  async #mountTonder(getCards = true) {
+
+  async #mountTonder(getCards = false) {
     this.#mountPayButton()
     try {
       const {
@@ -319,22 +306,15 @@ export class InlineCheckout {
         const customerResponse = await this.getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
           const { auth_token } = customerResponse
-          const saveCardCheckbox = document.getElementById('save-card-container');
+          const cards = await getCustomerCards(this.baseUrl, auth_token);
 
-          saveCardCheckbox.style.display = 'none';
-          if (this.mode !== 'production') {
-            const cards = await getCustomerCards(this.baseUrl, auth_token);
-            saveCardCheckbox.style.display = '';
-
-            if ("cards" in cards) {
-              const cardsMapped = cards.cards.map(mapCards)
-              this.#loadCardsList(cardsMapped, auth_token)
-            }
+          if ("cards" in cards) {
+            const cardsMapped = cards.cards.map(mapCards)
+            this.#loadCardsList(cardsMapped, auth_token)
           }
-
-
         }
       }
+      
       await this.#mountAPMs();
 
       this.collectContainer = await initSkyflow(
@@ -347,11 +327,11 @@ export class InlineCheckout {
         this.collectorIds
       );
       setTimeout(() => {
-        this.#removeGlobalLoader()
+        globalLoader.remove()
       }, 800)
     } catch (e) {
       if (e && e.name !== 'AbortError') {
-        this.#removeGlobalLoader()
+        globalLoader.remove()
         showError("No se pudieron cargar los datos del comercio.")
       }
     }
@@ -488,7 +468,7 @@ export class InlineCheckout {
         metadata: this.metadata,
         browser_info: getBrowserInfo(),
         currency: this.currency,
-        ...( !!selected_apm 
+        ...( !!selected_apm
           ? {payment_method: selected_apm.payment_method}
           : {card: cardTokens}
         )
@@ -537,7 +517,7 @@ export class InlineCheckout {
           .filter((apm) =>
             clearSpace(apm.category.toLowerCase()) !== 'cards' && apm.status.toLowerCase() === 'active')
           .sort((a, b) => a.priority - b.priority);
-  
+
         queryElement.innerHTML = apmItemsTemplate(filteredAndSortedApms);
         clearInterval(injectInterval);
         this.#mountRadioButtons();
@@ -545,7 +525,7 @@ export class InlineCheckout {
       }
     }, 500);
   }
-  
+
   #mountRadioButtons(token = '') {
     const radioButtons = document.getElementsByName(`card_selected`);
     for (const radio of radioButtons) {
@@ -571,7 +551,7 @@ export class InlineCheckout {
     }
     if (radio.id === "new") {
       if (this.radioChecked !== radio.id) {
-        this.#addGlobalLoader()
+        globalLoader.show()
         this.#mountTonder(false);
         InlineCheckout.injected = true;
       }
