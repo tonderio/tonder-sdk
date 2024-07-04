@@ -1,3 +1,5 @@
+import { PAYMENT_METHOD } from "./constants";
+
 export async function addScripts() {
   try {
     const skyflowScript = document.createElement("script");
@@ -101,16 +103,245 @@ export const clearSpace = (text) => {
   return text.trim().replace(/\s+/g, '');
 }
 export const getAPMType = (scheme_data) => {
-  const scheme = clearSpace(scheme_data.toLowerCase())
-  const apms_images = {
-    codi: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIgAAAB2CAMAAAAk/CsJAAAAY1BMVEVHcEwRERELCwsFBQULCwsKCgoLCwsLCwsLCwsKCgoMDAz///+enqQHBwcDAwPv7+8wLy+mpqs+Pj74+Pji4uIeHR1RUFFlZGV+fn7R0dKUlJjDw8S0s7SCgYNxcXF5eHqJiIucNEs0AAAACXRSTlMA/b0WnkLfZsz7rGysAAAE+ElEQVRo3u2b2ZKqMBCGjTqOBDpAgCCb+P5PeYCsSHAGppRUHf4rCzB8dHpJozkcDJ2+j9cLwh8QulyP36eDXV9HjD0Pf0b9fdD5awbj0/K84wTljLdQZ5fzCON0xZvpaLjK6YI31EWTHPGmOm7rH0YsCz/5wpuLx851e5Bhcr4xdsMkRxdAOpOcsBM6uTEzGH9vHrtCZzdcpHeSixsglwNyAwQdsCPaQXaQHWQH2UH+DxDvw3o3CPCbeNgD2A4EANG8KcsgKMuWRYhsAkI8+oiDkeImmrXLu0BI1gZW3TPyQRAS3eJgTm0GnwJB+WhCBpkHcgSfAIGoVLcMylvOaCfWOW2gaMoIPgDC1P0eFBHCI9gDAhnThOztICCnJb5Pw5VkjaS8w3tBiOCIWzTjPzdBcnsrCMn5E5d0NnF5VLpsn2veBAKUczyyF/kcska4bNkweA9IJqz+w7exSnZxi98BAjwqmp8v1Gk3h1UgBBBCc4UUGB+bqJqnNHFZnd2yxSBAaB0mg9LSVjEQdxBl7CKVKqqGgvmNTOWamC4FwU3qayUFI9YMElP5+Dj0TYUV1d+IdMpny0BInvpPqp7yNH/KRt3tCaRToVAMi0SLQHDsW5SPSJg5rhXE90s57k2VHbQEBFU2Dv9mguAhZO7kJYhfoVGgB0G0JGqwnSM1L8LDtBsGsYP4qcxq5YjjVyAk0OPUOWNtwT/TaZF54J9A/ILIAshYRBal+Fw9TdTV9P4RcJ74fmxMDMF8EcJgAnIjnbysTeQodzUZS4uejJcGg64XdaLKK+B7EYaDpWtGpiByLmTk8xR2H5T9HgQe1hhBTOePnrQYQBJfZ4sxSJdnc2GUoB+I8LPR70FIagmRoZ4LcQ+qB4P0D6yqxxikG6kRj5StAolG3j6tPiKihgxVmKabgKhr+wuWgwSWEDEkI2qYmdS8dgoiH6omK0DEF3x7OSbUN0GEE4R4BkSYpD+/GATzwWt75ccyooagKWWItjADUionWQyCEkvI6BWISlOmRXjOtYBAruZuLQizg8haWInKIQ1E7SAeWw2CX4LILF6ooi4ONHYQzP5skcYKkhkOwiWDmdinRmSSaE34cpAUbA28zDFGg60D1OasNU/yaA1IobPhRPRpZpS/VnaQTJ9dHr7C0R9g66emIK8sIn27XZVZRSLxo1/5SP3KR6gx1IqiJ/yvyKZFT9wr0WvyQlfIZxCIREhV66qveo7CbGiBFqBtHT4ZxJpHVPKj3joQIkcPdWMCbTce6Mwaxmbw8lJtggCJ1LqXV4sVIB5Si8+Q4X7hlz0SEYR6XRoWVTpeDYpzgycXiW7NwFsL4lGjX0uLQt6wCySg1pU6ml88h5m3HkRP71j9KPHM8RmQVPYPq0Aw2En6vp9Mep6EzbcTlXL4dRbpMkYxHbVGowqs/AjmQMKH7iFWgmBMbk/jpiqGzP48qbK5Bistzfe8ay0y9HKhrbHvZ+6uDkczvW9YdmdG7eN6kG4WEL0HdV3mEYbnMxFjdHLY+MFk+nbxb683Z15FdePAD78MbfwL1t9B9l85d5AdZAfZQXaQHWQH2UFcAHHmr8aO/Pn66s7f0d34g753dmfLghObODx0cmdbiws7n8TeJ1e2PrmzGWz7CD67tmHQnS2Uh9OGNrmeHNhmi5+32faxs0kUH617oD9uFetW7I9uTvemm9P/AYgTfGdO2ae7AAAAAElFTkSuQmCC",
-    conveniencestores:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIgAAAB2CAMAAAAk/CsJAAAAPFBMVEVHcEz2+Pr3+Pv2+Pry9Pf3+Pr+///5+f72+Ppsd4iutb+OlqTg5Om5wMnS1t18hpWFj52ao690f4/CyM8eEYekAAAACHRSTlMA2WC/+poULWHxxG0AAAIlSURBVGje7dvbkoMgDABQEFQEBK3//6+tl92GajumIyUPyRO0nfVIwuq0RggQbaWk1OYHoaVUVSuOo5LmxyGrA0b7c8YxpTaFok4YjTLFQjWl0/KfnmfRKlM0VPH6eKmTyhSPde/I4g4tiSzIuiSKAuRRr40hEQ2NzMy5qWlAaholMheJpALRNCBaGCLBEIYwhCEMYQhDGHIqgovdyYgu5IOMHSrGXBDbIcPmgfgOHT4LxOIhNgtkrVM7h1uGbhl3H16OOSAeFOB6mGkZr5BlOIFliMjcCGRmerB9wisk7Kw2A2QAp+ieB4eQdezAAg7XQ5I/DAsAQuJu7C+H9CAzHpx5AllXSu9SeSUEZibA/EOIBbWDzI1AZSbC1Zn2kAmuAi43ApUZuz/xBJIs1YjKzVkI3LDJpkkgGhZPQF35zkKSYw/vICapC6i6DAITrrvPkG3baFS14lakB/Wy5Wk6mMCPuSzFepuXJNy6NxP/NwnPydXFqrdjuO0SuxwPTh7vjHCyvRMv/4f2xd0I2GdXXvTGbxznb1sRN0bfQAxDGMIQhjCEIQxhCEMYwpCCkIh3ZPl60zg8xGWB9HhInwWiB6zj/JebuF8nPFIy+EwQo3tEnbge9bAO/6bHEIYwhCEMYQhDikPIPGpM5OFrSedxdCKQmk7LQksD0tBpa6HT6ENhA0tazWBk2uPoNAyKpmwLZUOvqZROm22R/uclLS3dVuzSzel3IXr3/Lo5GXoAAAAASUVORK5CYII=",
-    oxxo: "data:image/png;base64,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",
-    paypal: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIgAAAB2CAMAAAAk/CsJAAAAclBMVEVHcEzp6+7v7+/w8PDv7+/v7+/v7+/z8/Pv7+/x8fHy8vLv7+8BLIsAH2oBm+EAK4kCnOIBmeACJXXb3ueDx+gPO5FNaKkkTJsChc0zq+QFXKfR5O2s1+sDbrlgvObFy91ierK2v9YUoeKdqsttg7eFl8EApSqtAAAAC3RSTlMA+8xpuJrgFNdHJyLf5rQAAARHSURBVGje7Ztnk6MwDIZD+i6cZYcW0iDt///Fc8GFPciNczH2zKFdymY/8ER6JcsePJsZ9r1YztdRPIJF6/ly8T3rt8U6HtnWix6Mr23swbZfPzlWsSdbdTA289ibLTeGSNexR1tr0c5jr7b0ro8fOvmKvZvIna1/kDmvY3EAtvCvVOWSTRyEbcKIDIvNKgyQ1WwZBsgyDK0ytUZhgESzOBCbQCaQCWQC+b9B0l6LxgZJmzzps7wsmnudjgfyaB8MAAn9AXrX/tL7vGzqkUCiUj1YGbR/sE8heaSjgKSliWCwcBdxK69jgNSGQkCE5w+SvB4B5MoBxCEjAhpGfF5G7kHukCgCFSQJJE700rgHeQyDSBp4Izj2IIX5ZKkRGSrll+TuHCQHqQmQX9/wiCJrXIOkILPFOINGk1a6BrlCJ08UVTI2yFM+G35W1m6Zy12DNB0Q2PUY/5drj0RFp6j/6jcKUzgGoSONTNQXINQOJ8cgucxXhrMbBjnjzCmIHPL+BrLbIzsSW5CrGvCYY16D3E4OQZ5aH/QyHJmcIIQuDkGazmj7QiIMBB/dgZSdrmw4MpzDRiW2IDkYXdCwRA4II0zIxRlI2hlYdi+kSh2CUOUM5N6qVMwedsMOYRguQZ6gmiAYlghPGbcgBci+9AUIqyHMIcQdSFQazdkQyI6mLuYkyJlYUzN7AQY4qCtoxrDwnFyB1J3pd69W8z0vIQSxi7OCVutmHXqzd3cgrIJQDiaTylmJv+t2FXpGmt2BuYOBMJFglDkDeZoTXOj2ZEl5JqJ8YCRAsLvRt0j0+gOtZ+VB2Pl83u+JLB4id1lkImcgJeipHCR78VQRCHGL2pJKzwS5a4yiztDLR3rCv39bNrAIS3tr5RA7kFpN55hW9koPLF2ZC3i6cP/Q+5td9zyzSxqQaQM8MlgEhoMQAUKw0IhdYCxBHuZMN99zCiQP0nK1n15ihyCFmP63IMQEaVMGS/VmkUOQqDRmEklJOIJSKpIyoUdlObuyBBFDnlxYPYhnIuUX7hR2umXH2ClInZsT/jOvFbzvIIKIyhXfqip7ay3cBuRqlFWavQqEUdwu1LLsdDzG75kNyB1Ar5WBrOjcJ9W7z38L5GFwJDnrfXjVQJbj7L+DFOY6WYmIHuLwaVSQ3FyhOsiwMJDbcUyQVK9f0kNMbkUBIeOCXOUCN6+se9V+INuB9l9Bnuaabi6HPMwqahWPCdKo5UQGIqp5O/peRgfRy6hENyNW85dPiPVRaGtkxvAychwVpGOZ6pLZNfYHcsGqXUef0OrbIJUaafBHtPo2CDZnMZk/kKPqy5hPTh5BsFYqqo4eQ3PKtH3kVbbp/ZEJZAKZQCaQj4ME86rxOgyQbShvgS9DeS9+Fc6Whe8wQDbhbGsJZ6NPCC6Zh7UZLJjtcd6DM9dbOb3ukNsamzk3Huuruak0nG22AW08Dmcrtu/N6b8B32vIQmtZArEAAAAASUVORK5CYII=",
-    spei: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIgAAAB2CAMAAAAk/CsJAAAAV1BMVEVHcEwzL4MzL4QyL4QzL4QyLoUvKoI0MIT////+/v9APItoZaP19fnv7/VOS5SqqMybmcO2tdM4NIfp6fLc2+qDgLRzcKr7+/1HQ5DLyuBcWZzDwtuNi7pG3PkaAAAAE3RSTlMAzqhn4DcU///////////////+3upoiAAAA8FJREFUaN7tm9uWqyoQRaMxISAqAoKo//+dB1S8m63JScsD66lzM7OLqlWFI9xuEz3uYRBR8AeiURDeH7dt3SPwx4ruGxiPAFygYBWVEFykcIbxDMBlCp+TZYnAhYrG5QnApQovz48FyQNcrocLC9NWcetjwAHd3QhIG5IncEJPN1bGrE3oBkjoDkjgBkhwo26A0BtwRB7Eg3gQD+JBPIgH8SAexIN4EA/iQX4PgqqmZomEUGLGM1H2m9NipThF/WtlvKOqvd7kwXEQFOcMvgZBrIqyfV6+FoKY1UXafojgHSkEQMz6B8kZEESmGK2SDJkXXlvCKjafyl474gYEW/ITIDSXcHU1SXZBIGTpL0AosQsA5YRIij0Q/UZe/v8gtLLrktRZNuYKVHQX5AWbAyBJcg6E9F+NBaIUVcqSJNUIIrOmaQgfc7dGI4hM2EyqB1HmysdBkOqvl3dlWTGbk8UI0iaFTmo8/NfVCJKnc5mCMyB1WsMTIKX94rr3B6JTRZddwpolCED58IQYQbKNO2ItSFkqeAIksUvReQcoCWmaQog4XYGAYijhQyBAsBMgfKgZY6kma8ZlW4KIwWeOgeiKPJ4j+cREJKsbbeK7IGRjaWBeoqm6TMuVIvrPVB33EZHMKzPheVHRLRAa861kZflMfTqhricd7zV0FpLOOTEn6QwEN0KIIhvrd1q+i0+Lj7svqtcWD3kMwGeG9jmI9ge+arO6iOhnFv8FiLZ5wvEyKjof0R5HBX4DolFKkS9mAZijbRDJ340BMP56VCzjTCWTdGExGvPXSmKedXUxgHAyVYO6AiuEeRstPppZdVwmlSGLsWpqW5zElvZ7QytriQ1DzM4MRgiVXatq02WoZtiMPlJZuxq/9C1IqkzTNDyHQWrFOWcJzu3l6OBaZOWsU72PSAdCTjQ9PHolWPj4FyBdRAQ+MQZw2/KG69XrHPksIma0OQ5Cho1C0/ceua6atyCMzKWd0EREkvrUhFbhcR7Um6eyYEM/SY+BbM2sOiKwdQL4yRggeZ6pwWHXo+IJkFSd307EHE4a79RYwVcROb/BEnjLqXWj/+OIaJJVx4NsvuX8m4ho/maKYobXGIF/gZBkR2ZfU+b20bkxgKa6yTCsmxpmZlJEdlfcKys36N/dlqD2tkTs7xh5EA/iQTyIB/EgHsSDeBAP4kE8yO9Eb5EbIIE7vwJ35nfxzhxZeLgB8nTnWIs7B32cOfrkQkgebh2Pu3xxAieOcgIQTQ5zPi9cneDp4jFbhw4eu3MU++rD6f8BmTHWoxh/0OYAAAAASUVORK5CYII="
-  }
-  const default_image = "";
-  return apms_images[scheme] || default_image;
+  const scheme = clearSpace(scheme_data.toUpperCase())
+  
+  const PAYMENT_METHODS_CATALOG = {
+    [PAYMENT_METHOD.SORIANA]: {
+      label: "Soriana",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/soriana.png",
+    },
+    [PAYMENT_METHOD.OXXO]: {
+      label: "Oxxo",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/oxxo.png",
+    },
+    [PAYMENT_METHOD.CODI]: {
+      label: "CoDi",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/codi.png",
+    },
+    [PAYMENT_METHOD.SPEI]: {
+      label: "SPEI",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/spei.png",
+    },
+    [PAYMENT_METHOD.PAYPAL]: {
+      label: "Paypal",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/paypal.png",
+    },
+    [PAYMENT_METHOD.COMERCIALMEXICANA]: {
+      label: "Comercial Mexicana",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/comercial_exicana.png",
+    },
+    [PAYMENT_METHOD.BANCOMER]: {
+      label: "Bancomer",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/bancomer.png",
+    },
+    [PAYMENT_METHOD.WALMART]: {
+      label: "Walmart",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/walmart.png",
+    },
+    [PAYMENT_METHOD.BODEGA]: {
+      label: "Bodega Aurrera",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/bodega_aurrera.png",
+    },
+    [PAYMENT_METHOD.SAMSCLUB]: {
+      label: "Sam´s Club",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/sams_club.png",
+    },
+    [PAYMENT_METHOD.SUPERAMA]: {
+      label: "Superama",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/superama.png",
+    },
+    [PAYMENT_METHOD.CALIMAX]: {
+      label: "Calimax",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/calimax.png",
+    },
+    [PAYMENT_METHOD.EXTRA]: {
+      label: "Tiendas Extra",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/tiendas_extra.png",
+    },
+    [PAYMENT_METHOD.CIRCULOK]: {
+      label: "Círculo K",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/circulo_k.png",
+    },
+    [PAYMENT_METHOD.SEVEN11]: {
+      label: "7 Eleven",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/7_eleven.png",
+    },
+    [PAYMENT_METHOD.TELECOMM]: {
+      label: "Telecomm",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/telecomm.png",
+    },
+    [PAYMENT_METHOD.BANORTE]: {
+      label: "Banorte",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/banorte.png",
+    },
+    [PAYMENT_METHOD.BENAVIDES]: {
+      label: "Farmacias Benavides",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/farmacias_benavides.png",
+    },
+    [PAYMENT_METHOD.DELAHORRO]: {
+      label: "Farmacias del Ahorro",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/farmacias_ahorro.png",
+    },
+    [PAYMENT_METHOD.ELASTURIANO]: {
+      label: "El Asturiano",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/asturiano.png",
+    },
+    [PAYMENT_METHOD.WALDOS]: {
+      label: "Waldos",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/waldos.png",
+    },
+    [PAYMENT_METHOD.ALSUPER]: {
+      label: "Alsuper",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/al_super.png",
+    },
+    [PAYMENT_METHOD.KIOSKO]: {
+      label: "Kiosko",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/kiosko.png",
+    },
+    [PAYMENT_METHOD.STAMARIA]: {
+      label: "Farmacias Santa María",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/farmacias_santa_maria.png",
+    },
+    [PAYMENT_METHOD.LAMASBARATA]: {
+      label: "Farmacias la más barata",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/farmacias_barata.png",
+    },
+    [PAYMENT_METHOD.FARMROMA]: {
+      label: "Farmacias Roma",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/farmacias_roma.png",
+    },
+    [PAYMENT_METHOD.FARMUNION]: {
+      label: "Pago en Farmacias Unión",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/farmacias_union.png",
+    },
+    [PAYMENT_METHOD.FARMATODO]: {
+      label: "Pago en Farmacias Farmatodo",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/farmacias_farmatodo.png	",
+    },
+    [PAYMENT_METHOD.SFDEASIS]: {
+      label: "Pago en Farmacias San Francisco de Asís",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/farmacias_san_francisco.png",
+    },
+    [PAYMENT_METHOD.FARM911]: {
+      label: "Farmacias 911",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.FARMECONOMICAS]: {
+      label: "Farmacias Economicas",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.FARMMEDICITY]: {
+      label: "Farmacias Medicity",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.RIANXEIRA]: {
+      label: "Rianxeira",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.WESTERNUNION]: {
+      label: "Western Union",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.ZONAPAGO]: {
+      label: "Zona Pago",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.CAJALOSANDES]: {
+      label: "Caja Los Andes",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.CAJAPAITA]: {
+      label: "Caja Paita",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.CAJASANTA]: {
+      label: "Caja Santa",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.CAJASULLANA]: {
+      label: "Caja Sullana",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.CAJATRUJILLO]: {
+      label: "Caja Trujillo",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.EDPYME]: {
+      label: "Edpyme",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.KASNET]: {
+      label: "KasNet",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.NORANDINO]: {
+      label: "Norandino",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.QAPAQ]: {
+      label: "Qapaq",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.RAIZ]: {
+      label: "Raiz",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.PAYSER]: {
+      label: "Paysera",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.WUNION]: {
+      label: "Western Union",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.BANCOCONTINENTAL]: {
+      label: "Banco Continental",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.GMONEY]: {
+      label: "Go money",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.GOPAY]: {
+      label: "Go pay",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.WU]: {
+      label: "Western Union",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.PUNTOSHEY]: {
+      label: "Puntoshey",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.AMPM]: {
+      label: "Ampm",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.JUMBOMARKET]: {
+      label: "Jumbomarket",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.SMELPUEBLO]: {
+      label: "Smelpueblo",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.BAM]: {
+      label: "Bam",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.REFACIL]: {
+      label: "Refacil",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+    [PAYMENT_METHOD.ACYVALORES]: {
+      label: "Acyvalores",
+      icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    },
+  };
+  
+  const default_image = "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png";
+  return PAYMENT_METHODS_CATALOG[scheme] || default_image;
 }
 
 

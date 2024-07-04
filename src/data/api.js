@@ -172,15 +172,14 @@ export async function getCustomerCards(baseUrlTonder, customerToken, query = "",
   }
 }
 
-export async function getCustomerAPMs(baseUrlTonder, customerToken, query = "", signal) {
+export async function getCustomerAPMs(baseUrlTonder, apiKeyTonder, query = "", signal) {
   try {
     const response = await fetch(
-      // `${baseUrlTonder}/api/v1/cards/${query}`,
-      'http://demo1106857.mockable.io/api/v1/payment_methods', // TODO: CHANGE WITH REAL API
+      `${baseUrlTonder}/api/v1/payment_methods${query}`,
       {
       method: 'GET',
       headers: {
-        'Authorization': `Token ${customerToken}`,
+        Authorization: `Token ${apiKeyTonder}`,
         'Content-Type': 'application/json'
       },
       signal

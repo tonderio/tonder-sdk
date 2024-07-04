@@ -186,6 +186,8 @@ export const cardTemplate = (data) => `
   flex-direction: column;
   padding: ;
   gap: 33% 20px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 .pay-new-card {
   display: flex;
@@ -487,12 +489,17 @@ export const cardItemsTemplate = (cards) => {
 export const apmItemsTemplate = (apms) => {
   
   const apmItemsHTML = apms.reduce((total, apm) => {
+    const apm_data = getAPMType(apm.payment_method);
     return `${total}
-    <div class="apm-item" id="card_container-${apm.apm}">
-        <input id="${apm.apm}" class="card_selected" name="card_selected" type="radio"/>
-        <label class="apm-item-label" for="${apm.apm}">
-          <img class="apm-image" src="${getAPMType(apm.apm)}" />
-          <div class="apm-name">${apm.name}</div>
+    <div class="apm-item" id="card_container-${apm.pk}">
+        <input id="${apm.pk}" class="card_selected" name="card_selected" type="radio"/>
+        <label class="apm-item-label" for="${apm.pk}">
+          
+          <div class="apm-image">
+            <div class="apm-image-border"></div>
+            <img src="${apm_data.icon}" />
+          </div>
+          <div class="apm-name">${apm_data.label}</div>
         </label>
     </div>`
   }, ``);
@@ -527,13 +534,26 @@ export const apmItemsTemplate = (apms) => {
       .apm-item .apm-name {
         font-size: 16px;
       }
-
       .apm-image {
+        width: 30px;
+        height: 30px;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .apm-image img {
         width: auto;
         height: 30px;
-        text-align: left;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
+      }
+      .apm-image-border{
+        position: absolute;
+        border: 1px solid #bababa36;
+        border-radius: 4px;
+        pointer-events: none;
+        box-sizing: border-box;
+        width: 100%;
+        height: 97%;
       }
 
       .card_selected {
