@@ -1,5 +1,4 @@
 import { cardItemsTemplate, cardTemplate } from '../helpers/template.js'
-import { cardTemplateSkeleton } from '../helpers/template-skeleton.js'
 import {
   getBusiness,
   customerRegister,
@@ -19,6 +18,7 @@ import {
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
 import { ThreeDSHandler } from './3dsHandler.js';
+import { globalLoader } from './globalLoader.js';
 
 
 export class InlineCheckout {
@@ -147,7 +147,6 @@ export class InlineCheckout {
         this.#handleCard(data)
         const response = await this.#checkout()
         this.process3ds.setPayload(response)
-        this.process3ds.saveCheckoutId(response.checkout_id)
         this.callBack(response);
         const payload = await this.handle3dsRedirect(response)
         if (payload) {
@@ -243,38 +242,29 @@ export class InlineCheckout {
 
   async resumeCheckout(response) {
     if (["Failed", "Declined", "Cancelled"].includes(response?.status)) {
+      globalLoader.show()
       const routerItems = {
-        // TODO: Replace this with reponse.checkout_id
-        checkout_id: this.process3ds.getCurrentCheckoutId(),
+        checkout_id: response.checkout?.id,
       };
-      const routerResponse = await startCheckoutRouter(
-        this.baseUrl,
-        this.apiKeyTonder,
-        routerItems
-      );
-      return routerResponse
+      try {
+        const routerResponse = await startCheckoutRouter(
+          this.baseUrl,
+          this.apiKeyTonder,
+          routerItems
+        );
+        return routerResponse
+      } catch (error) {
+        throw error
+      } finally {
+        globalLoader.remove()
+      }
     }
     return response
   }
 
-  #addGlobalLoader() {
-    let checkoutContainer = document.querySelector("#global-loader");
-    if (checkoutContainer) {
-      checkoutContainer.innerHTML = cardTemplateSkeleton;
-      checkoutContainer.style.display = 'block';
-    }
-  }
-
-  #removeGlobalLoader() {
-    const loader = document.querySelector('#global-loader');
-    if (loader) {
-      loader.style.display = 'none';
-    }
-  }
-
   #mount(containerTonderCheckout) {
     containerTonderCheckout.innerHTML = cardTemplate;
-    this.#addGlobalLoader();
+    globalLoader.show()
     this.#mountTonder();
     InlineCheckout.injected = true;
   }
@@ -323,11 +313,11 @@ export class InlineCheckout {
         this.collectorIds
       );
       setTimeout(() => {
-        this.#removeGlobalLoader()
+        globalLoader.remove()
       }, 800)
     } catch (e) {
       if (e && e.name !== 'AbortError') {
-        this.#removeGlobalLoader()
+        globalLoader.remove()
         showError("No se pudieron cargar los datos del comercio.")
       }
     }
@@ -523,7 +513,7 @@ export class InlineCheckout {
     }
     if (radio.id === "new") {
       if (this.radioChecked !== radio.id) {
-        this.#addGlobalLoader()
+        globalLoader.show()
         this.#mountTonder(false);
         InlineCheckout.injected = true;
       }

@@ -39,18 +39,6 @@ export class ThreeDSHandler {
     }
   }
 
-  saveCheckoutId(checkoutId) {
-    localStorage.setItem('checkout_id', JSON.stringify(checkoutId))
-  }
-
-  removeCheckoutId() {
-    localStorage.removeItem("checkout_id")
-  }
-
-  getCurrentCheckoutId() {
-    return JSON.parse(localStorage.getItem("checkout_id"));
-  }
-
   getUrlWithExpiration() {
     const item = JSON.parse(localStorage.getItem("verify_transaction_status"))
     if (!item) return
