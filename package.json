@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.11.0-beta.3",
+  "version": "1.11.0",
   "description": "tonder sdk for integrations",
   "main": "src/index.js",
   "scripts": {

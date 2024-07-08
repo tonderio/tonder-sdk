@@ -252,13 +252,18 @@ export class InlineCheckout {
       const routerItems = {
         checkout_id: response.checkout?.id,
       };
-      const routerResponse = await startCheckoutRouter(
-        this.baseUrl,
-        this.apiKeyTonder,
-        routerItems
-      );
-      globalLoader.remove()
-      return routerResponse
+      try {
+        const routerResponse = await startCheckoutRouter(
+          this.baseUrl,
+          this.apiKeyTonder,
+          routerItems
+        );
+        return routerResponse
+      } catch (error) {
+        throw error
+      } finally {
+        globalLoader.remove()
+      }
     }
     return response
   }
