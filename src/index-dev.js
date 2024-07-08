@@ -108,8 +108,7 @@ const inlineCheckout = new InlineCheckout({
   apiKey,
   returnUrl,
   successUrl,
-  styles: customStyles,
-  renderPaymentButton: true
+  styles: customStyles
 });
 inlineCheckout.configureCheckout({customer: checkoutData.customer})
 inlineCheckout.injectCheckout();
