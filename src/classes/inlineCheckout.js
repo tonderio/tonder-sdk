@@ -1,4 +1,5 @@
-import { cardItemsTemplate, cardTemplate } from '../helpers/template.js'
+import { apmItemsTemplate, cardItemsTemplate, cardTemplate } from '../helpers/template.js'
+import { cardTemplateSkeleton } from '../helpers/template-skeleton.js'
 import {
   getBusiness,
   customerRegister,
@@ -8,13 +9,15 @@ import {
   getOpenpayDeviceSessionID,
   getCustomerCards,
   registerCard,
-  deleteCustomerCard
+  deleteCustomerCard,
+  getCustomerAPMs
 } from '../data/api';
 import {
   showError,
   getBrowserInfo,
   mapCards,
   showMessage,
+  clearSpace
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
 import { ThreeDSHandler } from './3dsHandler.js';
@@ -24,6 +27,8 @@ import { globalLoader } from './globalLoader.js';
 export class InlineCheckout {
   static injected = false;
   static cardsInjected = false
+  static apmsInjected = false
+  static apmsData = [];
   deletingCards = [];
   customer = {}
   items = []
@@ -42,7 +47,8 @@ export class InlineCheckout {
     cvv: "collectCvv",
     tonderPayButton: "tonderPayButton",
     msgError: "msgError",
-    msgNotification: "msgNotification"
+    msgNotification: "msgNotification",
+    apmsListContainer: "apmsListContainer"
   }
 
   constructor({
@@ -263,7 +269,7 @@ export class InlineCheckout {
   }
 
   #mount(containerTonderCheckout) {
-    containerTonderCheckout.innerHTML = cardTemplate;
+    containerTonderCheckout.innerHTML = cardTemplate({renderPaymentButton: this.renderPaymentButton, customStyles: this.customStyles});
     globalLoader.show()
     this.#mountTonder();
     InlineCheckout.injected = true;
@@ -282,6 +288,18 @@ export class InlineCheckout {
     return await customerRegister(this.baseUrl, this.apiKeyTonder, customer, signal);
   }
 
+  async #mountAPMs(){
+    try{
+      const apms = await getCustomerAPMs(this.baseUrl, this.apiKeyTonder, "?status=active&page_size=10000");
+      if(apms && apms['results'] && apms['results'].length > 0){
+        this.apmsData = apms['results']
+        this.#loadAPMList(apms['results'])
+      }
+    }catch(e){
+      console.warn("Error getting APMS")
+    }
+  }
+
   async #mountTonder(getCards = false) {
     this.#mountPayButton()
     try {
@@ -289,7 +307,6 @@ export class InlineCheckout {
         vault_id,
         vault_url,
       } = await this.#fetchMerchantData();
-      console.log("this.email : ", this.email )
       if (this.email && getCards) {
         const customerResponse = await this.getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
@@ -302,6 +319,8 @@ export class InlineCheckout {
           }
         }
       }
+      
+      await this.#mountAPMs();
 
       this.collectContainer = await initSkyflow(
         vault_id,
@@ -326,6 +345,7 @@ export class InlineCheckout {
   removeCheckout() {
     InlineCheckout.injected = false
     InlineCheckout.cardsInjected = false
+    InlineCheckout.apmsInjected = false
     // Cancel all requests
     this.abortController.abort();
     this.abortController = new AbortController();
@@ -428,9 +448,10 @@ export class InlineCheckout {
         paymentItems
       );
 
+      const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk ===  this.radioChecked):{};
+
       // Checkout router
       const routerItems = {
-        card: cardTokens,
         name: this.firstName || "",
         last_name: this.lastName || "",
         email_client: this.email,
@@ -452,6 +473,10 @@ export class InlineCheckout {
         metadata: this.metadata,
         browser_info: getBrowserInfo(),
         currency: this.currency,
+        ...( !!selected_apm
+          ? {payment_method: selected_apm.payment_method}
+          : {card: cardTokens}
+        )
       };
       const jsonResponseRouter = await startCheckoutRouter(
         this.baseUrl,
@@ -488,7 +513,25 @@ export class InlineCheckout {
     }, 500);
   }
 
-  #mountRadioButtons(token) {
+  #loadAPMList(apms) {
+    if (this.apmsInjected) return;
+    const injectInterval = setInterval(() => {
+      const queryElement = document.querySelector(`#${this.collectorIds.apmsListContainer}`);
+      if (queryElement && InlineCheckout.injected) {
+        const filteredAndSortedApms = apms
+          .filter((apm) =>
+            clearSpace(apm.category.toLowerCase()) !== 'cards' && apm.status.toLowerCase() === 'active')
+          .sort((a, b) => a.priority - b.priority);
+
+        queryElement.innerHTML = apmItemsTemplate(filteredAndSortedApms);
+        clearInterval(injectInterval);
+        this.#mountRadioButtons();
+        this.apmsInjected = true;
+      }
+    }, 500);
+  }
+
+  #mountRadioButtons(token = '') {
     const radioButtons = document.getElementsByName(`card_selected`);
     for (const radio of radioButtons) {
       radio.style.display = "block";

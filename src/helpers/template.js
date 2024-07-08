@@ -1,6 +1,6 @@
-import { getCardType } from "./utils";
+import { getAPMType, getCardType } from "./utils";
 
-export const cardTemplate = `
+export const cardTemplate = (data) => `
 <div class="container-tonder">
   <div id="cardsListContainer" class="cards-list-container"></div>
   <div class="pay-new-card">
@@ -22,20 +22,31 @@ export const cardTemplate = `
     <div id="msgError"></div>
     <div id="msgNotification"></div>
   </div>
-  <button id="tonderPayButton" class="pay-button">Pagar</button>
+  <div id="apmsListContainer" class="apms-list-container"></div>
+  <div class="container-pay-button">
+    <button id="tonderPayButton" class="pay-button">Pagar</button>
+  </div>
 </div>
 
 <style>
+
 .container-tonder {
   background-color: #F9F9F9;
   margin: 0 auto !important;
-  padding: 30px 25px;
+  padding: 0px;
   overflow: hidden;
   transition: max-height 0.5s ease-out;
   max-width: 600px;
   border: solid 1px #e3e3e3;
-  max-height: 100vh;
   position: relative;
+  font-family: ${getFontFamily(data)};
+}
+.container-pay-button{
+  padding: ${!!data['renderPaymentButton'] ? '30px 25px':''};
+}
+
+.container-form {
+  padding: 25px 25px 0px 25px;
 }
 
 .collect-row {
@@ -94,7 +105,7 @@ export const cardTemplate = `
   border: none;
   background-color: #000;
   color: #fff;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
   display: none;
 }
 
@@ -154,16 +165,23 @@ export const cardTemplate = `
   margin-top: 10px;
   margin-bottom: 20px;
   text-align: left;
-  padding: 0 10px;
+  padding: 0 8px;
 }
 
 .cards-list-container {
   display: flex;
   flex-direction: column;
-  padding: 0px 10px 0px 10px;
+  padding: 0px;
   gap: 33% 20px;
 }
 
+.apms-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 33% 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
 .pay-new-card {
   display: flex;
   justify-content: start;
@@ -172,8 +190,7 @@ export const cardTemplate = `
   gap: 33% 15px;
   margin-top: 10px;
   margin-bottom: 10px;
-  padding-left: 10px;
-  padding-right: 10px;
+  padding: 0px 30px;
   width: 100%;
   position: relative;
 }
@@ -206,7 +223,7 @@ export const cardTemplate = `
   appearance: none;
   cursor: pointer;
   border-radius: 100%;
-  border: 1px #3bc635 solid;
+  border: 1px #bababa solid;
   color: #3bc635;
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -332,8 +349,8 @@ export const cardItemsTemplate = (cards) => {
         align-items: center;
         color: #1D1D1D;
         gap: 33% 20px;
-        margin-top: 10px;
-        margin-bottom: 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
         width: 100%;
       }
 
@@ -343,6 +360,8 @@ export const cardItemsTemplate = (cards) => {
         justify-content: start;
         align-items: center;
         gap: 33% 15px;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0px 30px;
       }
 
       .card-item .card-number {
@@ -377,7 +396,7 @@ export const cardItemsTemplate = (cards) => {
         appearance: none;
         cursor: pointer;
         border-radius: 100%;
-        border: 1px #3bc635 solid;
+        border: 1px #bababa solid;
         color: #3bc635;
         transition-property: all;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -459,3 +478,169 @@ export const cardItemsTemplate = (cards) => {
   `
   return cardItem;
 }
+
+export const apmItemsTemplate = (apms) => {
+
+  const apmItemsHTML = apms.reduce((total, apm) => {
+    const apm_data = getAPMType(apm.payment_method);
+    return `${total}
+    <div class="apm-item" id="card_container-${apm.pk}">
+        <input id="${apm.pk}" class="card_selected" name="card_selected" type="radio"/>
+        <label class="apm-item-label" for="${apm.pk}">
+          
+          <div class="apm-image">
+            <div class="apm-image-border"></div>
+            <img src="${apm_data.icon}" />
+          </div>
+          <div class="apm-name">${apm_data.label}</div>
+        </label>
+    </div>`
+  }, ``);
+
+  const apmItemStyle = `
+    <style>
+      .apm-item-label {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        color: #1D1D1D;
+        gap: 33% 10px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        width: 100%;
+      }
+
+      .apm-item {
+        position: relative;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        gap: 33% 15px;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0px 30px;
+      }
+
+      .apm-item:first-child {
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .apm-item .apm-name {
+        font-size: 16px;
+      }
+      .apm-image {
+        width: 30px;
+        height: 30px;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .apm-image img {
+        width: auto;
+        height: 30px;
+      }
+      .apm-image-border{
+        position: absolute;
+        border: 1px solid #bababa36;
+        border-radius: 4px;
+        pointer-events: none;
+        box-sizing: border-box;
+        width: 100%;
+        height: 97%;
+      }
+
+      .card_selected {
+        position: relative;
+        width: 16px;
+        min-width: 16px;
+        height: 16px;
+        appearance: none;
+        cursor: pointer;
+        border-radius: 100%;
+        border: 1px #bababa solid;
+        color: #3bc635;
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      
+      .card_selected:before {
+        width: 8px;
+        height: 8px;
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: block;
+        transform: translate(-50%, -50%);
+        border-radius: 100%;
+        background-color: #3bc635;
+        opacity: 0;
+        transition-property: opacity;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      
+      .card_selected:checked {
+        border: 1px #3bc635 solid;
+        position: relative;
+        width: 16px;
+        height: 16px;
+        min-width: 16px;
+        appearance: none;
+        cursor: pointer;
+        border-radius: 100%;
+        color: #3bc635;
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      
+      .card_selected:checked:before {
+        content: "";
+        border: 1px #3bc635 solid;
+        width: 8px;
+        height: 8px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: block;
+        transform: translate(-50%, -50%);
+        border-radius: 100%;
+        background-color: #3bc635;
+        opacity: 50;
+        transition-property: opacity;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      
+      .card_selected:hover:before {
+        width: 8px;
+        height: 8px;
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: block;
+        transform: translate(-50%, -50%);
+        border-radius: 100%;
+        background-color: #3bc635;
+        transition-property: opacity;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+        opacity: 10;
+      }
+
+    </style>
+  `
+  const apmItem = `
+  ${apmItemsHTML}
+  ${apmItemStyle}
+  `
+  return apmItem;
+}
+
+const getFontFamily = (data) => {
+  const base = data?.customStyles?.labelStyles?.base;
+  return base?.fontFamily || '"Inter", sans-serif';
+};
