@@ -178,7 +178,6 @@ export const cardTemplate = (data) => `
 .apms-list-container {
   display: flex;
   flex-direction: column;
-  padding: ;
   gap: 33% 20px;
   max-height: 300px;
   overflow-y: auto;

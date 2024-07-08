@@ -340,8 +340,11 @@ export const getAPMType = (scheme_data) => {
     },
   };
   
-  const default_image = "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png";
-  return PAYMENT_METHODS_CATALOG[scheme] || default_image;
+  const _default = {
+    icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
+    label: ""
+  };
+  return PAYMENT_METHODS_CATALOG[scheme] || _default;
 }
 
 
