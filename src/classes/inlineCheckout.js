@@ -449,7 +449,7 @@ export class InlineCheckout {
       );
 
       const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk ===  this.radioChecked):{};
-
+      
       // Checkout router
       const routerItems = {
         name: this.firstName || "",
@@ -473,7 +473,7 @@ export class InlineCheckout {
         metadata: this.metadata,
         browser_info: getBrowserInfo(),
         currency: this.currency,
-        ...( !!selected_apm
+        ...( selected_apm && Object.keys(selected_apm).length > 0
           ? {payment_method: selected_apm.payment_method}
           : {card: cardTokens}
         )
