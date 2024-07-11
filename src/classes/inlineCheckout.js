@@ -1,5 +1,4 @@
 import { apmItemsTemplate, cardItemsTemplate, cardTemplate } from '../helpers/template.js'
-import { cardTemplateSkeleton } from '../helpers/template-skeleton.js'
 import {
   getBusiness,
   customerRegister,
@@ -311,7 +310,11 @@ export class InlineCheckout {
         const customerResponse = await this.getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
           const { auth_token } = customerResponse
-          const cards = await getCustomerCards(this.baseUrl, auth_token);
+          const cards = await getCustomerCards(
+            this.baseUrl,
+            auth_token,
+            `?business=${this.merchantData.business.pk}`,
+          );
 
           if ("cards" in cards) {
             const cardsMapped = cards.cards.map(mapCards)
@@ -319,7 +322,7 @@ export class InlineCheckout {
           }
         }
       }
-      
+
       await this.#mountAPMs();
 
       this.collectContainer = await initSkyflow(
@@ -400,7 +403,10 @@ export class InlineCheckout {
       if (auth_token && this.email) {
         const saveCard = document.getElementById("save-checkout-card");
         if (saveCard && "checked" in saveCard && saveCard.checked) {
-          await registerCard(this.baseUrl, auth_token, { skyflow_id: cardTokens.skyflow_id });
+          await registerCard(this.baseUrl, auth_token, {
+            skyflow_id: cardTokens.skyflow_id,
+            business_id: business.pk,
+          });
 
           this.cardsInjected = false;
 
