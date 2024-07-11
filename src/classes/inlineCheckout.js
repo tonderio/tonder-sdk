@@ -307,7 +307,7 @@ export class InlineCheckout {
     }
   }
 
-  async #mountTonder(getCards = false) {
+  async #mountTonder(getCards = true) {
     this.#mountPayButton()
     try {
       const {
