@@ -176,7 +176,16 @@ export class InlineCheckout extends BaseInlineCheckout {
         const customerResponse = await this._getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
           const { auth_token } = customerResponse
-          await this.#loadCardsList(auth_token)
+          const cards = await getCustomerCards(
+            this.baseUrl,
+            auth_token,
+            `?business=${this.merchantData.business.pk}`,
+          );
+
+          if ("cards" in cards) {
+            const cardsMapped = cards.cards.map(mapCards)
+            this.#loadCardsList(cardsMapped, auth_token)
+          }
         }
       }
 
@@ -263,7 +272,24 @@ export class InlineCheckout extends BaseInlineCheckout {
       )
       const { auth_token } = customerData;
       if (auth_token && this.email) {
-        await this.#handleSaveCard(auth_token, business.pk, cardTokens)
+        const saveCard = document.getElementById("save-checkout-card");
+        if (saveCard && "checked" in saveCard && saveCard.checked) {
+          await registerCard(this.baseUrl, auth_token, {
+            skyflow_id: cardTokens.skyflow_id,
+            business_id: business.pk,
+          });
+
+          this.cardsInjected = false;
+
+          const cards = await getCustomerCards(this.baseUrl, auth_token);
+          if ("cards" in cards) {
+            const cardsMapped = cards.cards.map((card) => mapCards(card))
+            this.#loadCardsList(cardsMapped, auth_token)
+          }
+
+          showMessage("Tarjeta registrada con éxito", this.collectorIds.msgNotification);
+
+        }
       }
 
       const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk === this.radioChecked) : {};
