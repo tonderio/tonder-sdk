@@ -99,7 +99,6 @@ const checkoutData = {
 // localhost
 const apiKey = "11e3d3c3e95e0eaabbcae61ebad34ee5f93c3d27";
 const returnUrl = "http://127.0.0.1:8080/"
-const successUrl = "http://127.0.0.1:8080/success"
 // stage
 // const apiKey = "8365683bdc33dd6d50fe2397188d79f1a6765852";
 
@@ -107,7 +106,6 @@ const inlineCheckout = new InlineCheckout({
   mode: 'stage',
   apiKey,
   returnUrl,
-  successUrl,
   styles: customStyles
 });
 inlineCheckout.configureCheckout({customer: checkoutData.customer})
