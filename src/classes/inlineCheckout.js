@@ -55,14 +55,12 @@ export class InlineCheckout {
     mode = "stage",
     apiKey,
     returnUrl,
-    successUrl,
     renderPaymentButton = false,
     callBack = () => { },
     styles
   }) {
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
-    this.successUrl = successUrl;
     this.renderPaymentButton = renderPaymentButton;
     this.callBack = callBack;
     this.customStyles = styles
@@ -72,7 +70,7 @@ export class InlineCheckout {
     this.abortController = new AbortController()
     this.abortRefreshCardsController = new AbortController()
     this.process3ds = new ThreeDSHandler(
-      { apiKey: apiKey, baseUrl: this.baseUrl, successUrl: successUrl }
+      { apiKey: apiKey, baseUrl: this.baseUrl }
     )
   }
 

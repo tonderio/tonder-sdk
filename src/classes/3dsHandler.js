@@ -3,12 +3,10 @@ export class ThreeDSHandler {
     payload = null,
     apiKey,
     baseUrl,
-    successUrl
   }) {
     this.baseUrl = baseUrl,
     this.apiKey = apiKey,
-    this.payload = payload,
-    this.successUrl = successUrl
+    this.payload = payload
   }
 
   saveVerifyTransactionUrl() {
@@ -120,7 +118,6 @@ export class ThreeDSHandler {
   // TODO: Remove this duplication
   handleSuccessTransaction(response) {
     this.removeVerifyTransactionUrl();
-    // window.location = this.successUrl
     console.log('Transacción autorizada');
     return response;
   }
