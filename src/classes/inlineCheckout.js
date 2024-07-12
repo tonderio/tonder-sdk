@@ -311,7 +311,7 @@ export class InlineCheckout {
           const cards = await getCustomerCards(
             this.baseUrl,
             auth_token,
-            `?business=${this.merchantData.business.pk}`,
+            this.merchantData.business.pk
           );
 
           if ("cards" in cards) {
@@ -401,14 +401,17 @@ export class InlineCheckout {
       if (auth_token && this.email) {
         const saveCard = document.getElementById("save-checkout-card");
         if (saveCard && "checked" in saveCard && saveCard.checked) {
-          await registerCard(this.baseUrl, auth_token, {
+          await registerCard(this.baseUrl, auth_token, business.pk, {
             skyflow_id: cardTokens.skyflow_id,
-            business_id: business.pk,
           });
 
           this.cardsInjected = false;
 
-          const cards = await getCustomerCards(this.baseUrl, auth_token);
+          const cards = await getCustomerCards(
+            this.baseUrl,
+            auth_token,
+            this.merchantData.business.pk,
+          );
           if ("cards" in cards) {
             const cardsMapped = cards.cards.map((card) => mapCards(card))
             this.#loadCardsList(cardsMapped, auth_token)
@@ -584,7 +587,8 @@ export class InlineCheckout {
           this.abortRefreshCardsController.abort();
           this.abortRefreshCardsController = new AbortController();
         }
-        await deleteCustomerCard(this.baseUrl, customerToken, skyflow_id)
+        const businessId = this.merchantData.business.pk
+        await deleteCustomerCard(this.baseUrl, customerToken, skyflow_id, businessId)
       } catch {
       } finally {
         this.deletingCards = this.deletingCards.filter(id => id !== skyflow_id);
@@ -595,7 +599,12 @@ export class InlineCheckout {
   async #refreshCardOnDelete(customerToken) {
     if (this.deletingCards.length > 0) return;
     this.cardsInjected = false
-    const cards = await getCustomerCards(this.baseUrl, customerToken, "", this.abortRefreshCardsController.signal)
+    const cards = await getCustomerCards(
+      this.baseUrl,
+      customerToken,
+      this.merchantData.business.pk,
+      this.abortRefreshCardsController.signal
+    )
     if ("cards" in cards) {
       const cardsMapped = cards.cards.map(mapCards)
       this.#loadCardsList(cardsMapped, customerToken)
