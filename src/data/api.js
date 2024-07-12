@@ -110,9 +110,10 @@ export async function startCheckoutRouter(baseUrlTonder, apiKeyTonder, routerIte
   }
 }
 
-export async function registerCard(baseUrlTonder, customerToken, data) {
+export async function registerCard(baseUrlTonder, customerToken, businessId, data) {
   try {
-    const response = await fetch(`${baseUrlTonder}/api/v1/cards/`, {
+    const url = `${baseUrlTonder}/api/v1/business/${businessId}/cards/`;
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Authorization': `Token ${customerToken}`,
@@ -138,9 +139,11 @@ export async function registerCard(baseUrlTonder, customerToken, data) {
     throw buildErrorResponseFromCatch(error);
   }
 }
-export async function deleteCustomerCard(baseUrlTonder, customerToken, skyflowId = "") {
+export async function deleteCustomerCard(baseUrlTonder, customerToken, skyflowId = "", businessId) {
   try {
-    const response = await fetch(`${baseUrlTonder}/api/v1/cards/${skyflowId}`, {
+    const url = `${baseUrlTonder}/api/v1/business/${businessId}/cards/${skyflowId}`;
+
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: {
         'Authorization': `Token ${customerToken}`,
@@ -154,9 +157,15 @@ export async function deleteCustomerCard(baseUrlTonder, customerToken, skyflowId
     throw buildErrorResponseFromCatch(error);
   }
 }
-export async function getCustomerCards(baseUrlTonder, customerToken, query = "", signal) {
+export async function getCustomerCards(
+  baseUrlTonder,
+  customerToken,
+  businessId,
+  signal
+) {
   try {
-    const response = await fetch(`${baseUrlTonder}/api/v1/cards/${query}`, {
+    const url = `${baseUrlTonder}/api/v1/business/${businessId}/cards/`;
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Authorization': `Token ${customerToken}`,
