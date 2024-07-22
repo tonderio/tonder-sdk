@@ -171,3 +171,23 @@ export async function getCustomerCards(baseUrlTonder, customerToken, query = "",
     throw buildErrorResponseFromCatch(error);
   }
 }
+
+export async function getCustomerAPMs(baseUrlTonder, apiKeyTonder, query = "", signal) {
+  try {
+    const response = await fetch(
+      `${baseUrlTonder}/api/v1/payment_methods${query}`,
+      {
+      method: 'GET',
+      headers: {
+        Authorization: `Token ${apiKeyTonder}`,
+        'Content-Type': 'application/json'
+      },
+      signal
+    });
+
+    if (response.ok) return await response.json();
+    throw await buildErrorResponse(response);
+  } catch (error) {
+    throw buildErrorResponseFromCatch(error);
+  }
+}
