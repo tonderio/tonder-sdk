@@ -237,20 +237,29 @@ export class InlineCheckout {
   }
 
   async verify3dsTransaction () {
+    globalLoader.show()
     const result3ds = await this.process3ds.verifyTransactionStatus()
     const resultCheckout = await this.resumeCheckout(result3ds)
     this.process3ds.setPayload(resultCheckout)
-    if (resultCheckout?.is_route_finished && resultCheckout?.provider === 'tonder') {
-      return resultCheckout
-    }
+    globalLoader.remove()
     return this.handle3dsRedirect(resultCheckout)
   }
 
+
   async resumeCheckout(response) {
-    if (["Failed", "Declined", "Cancelled"].includes(response?.status)) {
+    // Stop the routing process if the transaction is either hard declined or successful
+    if (response?.decline?.error_type === "Hard") {
+      return response
+    }
+
+    if (["Success", "Authorized"].includes(response?.transaction_status)) {
+      return response;
+    }
+
+    if (response) {
       globalLoader.show()
       const routerItems = {
-        checkout_id: response.checkout?.id,
+        checkout_id: response?.checkout?.id,
       };
       try {
         const routerResponse = await startCheckoutRouter(
@@ -260,12 +269,12 @@ export class InlineCheckout {
         );
         return routerResponse
       } catch (error) {
-        throw error
+        // throw error
       } finally {
         globalLoader.remove()
       }
+      return response
     }
-    return response
   }
 
   #mount(containerTonderCheckout) {
@@ -288,7 +297,7 @@ export class InlineCheckout {
     return await customerRegister(this.baseUrl, this.apiKeyTonder, customer, signal);
   }
 
-  async #mountAPMs(){
+  async #mountAPMs() {
     try{
       const apms = await getCustomerAPMs(this.baseUrl, this.apiKeyTonder, "?status=active&page_size=10000");
       if(apms && apms['results'] && apms['results'].length > 0){
