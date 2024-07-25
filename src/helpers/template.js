@@ -79,7 +79,7 @@ export const cardTemplate = (data) => `
   margin-right: 10px !important;
 }
 
-.error-container{
+.error-container {
   color: red !important;
   background-color: #FFDBDB !important;
   margin-bottom: 13px !important;
