@@ -123,8 +123,10 @@ export async function registerCard(baseUrlTonder, customerToken, businessId, dat
     });
 
     if (response.ok) return await response.json();
+
+    const res_json = await response.json()
+
     if (response.status === 409){
-      const res_json = await response.json()
       if(res_json.error = 'Card number already exists.'){
         return {
           code: 200,
@@ -134,7 +136,7 @@ export async function registerCard(baseUrlTonder, customerToken, businessId, dat
         }
       }
     }
-    throw await buildErrorResponse(response);
+    throw await buildErrorResponse(response, res_json);
   } catch (error) {
     throw buildErrorResponseFromCatch(error);
   }
@@ -151,8 +153,10 @@ export async function deleteCustomerCard(baseUrlTonder, customerToken, skyflowId
       }
     });
 
-    if (response.ok) return true;
-    throw await buildErrorResponse(response);
+    if (response.ok) return await response.json();
+    const res_json = await response.json()
+
+    throw await buildErrorResponse(response, res_json);
   } catch (error) {
     throw buildErrorResponseFromCatch(error);
   }
@@ -175,7 +179,8 @@ export async function getCustomerCards(
     });
 
     if (response.ok) return await response.json();
-    throw await buildErrorResponse(response);
+    const res_json = await response.json()
+    throw await buildErrorResponse(response, res_json);
   } catch (error) {
     throw buildErrorResponseFromCatch(error);
   }
@@ -195,7 +200,8 @@ export async function getCustomerAPMs(baseUrlTonder, apiKeyTonder, query = "", s
     });
 
     if (response.ok) return await response.json();
-    throw await buildErrorResponse(response);
+    const res_json = await response.json()
+    throw await buildErrorResponse(response, res_json);
   } catch (error) {
     throw buildErrorResponseFromCatch(error);
   }

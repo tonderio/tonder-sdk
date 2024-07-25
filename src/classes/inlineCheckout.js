@@ -410,9 +410,16 @@ export class InlineCheckout {
       if (auth_token && this.email) {
         const saveCard = document.getElementById("save-checkout-card");
         if (saveCard && "checked" in saveCard && saveCard.checked) {
-          await registerCard(this.baseUrl, auth_token, business.pk, {
-            skyflow_id: cardTokens.skyflow_id,
-          });
+          try {
+            await registerCard(this.baseUrl, auth_token, business.pk, {
+              skyflow_id: cardTokens.skyflow_id,
+            });
+            showMessage("Tarjeta registrada con éxito", this.collectorIds.msgNotification);
+          } catch (error) {
+            if (error?.message) {
+              showError(error.message)
+            }
+          }
 
           this.cardsInjected = false;
 
@@ -425,9 +432,6 @@ export class InlineCheckout {
             const cardsMapped = cards.cards.map((card) => mapCards(card))
             this.#loadCardsList(cardsMapped, auth_token)
           }
-
-          showMessage("Tarjeta registrada con éxito", this.collectorIds.msgNotification);
-
         }
       }
       var orderItems = {
@@ -559,6 +563,7 @@ export class InlineCheckout {
     for (const cardButton of cardsButtons) {
       cardButton.addEventListener("click", (event) => {
         event.preventDefault();
+        event.stopImmediatePropagation();
         this.#handleDeleteCardButtonClick(token, cardButton)
       }, false);
     }

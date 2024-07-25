@@ -348,31 +348,16 @@ export const getAPMType = (scheme_data) => {
 }
 
 
-export async function buildErrorResponse(
-  response,
-  stack = undefined
-) {
-
-  let body, status, message = "Error";
-
-  if(response && "json" in response) {
-    body = await response?.json();
-  }
-
-  if(response && "status" in response) {
-    status = response.status.toString();
-  }
-
-  if(response && "text" in response) {
-    message = await response.text();
-  }
+export async function buildErrorResponse(response, resJson) {
+  let status = response.status.toString();
+  let message = resJson.detail || "Error";
 
   return {
     code: status,
-    body: body,
+    body: resJson,
     name: status,
     message: message,
-    stack,
+    stack: undefined,
   };
 }
 
