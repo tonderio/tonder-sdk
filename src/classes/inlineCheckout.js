@@ -3,8 +3,9 @@ import {
   clearSpace,
   injectMercadoPagoSecurity,
   mapCards,
-  showError,
-  showMessage
+  showMessage,
+  clearSpace,
+  injectMercadoPagoSecurity
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
 import { globalLoader } from './globalLoader.js';
@@ -170,8 +171,9 @@ export class InlineCheckout extends BaseInlineCheckout {
     try {
       const {
         vault_id,
-        vault_url
-      } = this.merchantData;
+        vault_url,
+        mercado_pago
+      } = await this.#fetchMerchantData();
       if (this.email && getCards) {
         const customerResponse = await this._getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
@@ -187,6 +189,9 @@ export class InlineCheckout extends BaseInlineCheckout {
             this.#loadCardsList(cardsMapped, auth_token)
           }
         }
+      }
+      if (!!mercado_pago && !!mercado_pago.active){
+        injectMercadoPagoSecurity()
       }
 
       await this.#mountAPMs();
@@ -300,6 +305,44 @@ export class InlineCheckout extends BaseInlineCheckout {
           : { card: cardTokens }),
         customer: customerData
       });
+
+      const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk ===  this.radioChecked):{};
+      
+      // Checkout router
+      const routerItems = {
+        name: this.firstName || "",
+        last_name: this.lastName || "",
+        email_client: this.email,
+        phone_number: this.phone,
+        return_url: this.returnUrl,
+        id_product: "no_id",
+        quantity_product: 1,
+        id_ship: "0",
+        instance_id_ship: "0",
+        amount: total,
+        title_ship: "shipping",
+        description: "transaction",
+        device_session_id: deviceSessionIdTonder ? deviceSessionIdTonder : null,
+        token_id: "",
+        order_id: jsonResponseOrder.id,
+        business_id: business.pk,
+        payment_id: jsonResponsePayment.pk,
+        source: 'sdk',
+        metadata: this.metadata,
+        browser_info: getBrowserInfo(),
+        currency: this.currency,
+        ...( selected_apm && Object.keys(selected_apm).length > 0
+          ? {payment_method: selected_apm.payment_method}
+          : {card: cardTokens}
+        ),
+        ...(typeof MP_DEVICE_SESSION_ID !== "undefined" ? {mp_device_session_id: MP_DEVICE_SESSION_ID}:{})
+      };
+
+      const jsonResponseRouter = await startCheckoutRouter(
+        this.baseUrl,
+        this.apiKeyTonder,
+        routerItems
+      );
 
       if (jsonResponseRouter) {
         try {
