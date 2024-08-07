@@ -16,7 +16,8 @@ import {
   getBrowserInfo,
   mapCards,
   showMessage,
-  clearSpace
+  clearSpace,
+  injectMercadoPagoSecurity
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
 import { ThreeDSHandler } from './3dsHandler.js';
@@ -312,6 +313,7 @@ export class InlineCheckout {
       const {
         vault_id,
         vault_url,
+        mercado_pago
       } = await this.#fetchMerchantData();
       if (this.email && getCards) {
         const customerResponse = await this.getCustomer({ email: this.email });
@@ -328,6 +330,9 @@ export class InlineCheckout {
             this.#loadCardsList(cardsMapped, auth_token)
           }
         }
+      }
+      if (!!mercado_pago && !!mercado_pago.active){
+        injectMercadoPagoSecurity()
       }
 
       await this.#mountAPMs();
@@ -496,8 +501,10 @@ export class InlineCheckout {
         ...( selected_apm && Object.keys(selected_apm).length > 0
           ? {payment_method: selected_apm.payment_method}
           : {card: cardTokens}
-        )
+        ),
+        ...(typeof MP_DEVICE_SESSION_ID !== "undefined" ? {mp_device_session_id: MP_DEVICE_SESSION_ID}:{})
       };
+
       const jsonResponseRouter = await startCheckoutRouter(
         this.baseUrl,
         this.apiKeyTonder,
