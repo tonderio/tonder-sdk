@@ -1,30 +1,23 @@
 import { apmItemsTemplate, cardItemsTemplate, cardTemplate } from '../helpers/template.js'
 import {
-  getBusiness,
-  customerRegister,
-  createOrder,
-  createPayment,
-  startCheckoutRouter,
-  getOpenpayDeviceSessionID,
-  getCustomerCards,
-  registerCard,
-  deleteCustomerCard,
-  getCustomerAPMs
-} from '../data/api';
-import {
-  showError,
-  getBrowserInfo,
-  mapCards,
-  showMessage,
   clearSpace,
-  injectMercadoPagoSecurity
+  injectMercadoPagoSecurity,
+  mapCards,
+  showError,
+  showMessage
 } from '../helpers/utils';
 import { initSkyflow } from '../helpers/skyflow'
-import { ThreeDSHandler } from './3dsHandler.js';
 import { globalLoader } from './globalLoader.js';
+import { BaseInlineCheckout } from "./BaseInlineCheckout";
+import {
+  fetchCustomerCards,
+  removeCustomerCard,
+  saveCustomerCard,
+  fetchCustomerAPMs
+} from "../data";
+import { MESSAGES } from "../shared/constants/messages";
 
-
-export class InlineCheckout {
+export class InlineCheckout extends BaseInlineCheckout {
   static injected = false;
   static cardsInjected = false
   static apmsInjected = false
@@ -32,7 +25,6 @@ export class InlineCheckout {
   deletingCards = [];
   customer = {}
   items = []
-  baseUrl = null
   collectContainer = null
   merchantData = {}
   cartTotal = null
@@ -59,30 +51,10 @@ export class InlineCheckout {
     callBack = () => { },
     styles
   }) {
-    this.apiKeyTonder = apiKey;
-    this.returnUrl = returnUrl;
+    super({ mode, apiKey, returnUrl, callBack });
     this.renderPaymentButton = renderPaymentButton;
-    this.callBack = callBack;
     this.customStyles = styles
-    this.mode = mode
-    this.baseUrl = this.#getBaseUrl()
-
-    this.abortController = new AbortController()
     this.abortRefreshCardsController = new AbortController()
-    this.process3ds = new ThreeDSHandler(
-      { apiKey: apiKey, baseUrl: this.baseUrl }
-    )
-  }
-
-  #getBaseUrl() {
-    const modeUrls = {
-      'production': 'https://app.tonder.io',
-      'sandbox': 'https://sandbox.tonder.io',
-      'stage': 'https://stage.tonder.io',
-      'development': 'http://localhost:8000',
-    };
-
-    return modeUrls[this.mode] || modeUrls['stage']
   }
 
   #mountPayButton() {
@@ -115,90 +87,7 @@ export class InlineCheckout {
     }
   }
 
-  async handle3dsRedirect(response) {
-    const iframe = response?.next_action?.iframe_resources?.iframe
-
-    if (iframe) {
-      this.process3ds.loadIframe().then(() => {
-        //TODO: Check if this will be necessary on the frontend side
-        // after some the tests in production, since the 3DS process
-        // doesn't works properly on the sandbox environment
-        // setTimeout(() => {
-        //   process3ds.verifyTransactionStatus();
-        // }, 10000);
-        this.process3ds.verifyTransactionStatus();
-      }).catch((error) => {
-        console.log('Error loading iframe:', error)
-      })
-    } else {
-      const redirectUrl = this.process3ds.getRedirectUrl()
-      if (redirectUrl) {
-        this.process3ds.redirectToChallenge()
-      } else {
-        return response;
-      }
-    }
-  }
-
-  payment(data) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        this.#handleCustomer(data.customer)
-        this.setCartTotal(data.cart?.total)
-        this.setCartItems(data.cart?.items)
-        this.#handleMetadata(data)
-        this.#handleCurrency(data)
-        this.#handleCard(data)
-        const response = await this.#checkout()
-        this.process3ds.setPayload(response)
-        this.callBack(response);
-        const payload = await this.handle3dsRedirect(response)
-        if (payload) {
-          resolve(response);
-        }
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  #handleCustomer(customer) {
-    if (!customer) return
-
-    this.firstName = customer?.firstName
-    this.lastName = customer?.lastName
-    this.country = customer?.country
-    this.address = customer?.street
-    this.city = customer?.city
-    this.state = customer?.state
-    this.postCode = customer?.postCode
-    this.email = customer?.email
-    this.phone = customer?.phone
-    this.customer = customer
-  }
-
-  #handleMetadata(data) {
-    this.metadata = data?.metadata
-  }
-
-  #handleCurrency(data) {
-    this.currency = data?.currency
-  }
-
-  #handleCard(data) {
-    this.card = data?.card
-  }
-
-  setCartItems(items) {
-    this.cartItems = items
-  }
-
-  configureCheckout(data) {
-    if ('customer' in data)
-      this.#handleCustomer(data['customer'])
-  }
-  
-  setCartTotal(total) {
+  _setCartTotal(total) {
     this.cartTotal = total
     this.#updatePayButton()
   }
@@ -213,17 +102,23 @@ export class InlineCheckout {
     this.cb = cb
   }
 
-  injectCheckout() {
+  /**
+   * Injects the checkout into the DOM and initializes it.
+   * Checks for an existing container and sets up an observer if needed.
+   * @returns {void}
+   * @public
+   */
+  async injectCheckout() {
     if (InlineCheckout.injected) return
     const containerTonderCheckout = document.querySelector("#tonder-checkout");
     if (containerTonderCheckout) {
-      this.#mount(containerTonderCheckout)
+      await this.#mount(containerTonderCheckout)
       return;
     }
-    const observer = new MutationObserver((mutations, obs) => {
+    const observer = new MutationObserver(async (mutations, obs) => {
       const containerTonderCheckout = document.querySelector("#tonder-checkout");
       if (containerTonderCheckout) {
-        this.#mount(containerTonderCheckout)
+        await this.#mount(containerTonderCheckout)
         obs.disconnect();
       }
     });
@@ -234,92 +129,38 @@ export class InlineCheckout {
     });
   }
 
-  async verify3dsTransaction () {
+  async #mount(containerTonderCheckout) {
+    containerTonderCheckout.innerHTML = cardTemplate({ renderPaymentButton: this.renderPaymentButton, customStyles: this.customStyles });
     globalLoader.show()
-    const result3ds = await this.process3ds.verifyTransactionStatus()
-    const resultCheckout = await this.resumeCheckout(result3ds)
-    this.process3ds.setPayload(resultCheckout)
-    globalLoader.remove()
-    return this.handle3dsRedirect(resultCheckout)
-  }
-
-
-  async resumeCheckout(response) {
-    // Stop the routing process if the transaction is either hard declined or successful
-    if (response?.decline?.error_type === "Hard") {
-      return response
-    }
-
-    if (["Success", "Authorized"].includes(response?.transaction_status)) {
-      return response;
-    }
-
-    if (response) {
-      globalLoader.show()
-      const routerItems = {
-        checkout_id: response?.checkout?.id,
-      };
-      try {
-        const routerResponse = await startCheckoutRouter(
-          this.baseUrl,
-          this.apiKeyTonder,
-          routerItems
-        );
-        return routerResponse
-      } catch (error) {
-        // throw error
-      } finally {
-        globalLoader.remove()
-      }
-      return response
-    }
-  }
-
-  #mount(containerTonderCheckout) {
-    containerTonderCheckout.innerHTML = cardTemplate({renderPaymentButton: this.renderPaymentButton, customStyles: this.customStyles});
-    globalLoader.show()
-    this.#mountTonder();
+    await this.#mountTonder();
     InlineCheckout.injected = true;
   }
 
-  async #fetchMerchantData() {
-    this.merchantData = await getBusiness(
-      this.baseUrl,
-      this.apiKeyTonder,
-      this.abortController.signal
-    );
-    return this.merchantData
-  }
-
-  async getCustomer(customer, signal) {
-    return await customerRegister(this.baseUrl, this.apiKeyTonder, customer, signal);
-  }
-
   async #mountAPMs() {
-    try{
-      const apms = await getCustomerAPMs(this.baseUrl, this.apiKeyTonder, "?status=active&page_size=10000");
-      if(apms && apms['results'] && apms['results'].length > 0){
+    try {
+      const apms = await fetchCustomerAPMs(this.baseUrl, this.apiKeyTonder);
+      if (apms && apms['results'] && apms['results'].length > 0) {
         this.apmsData = apms['results']
         this.#loadAPMList(apms['results'])
       }
-    }catch(e){
+    } catch (e) {
       console.warn("Error getting APMS")
     }
   }
 
   async #mountTonder(getCards = true) {
     this.#mountPayButton()
+    await this._initializeCheckout()
     try {
       const {
         vault_id,
-        vault_url,
-        mercado_pago
-      } = await this.#fetchMerchantData();
+        vault_url
+      } = this.merchantData;
       if (this.email && getCards) {
-        const customerResponse = await this.getCustomer({ email: this.email });
+        const customerResponse = await this._getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
           const { auth_token } = customerResponse
-          const cards = await getCustomerCards(
+          const cards = await fetchCustomerCards(
             this.baseUrl,
             auth_token,
             this.merchantData.business.pk
@@ -330,9 +171,6 @@ export class InlineCheckout {
             this.#loadCardsList(cardsMapped, auth_token)
           }
         }
-      }
-      if (!!mercado_pago && !!mercado_pago.active){
-        injectMercadoPagoSecurity()
       }
 
       await this.#mountAPMs();
@@ -357,6 +195,21 @@ export class InlineCheckout {
     }
   }
 
+  /**
+   * Removes the checkout from the DOM and cleans up associated resources.
+   *
+   * This method performs the following actions:
+   * 1. Resets the injection status flags for the checkout, cards, and APMs.
+   * 2. Aborts any ongoing requests using the AbortController.
+   * 3. Creates a new AbortController for future use.
+   * 4. Clears any existing injection intervals.
+   *
+   * Note: This method should be called when you want to completely remove
+   * the checkout from the page and reset its state.
+   *
+   * @returns {void}
+   * @public
+   */
   removeCheckout() {
     InlineCheckout.injected = false
     InlineCheckout.cardsInjected = false
@@ -381,16 +234,14 @@ export class InlineCheckout {
     }
   }
 
-  async #checkout() {
+  async _checkout() {
     try {
       document.querySelector("#tonderPayButton").disabled = true;
     } catch (error) {
     }
+    const { business } = this.merchantData
+    let cardTokens;
 
-    const { openpay_keys, reference, business } = this.merchantData
-    const total = Number(this.cartTotal)
-
-    let cardTokens = null;
     if (this.radioChecked === "new" || this.radioChecked === undefined) {
       cardTokens = await this.#getCardTokens();
     } else {
@@ -399,117 +250,23 @@ export class InlineCheckout {
       }
     }
     try {
-      let deviceSessionIdTonder;
-      if (openpay_keys.merchant_id && openpay_keys.public_key) {
-        deviceSessionIdTonder = await getOpenpayDeviceSessionID(
-          openpay_keys.merchant_id,
-          openpay_keys.public_key,
-          this.abortController.signal
-        );
-      }
-
-      const { id, auth_token } = await this.getCustomer(
+      const customerData = await this._getCustomer(
         this.customer,
         this.abortController.signal
       )
+      const { auth_token } = customerData;
       if (auth_token && this.email) {
-        const saveCard = document.getElementById("save-checkout-card");
-        if (saveCard && "checked" in saveCard && saveCard.checked) {
-          try {
-            await registerCard(this.baseUrl, auth_token, business.pk, {
-              skyflow_id: cardTokens.skyflow_id,
-            });
-            showMessage("Tarjeta registrada con éxito", this.collectorIds.msgNotification);
-          } catch (error) {
-            if (error?.message) {
-              showError(error.message)
-            }
-          }
-
-          this.cardsInjected = false;
-
-          const cards = await getCustomerCards(
-            this.baseUrl,
-            auth_token,
-            this.merchantData.business.pk,
-          );
-          if ("cards" in cards) {
-            const cardsMapped = cards.cards.map((card) => mapCards(card))
-            this.#loadCardsList(cardsMapped, auth_token)
-          }
-        }
+        await this.#handleSaveCard(auth_token, business.pk, cardTokens)
       }
-      var orderItems = {
-        business: this.apiKeyTonder,
-        client: auth_token,
-        billing_address_id: null,
-        shipping_address_id: null,
-        amount: total,
-        status: "A",
-        reference: reference,
-        is_oneclick: true,
-        items: this.cartItems,
-      };
-      const jsonResponseOrder = await createOrder(
-        this.baseUrl,
-        this.apiKeyTonder,
-        orderItems
-      );
 
-      // Create payment
-      const now = new Date();
-      const dateString = now.toISOString();
+      const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk === this.radioChecked) : {};
 
-      var paymentItems = {
-        business_pk: business.pk,
-        client_id: id,
-        amount: total,
-        date: dateString,
-        order_id: jsonResponseOrder.id,
-      };
-      const jsonResponsePayment = await createPayment(
-        this.baseUrl,
-        this.apiKeyTonder,
-        paymentItems
-      );
-
-      const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk ===  this.radioChecked):{};
-      
-      // Checkout router
-      const routerItems = {
-        name: this.firstName || "",
-        last_name: this.lastName || "",
-        email_client: this.email,
-        phone_number: this.phone,
-        return_url: this.returnUrl,
-        id_product: "no_id",
-        quantity_product: 1,
-        id_ship: "0",
-        instance_id_ship: "0",
-        amount: total,
-        title_ship: "shipping",
-        description: "transaction",
-        device_session_id: deviceSessionIdTonder ? deviceSessionIdTonder : null,
-        token_id: "",
-        order_id: jsonResponseOrder.id,
-        business_id: business.pk,
-        payment_id: jsonResponsePayment.pk,
-        source: 'sdk',
-        metadata: this.metadata,
-        browser_info: getBrowserInfo(),
-        currency: this.currency,
-        ...( selected_apm && Object.keys(selected_apm).length > 0
-          ? {payment_method: selected_apm.payment_method}
-          : {card: cardTokens}
-        ),
-        ...(typeof MP_DEVICE_SESSION_ID !== "undefined" ? {mp_device_session_id: MP_DEVICE_SESSION_ID}:{})
-      };
-
-      const jsonResponseRouter = await startCheckoutRouter(
-        this.baseUrl,
-        this.apiKeyTonder,
-        routerItems
-      );
+      const jsonResponseRouter = await this._handleCheckout({
+        ...(selected_apm && Object.keys(selected_apm).length > 0
+          ? { payment_method: selected_apm.payment_method }
+          : { card: cardTokens }),
+        customer: customerData
+      });
 
       if (jsonResponseRouter) {
         try {
@@ -527,6 +284,33 @@ export class InlineCheckout {
     }
   };
 
+  async #handleSaveCard(auth_token, businessId, cardTokens) {
+    const saveCard = document.getElementById("save-checkout-card");
+    if (saveCard && "checked" in saveCard && saveCard.checked) {
+      try {
+        await saveCustomerCard(this.baseUrl, auth_token, businessId, {
+          skyflow_id: cardTokens.skyflow_id,
+        });
+        showMessage(MESSAGES.cardSaved, this.collectorIds.msgNotification);
+      } catch (error) {
+        if (error?.message) {
+          showError(error.message)
+        }
+      }
+
+      this.cardsInjected = false;
+
+      const cards = await fetchCustomerCards(
+        this.baseUrl,
+        auth_token,
+        this.merchantData.business.pk,
+      );
+      if ("cards" in cards) {
+        const cardsMapped = cards.cards.map((card) => mapCards(card))
+        this.#loadCardsList(cardsMapped, auth_token)
+      }
+    }
+  }
   #loadCardsList(cards, token) {
     if (this.cardsInjected) return;
     const injectInterval = setInterval(() => {
@@ -609,9 +393,8 @@ export class InlineCheckout {
           this.abortRefreshCardsController = new AbortController();
         }
         const businessId = this.merchantData.business.pk
-        await deleteCustomerCard(this.baseUrl, customerToken, skyflow_id, businessId)
-      } catch {
-      } finally {
+        await removeCustomerCard(this.baseUrl, customerToken, skyflow_id, businessId)
+      } catch (error) { } finally {
         this.deletingCards = this.deletingCards.filter(id => id !== skyflow_id);
         this.#refreshCardOnDelete(customerToken)
       }
@@ -620,7 +403,7 @@ export class InlineCheckout {
   async #refreshCardOnDelete(customerToken) {
     if (this.deletingCards.length > 0) return;
     this.cardsInjected = false
-    const cards = await getCustomerCards(
+    const cards = await fetchCustomerCards(
       this.baseUrl,
       customerToken,
       this.merchantData.business.pk,
