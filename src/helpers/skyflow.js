@@ -1,4 +1,6 @@
 import { defaultStyles } from "./styles";
+import {getVaultToken} from "../data/skyflowApi";
+import {buildErrorResponseFromCatch} from "./utils";
 
 export async function initSkyflow(
   vaultId,
@@ -14,20 +16,7 @@ export async function initSkyflow(
     vaultURL: vaultUrl,
     getBearerToken: async () => {
       // Pass the signal to the fetch call
-      const response = await fetch(`${baseUrl}/api/v1/vault-token/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Token ${apiKey}`,
-        },
-        signal: signal,
-      });
-
-      if (response.ok) {
-        const responseBody = await response.json();
-        return responseBody.token;
-      } else {
-        throw new Error('Failed to retrieve bearer token');
-      }
+      return await getVaultToken(baseUrl, apiKey, signal)
     },
     options: {
       logLevel: Skyflow.LogLevel.ERROR,
@@ -216,3 +205,75 @@ function updateErrorLabel(element, errorStyles, color = "" ){
     })
   }
 }
+
+export async  function getSkyflowTokens({baseUrl, apiKey, vault_id, vault_url, data }) {
+  const skyflow = Skyflow.init({
+    vaultID: vault_id,
+    vaultURL: vault_url,
+    getBearerToken: async () => await getVaultToken(baseUrl, apiKey),
+    options: {
+      logLevel: Skyflow.LogLevel.ERROR,
+      env: Skyflow.Env.DEV,
+    },
+  });
+
+  const collectContainer = skyflow.container(Skyflow.ContainerType.COLLECT);
+
+  const fieldPromises = await getFieldsPromise(data, collectContainer);
+
+  const result = await Promise.all(fieldPromises);
+  const mountFail = result.some((item) => !item);
+
+  if (mountFail) {
+    throw buildErrorResponseFromCatch(
+        Error("Ocurrió un error al montar los campos de la tarjeta"),
+    );
+  } else {
+    try {
+      const collectResponseSkyflowTonder = await collectContainer.collect();
+      if (collectResponseSkyflowTonder)
+        return collectResponseSkyflowTonder["records"][0]["fields"];
+      throw buildErrorResponseFromCatch(
+          Error("Por favor, verifica todos los campos de tu tarjeta"),
+      );
+    } catch (error) {
+      throw buildErrorResponseFromCatch(error);
+    }
+  }
+}
+async function getFieldsPromise(data, collectContainer) {
+  const fields = await getFields(data, collectContainer);
+  if (!fields) return [];
+  return fields.map((field) => {
+    return new Promise((resolve) => {
+      const div = document.createElement("div");
+      div.hidden = true;
+      div.id = `id-${field.key}`;
+      document.querySelector(`body`)?.appendChild(div);
+      setTimeout(() => {
+        field.element.mount(`#id-${field.key}`);
+        setInterval(() => {
+          if (field.element.isMounted()) {
+            const value = data[field.key];
+            field.element.update({ value: value });
+            return resolve(field.element.isMounted());
+          }
+        }, 120);
+      }, 120);
+    });
+  })
+}
+
+async function getFields(data, collectContainer) {
+  return await Promise.all(
+      Object.keys(data).map(async (key) => {
+        const cardHolderNameElement = await collectContainer.create({
+          table: "cards",
+          column: key,
+          type: Skyflow.ElementType.INPUT_FIELD,
+        });
+        return { element: cardHolderNameElement, key: key };
+      })
+  )
+}
+

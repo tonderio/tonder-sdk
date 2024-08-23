@@ -9,8 +9,19 @@ module.exports = (env, argv) => {
   const plugins = [
     new webpack.DefinePlugin({
       'process.env.BASE_URL': JSON.stringify(process.env.BASE_URL),
-    })
+    }),
+    new webpack.IgnorePlugin({
+      resourceRegExp: /samples\//
+    }),
   ];
+
+  if (isProduction) {
+    plugins.push(
+        new webpack.IgnorePlugin({
+          resourceRegExp: /^@maskito\/core$/,
+        })
+    );
+  }
   if (!isProduction) {
     plugins.push(new HtmlWebpackPlugin({
       template: 'src/index.html'

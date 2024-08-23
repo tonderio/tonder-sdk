@@ -1,4 +1,5 @@
-import { getAPMType, getCardType } from "./utils";
+import { getCardType } from "./utils";
+import {getPaymentMethodDetails} from "../shared/catalog/paymentMethodsCatalog";
 
 export const cardTemplate = (data) => `
 <div class="container-tonder">
@@ -162,8 +163,8 @@ export const cardTemplate = (data) => `
 
 .checkbox label {
   margin-left: 10px;
-  font-size: '12px';
-  font-weight: '500';
+  font-size: 12px;
+  font-weight: 500;
   color: #1D1D1D;
 }
 
@@ -488,7 +489,7 @@ export const cardItemsTemplate = (cards) => {
 export const apmItemsTemplate = (apms) => {
 
   const apmItemsHTML = apms.reduce((total, apm) => {
-    const apm_data = getAPMType(apm.payment_method);
+    const apm_data = getPaymentMethodDetails(apm.payment_method);
     return `${total}
     <div class="apm-item" id="card_container-${apm.pk}">
         <input id="${apm.pk}" class="card_selected" name="card_selected" type="radio"/>
