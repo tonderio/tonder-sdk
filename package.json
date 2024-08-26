@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.11.7",
+  "version": "1.12.0",
   "description": "tonder sdk for integrations",
   "main": "src/index.js",
   "scripts": {
@@ -8,6 +8,7 @@
     "build": "webpack --config webpack.config.js --mode production"
   },
   "author": "",
+  "types": "types/index.d.ts",
   "license": "ISC",
   "dependencies": {
     "crypto-js": "^4.1.1",
@@ -16,10 +17,12 @@
   "devDependencies": {
     "@babel/core": "^7.20.12",
     "@babel/preset-env": "^7.20.2",
+    "@maskito/core": "^3.0.1",
     "babel-loader": "^9.1.2",
     "css-loader": "^6.7.3",
     "cypress": "^13.6.2",
     "html-webpack-plugin": "^5.5.3",
+    "prettier": "^3.3.3",
     "style-loader": "^3.3.1",
     "terser-webpack-plugin": "^5.3.10",
     "webpack": "^5.75.0",
