@@ -2,5 +2,4 @@
 .vscode
 lib
 .env
-.idea
-/.idea
+.idea/

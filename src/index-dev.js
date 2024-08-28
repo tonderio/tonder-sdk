@@ -157,6 +157,7 @@ function setupLiteInlineCheckout() {
   });
 
   const liteForm = document.getElementById("lite-payment-form");
+  const payButton = document.getElementById("pay-button");
   liteForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -169,6 +170,7 @@ function setupLiteInlineCheckout() {
     };
 
     try {
+      payButton.textContent = "Procesando..."
       const paymentData = {
         ...checkoutData,
         card: cardData,
@@ -179,6 +181,8 @@ function setupLiteInlineCheckout() {
     } catch (error) {
       console.error("Error en el pago:", error);
       alert("Error al realizar el pago");
+    }finally {
+      payButton.textContent = "Pagar Ahora";
     }
   });
 }
@@ -234,17 +238,7 @@ function loadMaskitoMask(){
   };
 
   const cvvOptions = {
-    mask: [
-      ...Array(4).fill(/\d/),
-      " ",
-      ...Array(4).fill(/\d/),
-      " ",
-      ...Array(4).fill(/\d/),
-      " ",
-      ...Array(4).fill(/\d/),
-      " ",
-      ...Array(3).fill(/\d/),
-    ],
+    mask: [...Array(3).fill(/\d/)],
   };
 
   // Aplicar Maskito a cada campo
