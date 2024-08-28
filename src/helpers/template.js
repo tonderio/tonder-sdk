@@ -3,7 +3,10 @@ import {getPaymentMethodDetails} from "../shared/catalog/paymentMethodsCatalog";
 
 export const cardTemplate = (data) => `
 <div class="container-tonder">
-  <div id="cardsListContainer" class="cards-list-container"></div>
+  ${ data.customization?.saveCards?.showSaved ?
+    `<div id="cardsListContainer" class="cards-list-container"></div>`
+    :``
+  }
   <div class="pay-new-card">
     <input checked id="new" class="card_selected" name="card_selected" type="radio"/>
     <label class="card-item-label-new" for="new">
@@ -20,12 +23,17 @@ export const cardTemplate = (data) => `
       <div id="collectExpirationYear" class="expiration-year"></div>
       <div id="collectCvv" class="empty-div"></div>
     </div>
+    ${!!data.customization?.saveCards?.showSaveCardOption 
+    ? `
     <div class="checkbox" id="save-card-container">
       <input id="save-checkout-card" type="checkbox">
       <label for="save-checkout-card">
         Guardar tarjeta para futuros pagos
       </label>
     </div>
+    `
+    :``}
+
     <div id="msgError"></div>
     <div id="msgNotification"></div>
   </div>

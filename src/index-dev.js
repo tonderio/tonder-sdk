@@ -1,7 +1,7 @@
 import { InlineCheckout } from "./classes/inlineCheckout";
 import { LiteInlineCheckout } from "./classes/LiteInlineCheckout";
-import { Maskito } from '@maskito/core';
-import {validateCardNumber} from "./helpers/validations";
+import { Maskito } from "@maskito/core";
+import { validateCardNumber } from "./helpers/validations";
 
 const customStyles = {
   inputStyles: {
@@ -123,7 +123,16 @@ function getCheckoutMode() {
 }
 
 function setupInlineCheckout() {
-  inlineCheckout = new InlineCheckout({ ...commonConfig });
+  inlineCheckout = new InlineCheckout({
+    ...commonConfig,
+    customization: {
+      saveCards: {
+        showSaveCardOption: false, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
+        autoSave: true,           // Usar para guardar automáticamente la tarjeta (sin necesidad de mostrar el checkbox)
+        showSaved: false           // Usar para mostrar/ocultar el listado de tarjetas guardadas
+      },
+    },
+  });
   inlineCheckout.configureCheckout({ customer: checkoutData.customer });
   inlineCheckout.injectCheckout();
   // ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
@@ -157,7 +166,7 @@ function setupLiteInlineCheckout() {
   });
 
   const liteForm = document.getElementById("lite-payment-form");
-  const payButton = document.getElementById("pay-button");
+  const payButton = document.getElementById("pay-button-lite");
   liteForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -170,7 +179,7 @@ function setupLiteInlineCheckout() {
     };
 
     try {
-      payButton.textContent = "Procesando..."
+      payButton.textContent = "Procesando...";
       const paymentData = {
         ...checkoutData,
         card: cardData,
@@ -181,7 +190,7 @@ function setupLiteInlineCheckout() {
     } catch (error) {
       console.error("Error en el pago:", error);
       alert("Error al realizar el pago");
-    }finally {
+    } finally {
       payButton.textContent = "Pagar Ahora";
     }
   });
@@ -202,13 +211,12 @@ function setupCheckout() {
   }
 }
 
-
-function loadMaskitoMask(){
-  const cardNumberInput = document.getElementById('card-number');
-  const monthInput = document.getElementById('month');
-  const yearInput = document.getElementById('year');
-  const cvvInput = document.getElementById('cvv');
-  const nameInput = document.getElementById('card-name');
+function loadMaskitoMask() {
+  const cardNumberInput = document.getElementById("card-number");
+  const monthInput = document.getElementById("month");
+  const yearInput = document.getElementById("year");
+  const cvvInput = document.getElementById("cvv");
+  const nameInput = document.getElementById("card-name");
 
   // Definir las opciones para las máscaras
   const cardNumberOptions = {
@@ -222,7 +230,7 @@ function loadMaskitoMask(){
       ...Array(4).fill(/\d/),
       " ",
       ...Array(3).fill(/\d/),
-    ]
+    ],
   };
 
   const monthOptions = {
@@ -230,7 +238,7 @@ function loadMaskitoMask(){
   };
 
   const yearOptions = {
-    mask: [/\d/, /\d/]
+    mask: [/\d/, /\d/],
   };
 
   const nameOptions = {
@@ -248,8 +256,8 @@ function loadMaskitoMask(){
   const cvvMask = new Maskito(cvvInput, cvvOptions);
   const nameMask = new Maskito(nameInput, nameOptions);
 
-  cardNumberInput.addEventListener('input', () => {
-    const cardNumber = cardNumberInput.value.replace(/\s+/g, '');
+  cardNumberInput.addEventListener("input", () => {
+    const cardNumber = cardNumberInput.value.replace(/\s+/g, "");
     if (!validateCardNumber(cardNumber)) {
       cardNumberInput.setCustomValidity("Número de tarjeta inválido");
       cardNumberInput.classList.add("invalid");
@@ -259,7 +267,7 @@ function loadMaskitoMask(){
     }
   });
 
-  window.addEventListener('beforeunload', () => {
+  window.addEventListener("beforeunload", () => {
     cardNumberMask.destroy();
     monthMask.destroy();
     yearMask.destroy();
