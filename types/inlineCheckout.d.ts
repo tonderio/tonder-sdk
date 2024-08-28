@@ -59,7 +59,16 @@ export class InlineCheckout {
     removeCheckout(): void;
 }
 
+export type CustomizationOptions = {
+    saveCards?: {
+        showSaveCardOption?: boolean;
+        showSaved?: boolean;
+        autoSave?: boolean;
+    }
+}
+
 export interface IInlineCheckoutOptions extends IInlineCheckoutBaseOptions{
     styles?: Record<string, string>;
     renderPaymentButton?: boolean;
+    customization?: CustomizationOptions;
 }
