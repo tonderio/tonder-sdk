@@ -42,19 +42,34 @@ export class InlineCheckout extends BaseInlineCheckout {
     msgNotification: "msgNotification",
     apmsListContainer: "apmsListContainer"
   }
-
+  customization = {
+    saveCards: {
+      showSaveCardOption: true,
+      showSaved: true,
+      autoSave: false
+    }
+  }
   constructor({
     mode = "stage",
     apiKey,
     returnUrl,
     renderPaymentButton = false,
     callBack = () => { },
-    styles
+    styles,
+    customization,
   }) {
     super({ mode, apiKey, returnUrl, callBack });
     this.renderPaymentButton = renderPaymentButton;
     this.customStyles = styles
-    this.abortRefreshCardsController = new AbortController()
+    this.abortRefreshCardsController = new AbortController();
+    this.customization = {
+      ...this.customization,
+      ...(customization || {}),
+      saveCards: {
+        ...this.customization.saveCards,
+        ...(customization?.saveCards || {}),
+      },
+    }
   }
 
   #mountPayButton() {
@@ -130,7 +145,7 @@ export class InlineCheckout extends BaseInlineCheckout {
   }
 
   async #mount(containerTonderCheckout) {
-    containerTonderCheckout.innerHTML = cardTemplate({ renderPaymentButton: this.renderPaymentButton, customStyles: this.customStyles });
+    containerTonderCheckout.innerHTML = cardTemplate({ renderPaymentButton: this.renderPaymentButton, customStyles: this.customStyles, customization: this.customization });
     globalLoader.show()
     await this.#mountTonder();
     InlineCheckout.injected = true;
@@ -160,16 +175,7 @@ export class InlineCheckout extends BaseInlineCheckout {
         const customerResponse = await this._getCustomer({ email: this.email });
         if ("auth_token" in customerResponse) {
           const { auth_token } = customerResponse
-          const cards = await fetchCustomerCards(
-            this.baseUrl,
-            auth_token,
-            this.merchantData.business.pk
-          );
-
-          if ("cards" in cards) {
-            const cardsMapped = cards.cards.map(mapCards)
-            this.#loadCardsList(cardsMapped, auth_token)
-          }
+          await this.#loadCardsList(auth_token)
         }
       }
 
@@ -286,7 +292,7 @@ export class InlineCheckout extends BaseInlineCheckout {
 
   async #handleSaveCard(auth_token, businessId, cardTokens) {
     const saveCard = document.getElementById("save-checkout-card");
-    if (saveCard && "checked" in saveCard && saveCard.checked) {
+    if ((saveCard && "checked" in saveCard && saveCard.checked) || !!this.customization.saveCards?.autoSave) {
       try {
         await saveCustomerCard(this.baseUrl, auth_token, businessId, {
           skyflow_id: cardTokens.skyflow_id,
@@ -298,30 +304,30 @@ export class InlineCheckout extends BaseInlineCheckout {
         }
       }
 
-      this.cardsInjected = false;
-
-      const cards = await fetchCustomerCards(
-        this.baseUrl,
-        auth_token,
-        this.merchantData.business.pk,
-      );
-      if ("cards" in cards) {
-        const cardsMapped = cards.cards.map((card) => mapCards(card))
-        this.#loadCardsList(cardsMapped, auth_token)
-      }
+      await this.#loadCardsList(auth_token)
     }
   }
-  #loadCardsList(cards, token) {
-    if (this.cardsInjected) return;
-    const injectInterval = setInterval(() => {
-      const queryElement = document.querySelector(`#${this.collectorIds.cardsListContainer}`);
-      if (queryElement && InlineCheckout.injected) {
-        queryElement.innerHTML = cardItemsTemplate(cards)
-        clearInterval(injectInterval)
-        this.#mountRadioButtons(token)
-        this.cardsInjected = true
-      }
-    }, 500);
+  async #loadCardsList(token) {
+    if(this.cardsInjected || !this.customization.saveCards?.showSaved) return;
+    this.cardsInjected = false
+    const cardsResponse = await fetchCustomerCards(
+        this.baseUrl,
+        token,
+        this.merchantData.business.pk,
+    );
+    let cards = []
+    if("cards" in cardsResponse) {
+      cards = cardsResponse.cards.map(mapCards)
+      const injectInterval = setInterval(() => {
+        const queryElement = document.querySelector(`#${this.collectorIds.cardsListContainer}`);
+        if (queryElement && InlineCheckout.injected) {
+          queryElement.innerHTML = cardItemsTemplate(cards)
+          clearInterval(injectInterval)
+          this.#mountRadioButtons(token)
+          this.cardsInjected = true
+        }
+      }, 500);
+    }
   }
 
   #loadAPMList(apms) {
@@ -402,17 +408,7 @@ export class InlineCheckout extends BaseInlineCheckout {
   }
   async #refreshCardOnDelete(customerToken) {
     if (this.deletingCards.length > 0) return;
-    this.cardsInjected = false
-    const cards = await fetchCustomerCards(
-      this.baseUrl,
-      customerToken,
-      this.merchantData.business.pk,
-      this.abortRefreshCardsController.signal
-    )
-    if ("cards" in cards) {
-      const cardsMapped = cards.cards.map(mapCards)
-      this.#loadCardsList(cardsMapped, customerToken)
-    }
+    await this.#loadCardsList(customerToken)
   }
   #unmountForm() {
     InlineCheckout.injected = false

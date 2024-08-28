@@ -6,8 +6,8 @@ Tonder SDK helps to integrate the services Tonder offers in your own website
 
 1. [Installation](#installation)
 2. [Usage](#usage)
-    - [InlineCheckout](#inlinecheckout)
-    - [LiteCheckout](#litecheckout)
+   - [InlineCheckout](#inlinecheckout)
+   - [LiteCheckout](#litecheckout)
 3. [Configuration Options](#configuration-options)
 4. [Styling InlineCheckout](#styling-inlinecheckout)
 5. [Payment Data Structure](#payment-data-structure)
@@ -35,6 +35,7 @@ npm i tonder-web-sdk
 ### Dependencies
 
 Add dependencies to the root of the app (index.html)
+
 ```html
 <script src="https://js.skyflow.com/v1/index.js"></script>
 <script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js"></script>
@@ -53,29 +54,29 @@ You need to have an element where the inline checkout will be mounted. This shou
 
 ```html
 <div>
-    <h1>Checkout</h1>
-    <div id="tonder-checkout"></div>
+  <h1>Checkout</h1>
+  <div id="tonder-checkout"></div>
 </div>
 ```
 
 #### JavaScript Implementation
 
 ```javascript
-import { InlineCheckout } from "tonder-web-sdk" // Not required if using script tag
+import { InlineCheckout } from "tonder-web-sdk"; // Not required if using script tag
 ```
 
 ```javascript
 // if using script tag, it should be initialized like this
 // new TonderSdk.InlineCheckout
 const inlineCheckout = new InlineCheckout({
-    apiKey: "your-api-key",
-    returnUrl: "https://your-website.com/checkout",
-    styles: customStyles // Optional, see Styling section
+  apiKey: "your-api-key",
+  returnUrl: "https://your-website.com/checkout",
+  styles: customStyles, // Optional, see Styling section
 });
 
-// The configureCheckout function allows you to set initial information, 
+// The configureCheckout function allows you to set initial information,
 // such as the customer's email, which is used to retrieve a list of saved cards.
-inlineCheckout.configureCheckout({customer: {email: "example@email.com"}});
+inlineCheckout.configureCheckout({ customer: { email: "example@email.com" } });
 
 // Inject the checkout into the DOM
 inlineCheckout.injectCheckout();
@@ -85,9 +86,9 @@ inlineCheckout.injectCheckout();
 // The response status will be one of the following
 // ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
 
-inlineCheckout.verify3dsTransaction().then(response => {
-    console.log('Verify 3ds response', response)
-})
+inlineCheckout.verify3dsTransaction().then((response) => {
+  console.log("Verify 3ds response", response);
+});
 ```
 
 ```javascript
@@ -100,19 +101,18 @@ const response = await inlineCheckout.payment(checkoutData);
 LiteCheckout allows you to build a custom checkout interface using Tonder's core functionality.
 
 ```javascript
-import { LiteCheckout } from "tonder-web-sdk"
+import { LiteCheckout } from "tonder-web-sdk";
 ```
 
 ```javascript
 const liteCheckout = new LiteCheckout({
   apiKey: "your-api-key", // Your api key getted from Tonder Dashboard
-  returnUrl: "http://your-website.com/checkout"
+  returnUrl: "http://your-website.com/checkout",
 });
 
-// The configureCheckout function allows you to set initial information, 
+// The configureCheckout function allows you to set initial information,
 // such as the customer's email, which is used to retrieve a list of saved cards.
-inlineCheckout.configureCheckout({customer: {email: "example@email.com"}});
-
+inlineCheckout.configureCheckout({ customer: { email: "example@email.com" } });
 
 // Initialize the checkout
 await liteCheckout.injectCheckout();
@@ -149,14 +149,19 @@ const verificationResult = await liteCheckout.verify3dsTransaction();
 ```
 
 ## Configuration Options
+
 Both InlineCheckout and LiteCheckout accept the following configuration options:
 
-| Property | Type | Description |
-|:--------:|:----:|:-----------:|
-| mode | string | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
-| apiKey | string | Your API key from the Tonder Dashboard |
-| returnUrl | string | URL where the checkout form is mounted (used for 3DS) |
-| styles | object | (InlineCheckout only) Custom styles for the checkout interface |
+|                  Property                  |  Type   |                                                                 Description                                                                 |
+| :----------------------------------------: | :-----: | :-----------------------------------------------------------------------------------------------------------------------------------------: |
+|                    mode                    | string  |                                Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage'                                |
+|                   apiKey                   | string  |                                                   Your API key from the Tonder Dashboard                                                    |
+|                 returnUrl                  | string  |                                            URL where the checkout form is mounted (used for 3DS)                                            |
+|                   styles                   | object  |                                       (InlineCheckout only) Custom styles for the checkout interface                                        |
+|               customization                | object  | Object to customize the checkout behavior and UI. Default value `{saveCards: {showSaved: true, showSaveCardOption: true, autoSave: false}}` |
+|     customization.saveCards.showSaved      | boolean |                                         Show saved cards in the checkout UI. Default value: `true`                                          |
+| customization.saveCards.showSaveCardOption | object  |                                 Show the option to save the card for future payments. Default value: `true`                                 |
+|      customization.saveCards.autoSave      | object  |                         Automatically save the card without showing the option to the user. Default value: `false`                          |
 
 ## Styling InlineCheckout
 
@@ -173,15 +178,15 @@ const customStyles = {
       marginTop: "2px",
       backgroundColor: "white",
       fontFamily: '"Inter", sans-serif',
-      fontSize: '16px',
-      '&::placeholder': {
+      fontSize: "16px",
+      "&::placeholder": {
         color: "#ccc",
       },
     },
     cardIcon: {
-      position: 'absolute',
-      left: '6px',
-      bottom: 'calc(50% - 12px)',
+      position: "absolute",
+      left: "6px",
+      bottom: "calc(50% - 12px)",
     },
     complete: {
       color: "#4caf50",
@@ -192,38 +197,39 @@ const customStyles = {
       border: "1px solid #f44336",
     },
     global: {
-      '@import': 'url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap")',
-    }
+      "@import":
+        'url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap")',
+    },
   },
   labelStyles: {
     base: {
-      fontSize: '12px',
-      fontWeight: '500',
-      fontFamily: '"Inter", sans-serif'
+      fontSize: "12px",
+      fontWeight: "500",
+      fontFamily: '"Inter", sans-serif',
     },
   },
   errorTextStyles: {
     base: {
-      fontSize: '12px',
-      fontWeight: '500',
+      fontSize: "12px",
+      fontWeight: "500",
       color: "#f44336",
-      fontFamily: '"Inter", sans-serif'
+      fontFamily: '"Inter", sans-serif',
     },
   },
   labels: {
-    nameLabel: 'Card Holder Name',
-    cardLabel: 'Card Number',
-    cvvLabel: 'CVC/CVV',
-    expiryDateLabel: 'Expiration Date',
+    nameLabel: "Card Holder Name",
+    cardLabel: "Card Number",
+    cvvLabel: "CVC/CVV",
+    expiryDateLabel: "Expiration Date",
   },
   placeholders: {
-    namePlaceholder: 'Name as it appears on the card',
-    cardPlaceholder: '1234 1234 1234 1234',
-    cvvPlaceholder: '3-4 digits',
-    expiryMonthPlaceholder: 'MM',
-    expiryYearPlaceholder: 'YY'
-  }
-}
+    namePlaceholder: "Name as it appears on the card",
+    cardPlaceholder: "1234 1234 1234 1234",
+    cvvPlaceholder: "3-4 digits",
+    expiryMonthPlaceholder: "MM",
+    expiryYearPlaceholder: "YY",
+  },
+};
 ```
 
 ## Payment Data Structure
@@ -235,20 +241,22 @@ When calling the `payment` method, use the following data structure:
 - **customer**: Object containing the customer's personal information to be registered in the transaction.
 
 - **cart**: Object containing the total amount and an array of items to be registered in the Tonder order.
-   - **total**: The total amount of the transaction.
-   - **items**: An array of objects, each representing a product or service in the order.
-     - name: name of the product 
-     - price_unit: valid float string with the price of the product 
-     - quantity: valid integer string with the quantity of this product
+
+  - **total**: The total amount of the transaction.
+  - **items**: An array of objects, each representing a product or service in the order.
+    - name: name of the product
+    - price_unit: valid float string with the price of the product
+    - quantity: valid integer string with the quantity of this product
 
 - **currency**: String representing the currency code for the transaction (e.g., "MXN" for Mexican Peso).
 
 - **metadata**: Object for including any additional information about the transaction. This can be used for internal references or tracking.
 
 - **card**: (for LiteCheckout) Object containing card information. This is used differently depending on whether it's a new card or a saved card:
-   - For a new card: Include `card_number`, `cvv`, `expiration_month`, `expiration_year`, and `cardholder_name`.
-   - For a saved card: Include only the `skyflow_id` of the saved card.
-   - This is only used when not paying with a payment_method.
+
+  - For a new card: Include `card_number`, `cvv`, `expiration_month`, `expiration_year`, and `cardholder_name`.
+  - For a saved card: Include only the `skyflow_id` of the saved card.
+  - This is only used when not paying with a payment_method.
 
 - **payment_method**: (for LiteCheckout) String indicating the alternative payment method to be used (e.g., "Spei"). This is only used when not paying with a card.
 
@@ -280,13 +288,13 @@ const paymentData = {
         name: "Product Name",
         amount_total: "100.00",
       },
-    ]
+    ],
   },
   currency: "MXN",
   metadata: {
-    order_id: "ORDER123"
+    order_id: "ORDER123",
   },
-  // For Lite checkout  
+  // For Lite checkout
   card: {
     // For a new card:
     card_number: "4111111111111111",
@@ -297,7 +305,7 @@ const paymentData = {
     // Or for a saved card:
     skyflow_id: "saved-card-id",
   },
-  // For Lite checkout 
+  // For Lite checkout
   payment_method: "Spei",
 };
 ```
@@ -316,22 +324,30 @@ For LiteCheckout implementations, the SDK provides validation functions to ensur
 Example usage:
 
 ```javascript
-import { validateCardNumber, validateCardholderName, validateCVV, validateExpirationDate } from 'tonder-web-sdk';
+import {
+  validateCardNumber,
+  validateCardholderName,
+  validateCVV,
+  validateExpirationDate,
+} from "tonder-web-sdk";
 
-const cardNumber = '4111111111111111';
-const cardholderName = 'John Doe';
-const cvv = '123';
-const expirationDate = '12/25';
+const cardNumber = "4111111111111111";
+const cardholderName = "John Doe";
+const cvv = "123";
+const expirationDate = "12/25";
 
-if (validateCardNumber(cardNumber) &&
-    validateCardholderName(cardholderName) &&
-    validateCVV(cvv) &&
-    validateExpirationDate(expirationDate)) {
-    // Proceed with payment
+if (
+  validateCardNumber(cardNumber) &&
+  validateCardholderName(cardholderName) &&
+  validateCVV(cvv) &&
+  validateExpirationDate(expirationDate)
+) {
+  // Proceed with payment
 } else {
-    // Show error message
+  // Show error message
 }
 ```
+
 ## API Reference
 
 ### InlineCheckout Methods
@@ -353,6 +369,7 @@ if (validateCardNumber(cardNumber) &&
 - `verify3dsTransaction()`: Verify a 3DS transaction
 
 ## Examples
+
 Here are examples of how to implement Tonder SDK in various JavaScript frameworks:
 
 ### Vanilla JavaScript
@@ -360,102 +377,106 @@ Here are examples of how to implement Tonder SDK in various JavaScript framework
 #### HTML Setup
 
 ```html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tonder Checkout Example</title>
     <script src="https://js.skyflow.com/v1/index.js"></script>
     <script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js"></script>
     <script src="https://openpay.s3.amazonaws.com/openpay-data.v1.min.js"></script>
     <!-- Only if not use npm package   -->
     <script src="https://zplit-prod.s3.amazonaws.com/v1/bundle.min.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <div id="tonder-checkout"></div>
     <button id="pay-button">Pay Now</button>
 
     <script src="your-script.js"></script>
-</body>
+  </body>
 </html>
 ```
 
 #### InlineCheckout Example (your-script.js)
 
 ```javascript
-import { InlineCheckout } from "tonder-web-sdk"
+import { InlineCheckout } from "tonder-web-sdk";
 
 const apiKey = "your-api-key";
 const returnUrl = "http://your-website.com/checkout";
 
 const inlineCheckout = new InlineCheckout({
-  mode: 'development',
+  mode: "development",
   apiKey,
   returnUrl,
-  styles: customStyles // Define your custom styles here
+  styles: customStyles, // Define your custom styles here
 });
 
-inlineCheckout.configureCheckout({customer: {email: "example@email.com"}});
+inlineCheckout.configureCheckout({ customer: { email: "example@email.com" } });
 inlineCheckout.injectCheckout();
 
-inlineCheckout.verify3dsTransaction().then(response => {
-  console.log('Verify 3ds response', response);
+inlineCheckout.verify3dsTransaction().then((response) => {
+  console.log("Verify 3ds response", response);
 });
 
-document.getElementById('pay-button').addEventListener('click', async function () {
-  try {
-    const response = await inlineCheckout.payment(checkoutData);
-    console.log("Payment response:", response);
-    alert('Payment successful');
-  } catch (error) {
-    console.error("Payment error:", error.details);
-    alert('Payment failed');
-  }
-});
+document
+  .getElementById("pay-button")
+  .addEventListener("click", async function () {
+    try {
+      const response = await inlineCheckout.payment(checkoutData);
+      console.log("Payment response:", response);
+      alert("Payment successful");
+    } catch (error) {
+      console.error("Payment error:", error.details);
+      alert("Payment failed");
+    }
+  });
 ```
 
 #### LiteCheckout Example (your-script.js)
 
 ```javascript
-import { LiteInlineCheckout } from "tonder-web-sdk"
+import { LiteInlineCheckout } from "tonder-web-sdk";
 
 const apiKey = "your-api-key";
 const returnUrl = "http://your-website.com/checkout";
 
 const liteCheckout = new LiteInlineCheckout({
-  mode: 'development',
+  mode: "development",
   apiKey,
-  returnUrl
+  returnUrl,
 });
 
-liteCheckout.configureCheckout({customer: {email: "example@email.com"}});
+liteCheckout.configureCheckout({ customer: { email: "example@email.com" } });
 liteCheckout.injectCheckout();
 
-liteCheckout.verify3dsTransaction().then(response => {
-  console.log('Verify 3ds response', response);
+liteCheckout.verify3dsTransaction().then((response) => {
+  console.log("Verify 3ds response", response);
 });
 
-document.getElementById('lite-payment-form').addEventListener('submit', async function(event) {
-  event.preventDefault();
-  const cardData = {
-    card_number: document.getElementById('card-number').value,
-    cardholder_name: document.getElementById('card-name').value,
-    expiration_month: document.getElementById('month').value,
-    expiration_year: document.getElementById('year').value,
-    cvv: document.getElementById('cvv').value
-  };
+document
+  .getElementById("lite-payment-form")
+  .addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const cardData = {
+      card_number: document.getElementById("card-number").value,
+      cardholder_name: document.getElementById("card-name").value,
+      expiration_month: document.getElementById("month").value,
+      expiration_year: document.getElementById("year").value,
+      cvv: document.getElementById("cvv").value,
+    };
 
-  try {
-    const paymentData = { ...checkoutData, card: cardData };
-    const response = await liteCheckout.payment(paymentData);
-    console.log("Payment response:", response);
-    alert('Payment successful');
-  } catch (error) {
-    console.error("Payment error:", error);
-    alert('Payment failed');
-  }
-});
+    try {
+      const paymentData = { ...checkoutData, card: cardData };
+      const response = await liteCheckout.payment(paymentData);
+      console.log("Payment response:", response);
+      alert("Payment successful");
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("Payment failed");
+    }
+  });
 ```
 
 ### React or Nextjs
@@ -466,8 +487,8 @@ First, create a TonderProvider:
 
 ```jsx
 // TonderProvider.jsx
-'use client' // only for Nextjs
-import React, { createContext, useContext, useState, useEffect } from 'react';
+"use client"; // only for Nextjs
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { InlineCheckout } from "tonder-web-sdk";
 
 const TonderContext = createContext();
@@ -476,14 +497,14 @@ export const useTonder = () => useContext(TonderContext);
 
 export const TonderProvider = ({ children }) => {
   const [tonderInstance, setTonderInstance] = useState(null);
-  
+
   useEffect(() => {
     const init = async () => {
       try {
         const inlineCheckout = new InlineCheckout({
-          mode: 'development',
-          apiKey: 'your-api-key',
-          returnUrl: 'http://your-website.com/checkout',
+          mode: "development",
+          apiKey: "your-api-key",
+          returnUrl: "http://your-website.com/checkout",
         });
         setTonderInstance(inlineCheckout);
       } catch (error) {
@@ -506,9 +527,9 @@ Then, create a TonderCheckout component:
 
 ```jsx
 // TonderCheckout.jsx
-'use client' // only for Nextjs
-import React, { useEffect, useState } from 'react';
-import { useTonder } from './TonderProvider';
+"use client"; // only for Nextjs
+import React, { useEffect, useState } from "react";
+import { useTonder } from "./TonderProvider";
 
 const TonderCheckout = () => {
   const tonder = useTonder();
@@ -516,12 +537,12 @@ const TonderCheckout = () => {
 
   useEffect(() => {
     if (!tonder) return;
-    
-    tonder.configureCheckout({customer: {email: 'example@email.com'}});
+
+    tonder.configureCheckout({ customer: { email: "example@email.com" } });
     tonder.injectCheckout();
-    
-    tonder.verify3dsTransaction().then(response => {
-      console.log('Verify 3ds response', response);
+
+    tonder.verify3dsTransaction().then((response) => {
+      console.log("Verify 3ds response", response);
     });
 
     return () => {
@@ -536,11 +557,11 @@ const TonderCheckout = () => {
     setLoading(true);
     try {
       const response = await tonder.payment(paymentData);
-      console.log('Payment successful:', response);
-      alert('Payment successful');
+      console.log("Payment successful:", response);
+      alert("Payment successful");
     } catch (error) {
-      console.error('Payment failed:', error);
-      alert('Payment failed');
+      console.error("Payment failed:", error);
+      alert("Payment failed");
     } finally {
       setLoading(false);
     }
@@ -550,7 +571,7 @@ const TonderCheckout = () => {
     <div>
       <div id="tonder-checkout"></div>
       <button onClick={handlePayment} disabled={loading}>
-        {loading ? 'Processing...' : 'Pay Now'}
+        {loading ? "Processing..." : "Pay Now"}
       </button>
     </div>
   );
@@ -562,10 +583,10 @@ export default TonderCheckout;
 Finally, use it in your checkout component:
 
 ```jsx
-'use client';
-import { useEffect, useState } from 'react';
-import { useTonder, TonderProvider } from './TonderProvider';
-import Script from 'next/script';
+"use client";
+import { useEffect, useState } from "react";
+import { useTonder, TonderProvider } from "./TonderProvider";
+import Script from "next/script";
 
 export default function TonderCheckout() {
   return (
@@ -584,10 +605,10 @@ function CheckoutContent() {
 
   useEffect(() => {
     if (!tonder) return;
-    tonder.configureCheckout({customer: {email: 'example@email.com'}});
+    tonder.configureCheckout({ customer: { email: "example@email.com" } });
     tonder.injectCheckout();
-    tonder.verify3dsTransaction().then(response => {
-      console.log('Verify 3ds response', response);
+    tonder.verify3dsTransaction().then((response) => {
+      console.log("Verify 3ds response", response);
     });
     return () => {
       if (tonder.removeCheckout) {
@@ -602,10 +623,10 @@ function CheckoutContent() {
     try {
       const response = await tonder.payment(paymentData);
       console.log(response);
-      alert('Payment successful');
+      alert("Payment successful");
     } catch (error) {
       console.error(error);
-      alert('Payment failed');
+      alert("Payment failed");
     } finally {
       setLoading(false);
     }
@@ -615,7 +636,7 @@ function CheckoutContent() {
     <div>
       <div id="tonder-checkout"></div>
       <button onClick={handlePayment} disabled={loading}>
-        {loading ? 'Processing...' : 'Pay'}
+        {loading ? "Processing..." : "Pay"}
       </button>
     </div>
   );
@@ -628,68 +649,67 @@ For Angular, we recommend using a service to manage the Tonder instance:
 
 ```typescript
 // tonder.service.ts
-import { Injectable } from '@angular/core';
-import { InlineCheckout } from 'tonder-web-sdk';
+import { Injectable } from "@angular/core";
+import { InlineCheckout } from "tonder-web-sdk";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class TonderService {
   private inlineCheckout: InlineCheckout;
 
-    constructor(private sdkParameters: IInlineCheckoutOptions) {
-        this.initializeInlineCheckout();
-    }
+  constructor(private sdkParameters: IInlineCheckoutOptions) {
+    this.initializeInlineCheckout();
+  }
 
-    private initializeInlineCheckout(): void {
-        this.inlineCheckout = new InlineCheckout({ ...this.sdkParameters });
-    }
+  private initializeInlineCheckout(): void {
+    this.inlineCheckout = new InlineCheckout({ ...this.sdkParameters });
+  }
 
-    configureCheckout(customerData: IConfigureCheckout): void {
-        this.inlineCheckout.configureCheckout({ ...customerData });
-    }
+  configureCheckout(customerData: IConfigureCheckout): void {
+    this.inlineCheckout.configureCheckout({ ...customerData });
+  }
 
-    async injectCheckout(): Promise<void> {
-        await this.inlineCheckout.injectCheckout();
-    }
+  async injectCheckout(): Promise<void> {
+    await this.inlineCheckout.injectCheckout();
+  }
 
-    verify3dsTransaction(): Promise<ITransaction | void> {
-        return this.inlineCheckout.verify3dsTransaction();
-    }
-    
-    // Add more functions, for example for lite sdk: get payment methods
-    
-    // getCustomerPaymentMethods(): Promise<IPaymentMethod[]> {
-    //     return this.liteCheckout.getCustomerPaymentMethods();
-    // }
+  verify3dsTransaction(): Promise<ITransaction | void> {
+    return this.inlineCheckout.verify3dsTransaction();
+  }
+
+  // Add more functions, for example for lite sdk: get payment methods
+
+  // getCustomerPaymentMethods(): Promise<IPaymentMethod[]> {
+  //     return this.liteCheckout.getCustomerPaymentMethods();
+  // }
 }
 
 // checkout.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TonderService } from './tonder.service';
+import { Component, OnInit, OnDestroy } from "@angular/core";
+import { TonderService } from "./tonder.service";
 
 @Component({
-  selector: 'app-tonder-checkout',
+  selector: "app-tonder-checkout",
   template: `
     <div id="tonder-checkout"></div>
     <button (click)="pay()" [disabled]="loading">
-      {{ loading ? 'Processing...' : 'Pay' }}
+      {{ loading ? "Processing..." : "Pay" }}
     </button>
   `,
-    providers: [
-        {
-            provide: TonderInlineService,
-            // Inicialización del SDK de Tonder Inline
-            // Nota: Reemplace estas credenciales con las suyas propias en desarrollo/producción
-            useFactory: () =>
-                new TonderInlineService({
-                    apiKey: "11e3d3c3e95e0eaabbcae61ebad34ee5f93c3d27",
-                    returnUrl:
-                        "http://localhost:4200/checkout/payment?tabPayment=0",
-                    mode: "development",
-                }),
-        },
-    ],
+  providers: [
+    {
+      provide: TonderInlineService,
+      // Inicialización del SDK de Tonder Inline
+      // Nota: Reemplace estas credenciales con las suyas propias en desarrollo/producción
+      useFactory: () =>
+        new TonderInlineService({
+          apiKey: "11e3d3c3e95e0eaabbcae61ebad34ee5f93c3d27",
+          returnUrl: "http://localhost:4200/checkout/payment?tabPayment=0",
+          mode: "development",
+        }),
+    },
+  ],
 })
 export class TonderCheckoutComponent implements OnInit, OnDestroy {
   loading = false;
@@ -697,31 +717,33 @@ export class TonderCheckoutComponent implements OnInit, OnDestroy {
   constructor(private tonderService: TonderService) {}
 
   ngOnInit() {
-    this.initCheckout()
+    this.initCheckout();
   }
 
   ngOnDestroy() {
-      // Limpieza del checkout al destruir el componente
-      this.tonderService.removeCheckout();
+    // Limpieza del checkout al destruir el componente
+    this.tonderService.removeCheckout();
   }
-  
+
   async initCheckout() {
-      this.tonderService.configureCheckout({ customer: { email: 'example@email.com' } });
-      await this.tonderService.injectCheckout();
-      this.tonderService.verify3dsTransaction().then(response => {
-          console.log('Verify 3ds response', response);
-      });
+    this.tonderService.configureCheckout({
+      customer: { email: "example@email.com" },
+    });
+    await this.tonderService.injectCheckout();
+    this.tonderService.verify3dsTransaction().then((response) => {
+      console.log("Verify 3ds response", response);
+    });
   }
 
   async pay() {
     this.loading = true;
     try {
       const response = await this.tonderService.payment(paymentData);
-      console.log('Payment successful:', response);
-      alert('Payment successful');
+      console.log("Payment successful:", response);
+      alert("Payment successful");
     } catch (error) {
-      console.error('Payment failed:', error);
-      alert('Payment failed');
+      console.error("Payment failed:", error);
+      alert("Payment failed");
     } finally {
       this.loading = false;
     }
@@ -732,11 +754,14 @@ export class TonderCheckoutComponent implements OnInit, OnDestroy {
 ## Notes
 
 ### General
+
 - Replace `'your-api-key'`, `'http://your-website.com/checkout'`, `customStyles`, and `paymentData` with your actual values.
 - The `paymentData` should be defined according to your specific requirements.
 
 ### Script Dependencies
+
 For all implementations, ensure you include the necessary scripts:
+
 ```html
 <script src="https://js.skyflow.com/v1/index.js"></script>
 <script src="https://openpay.s3.amazonaws.com/openpay.v1.min.js"></script>
