@@ -190,7 +190,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
         skyflowTokens = await getSkyflowTokens({
           vault_id: vault_id,
           vault_url: vault_url,
-          data: card,
+          data: {...card, card_number: card.card_number.replace(/\s+/g, '')},
           baseUrl: this.baseUrl,
           apiKey: this.apiKeyTonder,
         });
