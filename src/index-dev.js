@@ -127,9 +127,9 @@ function setupInlineCheckout() {
     ...commonConfig,
     customization: {
       saveCards: {
-        showSaveCardOption: false, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
-        autoSave: true,           // Usar para guardar automáticamente la tarjeta (sin necesidad de mostrar el checkbox)
-        showSaved: false           // Usar para mostrar/ocultar el listado de tarjetas guardadas
+        showSaveCardOption: true, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
+        autoSave: false,           // Usar para guardar automáticamente la tarjeta (sin necesidad de mostrar el checkbox)
+        showSaved: true           // Usar para mostrar/ocultar el listado de tarjetas guardadas
       },
     },
   });
