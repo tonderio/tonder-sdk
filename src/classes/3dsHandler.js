@@ -95,7 +95,7 @@ export class ThreeDSHandler {
     const url = this.getRedirectUrl()
     if (url) {
       this.saveVerifyTransactionUrl()
-      window.location = url;
+      // window.location = url;
     } else {
       console.log('No redirection found');
     }

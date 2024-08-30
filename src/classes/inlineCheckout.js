@@ -285,6 +285,49 @@ export class InlineCheckout extends BaseInlineCheckout {
       }
     } catch (error) {
       console.log(error);
+      console.log("ERROR router:",  error.details);
+      console.log("MIT", error.details.psp_response[0].res)
+      // TODO: ONLY FOR MIT TEST
+
+      // Crear el formulario dinámicamente
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "https://qa3.mitec.com.mx/ws3dsecure/Auth3dsecure";
+    
+      // Crear el input hidden con los datos XML
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "xml";
+      // const mit_data = "2nN5ZInOKur5M1yDYEJqycAw+R3yyvykVeHTik/qAi/k2+PNqXK/TEqaE/PVdCr3XgjRmTocLVTyXDpLAX3r52ut+HBOcUuZuJZrGvzSCPXHRR32vPaFUPnqQgUAMAnHnlmBjmlAYLAiNSww1hoCLHzSWeOsQzPqTK3uFftcRIBxmQEq4hHm4Pjr1KoLZJoIWaGAwM0LSYZHBfeQQAIG3X2A5hM9940VECp18g1GOZ6Y3bolJnb4Lao8YxjKtd4CWjj/ir+a4U3FSFe13ZAtZI2kQXnb2c+O2+sHhpIKsif0Kgvf3Ki9YFyvKyXsCxyGqd2895v96DzD4d4/fJfeQIVcbjGzES1ePspw7Do2xiXVNz91xLSoTLqeEAMMZLH/C69fPygRC1VBWqtdLLfWSQXO6mMuJu1ktwVREKCIL8pzRnx5ayS7tNtXDf1KvDEjKHy6C6oiWnEZg0h4VniY6vZAm4wiftj1SbqnUab8+9Uw0Ihe638rOLTErkCdtLTkEpmFL3MfaObjyXQ5zLr1ds1Zk7yP5XE5jLegyiIoQS4zxnnmj+tdxI5Qv5PMzu4tMF1A+WY4iPsJFNDF6i0R4ROOTdQdtDCxUGInuP4IolhYwJYZI4xVnxs80EIdERSM7Sgw0wcs9Vl1mKP2AJ7j3aHQ1YiBosMJjZOZhov9naYDuIotBX80NkTkUnLLy20atqe2OxOqRZPRDZQ1+WM80slNJqKAoI8VkPyTeNc50Nd0Q1SzWH0Z4K9o1ccb9QvqJxrb9o+DRiIXVU4o4fOrykpg41rfS+9S/rKDmh8OLSEVJgaU8+BUCgaCSfMa8zc0K5OhPS411HVJR+6teTZB9DFrTjeNX9CqjZCdl6S7DaBEX4i/qz0ukOCIQfCapvkxQZ0Z0ousjDbBo7GPDe2YAX4rc3NxzmbahVkOHFDf8qNDDsdu8r8elQqe4tANUhOfoe87DiC3Tx7Y8mHrs/MTJal+URW34u7mRsZpsUBhszdfXF3XOBwLL4v1O5YFL1TLsZGWK0GbcCNGMWUz9R2VkE3pK7TbwMf2xMDtSXhtIlFu2p6vn5Tbo2VYJxG8o4By6gF+RUCJ+n/ZJfhPRdBeslz3Ax7h7OhJH8ZnasUIv9Df2Gt2WumSNF1DrJ+/rgsa5n9XUvDLwuxerspM6nlxKGYzFZ/m41/Hk9ftQHg5gN25ts3q3fCgfLBLGATqgZ3Firc3xO8ZPklviaMevb2P1zaDQ9QBPsoFrTuncpegIvoD1EQIYSukj32egu8qdWg0"
+      input.value = error.details.psp_response[0].res;
+    
+      form.appendChild(input);
+    
+      document.body.appendChild(form);
+
+      // enviar peticion
+      form.submit();
+
+      // // *** WITH IFRAME
+      // const iframe = document.getElementById("iframe-mit");
+    
+      // const formHtml = `
+      //   <form id="mitForm" method="POST" action="https://qa3.mitec.com.mx/ws3dsecure/Auth3dsecure">
+      //     <input type="hidden" name="xml" value="${error.details.psp_response[0].res}">
+      //     <input type="submit" value="Submit">
+      //   </form>
+      //   <script>
+      //     document.getElementById('mitForm').submit();
+      //   </script>
+      // `;
+
+      // const doc = iframe.contentWindow.document;
+      // doc.open();
+      // doc.write(formHtml);
+      // doc.close();
+
+      // // TODO: FIN MIT TEST
+
       showError("Ha ocurrido un error")
       throw error;
     }
