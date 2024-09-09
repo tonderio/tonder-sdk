@@ -44,8 +44,8 @@ export class InlineCheckout extends BaseInlineCheckout {
   }
   customization = {
     saveCards: {
-      showSaveCardOption: true,
-      showSaved: true,
+      showSaveCardOption: false,
+      showSaved: false,
       autoSave: false
     }
   }
@@ -62,14 +62,15 @@ export class InlineCheckout extends BaseInlineCheckout {
     this.renderPaymentButton = renderPaymentButton;
     this.customStyles = styles
     this.abortRefreshCardsController = new AbortController();
-    this.customization = {
-      ...this.customization,
-      ...(customization || {}),
-      saveCards: {
-        ...this.customization.saveCards,
-        ...(customization?.saveCards || {}),
-      },
-    }
+    // TODO: Wait until SaveCards is ready (server token).
+    // this.customization = {
+    //   ...this.customization,
+    //   ...(customization || {}),
+    //   saveCards: {
+    //     ...this.customization.saveCards,
+    //     ...(customization?.saveCards || {}),
+    //   },
+    // } 
   }
 
   #mountPayButton() {
