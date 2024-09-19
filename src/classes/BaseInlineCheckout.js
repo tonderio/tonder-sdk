@@ -34,6 +34,7 @@ export class BaseInlineCheckout {
    */
   configureCheckout(data) {
     if ("customer" in data) this.#handleCustomer(data["customer"]);
+    if ("secureToken" in data) this.#handleSecureToken(data["secureToken"]);
   }
 
   /**
@@ -65,6 +66,7 @@ export class BaseInlineCheckout {
     return new Promise(async (resolve, reject) => {
       try {
         this.#handleCustomer(data.customer);
+        this.#handleSecureToken(data.secureToken);
         this._setCartTotal(data.cart?.total);
         this.#setCartItems(data.cart?.items);
         this.#handleMetadata(data);
@@ -263,6 +265,10 @@ export class BaseInlineCheckout {
     this.email = customer?.email;
     this.phone = customer?.phone;
     this.customer = customer;
+  }
+
+  #handleSecureToken(secureToken) {
+    this.secureToken = secureToken;
   }
 
   #handleMetadata(data) {
