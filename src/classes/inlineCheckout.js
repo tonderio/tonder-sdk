@@ -64,14 +64,14 @@ export class InlineCheckout extends BaseInlineCheckout {
     this.customStyles = styles
     this.abortRefreshCardsController = new AbortController();
     // TODO: Wait until SaveCards is ready (server token).
-    // this.customization = {
-    //   ...this.customization,
-    //   ...(customization || {}),
-    //   saveCards: {
-    //     ...this.customization.saveCards,
-    //     ...(customization?.saveCards || {}),
-    //   },
-    // } 
+    this.customization = {
+      ...this.customization,
+      ...(customization || {}),
+      saveCards: {
+        ...this.customization.saveCards,
+        ...(customization?.saveCards || {}),
+      },
+    } 
   }
 
   #mountPayButton() {
@@ -364,9 +364,13 @@ export class InlineCheckout extends BaseInlineCheckout {
     const saveCard = document.getElementById("save-checkout-card");
     if ((saveCard && "checked" in saveCard && saveCard.checked) || !!this.customization.saveCards?.autoSave) {
       try {
-        await saveCustomerCard(this.baseUrl, auth_token, businessId, {
-          skyflow_id: cardTokens.skyflow_id,
-        });
+        await saveCustomerCard(
+          this.baseUrl,
+          auth_token,
+          this.secureToken,
+          businessId,
+          { skyflow_id: cardTokens.skyflow_id, }
+        );
         showMessage(MESSAGES.cardSaved, this.collectorIds.msgNotification);
       } catch (error) {
         if (error?.message) {
@@ -383,6 +387,7 @@ export class InlineCheckout extends BaseInlineCheckout {
     const cardsResponse = await fetchCustomerCards(
         this.baseUrl,
         token,
+        this.secureToken,
         this.merchantData.business.pk,
     );
     let cards = []
@@ -469,7 +474,13 @@ export class InlineCheckout extends BaseInlineCheckout {
           this.abortRefreshCardsController = new AbortController();
         }
         const businessId = this.merchantData.business.pk
-        await removeCustomerCard(this.baseUrl, customerToken, skyflow_id, businessId)
+        await removeCustomerCard(
+          this.baseUrl,
+          customerToken,
+          this.secureToken,
+          skyflow_id,
+          businessId
+        )
       } catch (error) { } finally {
         this.deletingCards = this.deletingCards.filter(id => id !== skyflow_id);
         this.#refreshCardOnDelete(customerToken)
