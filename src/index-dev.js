@@ -113,7 +113,6 @@ const commonConfig = {
   styles: customStyles,
 };
 
-let checkout;
 let inlineCheckout;
 let liteInlineCheckout;
 
@@ -133,7 +132,10 @@ function setupInlineCheckout() {
       },
     },
   });
-  inlineCheckout.configureCheckout({ customer: checkoutData.customer });
+  inlineCheckout.configureCheckout({
+    customer: checkoutData.customer,
+    secureToken: "eyJhbGc..."
+  });
   inlineCheckout.injectCheckout();
   // ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
   inlineCheckout.verify3dsTransaction().then((response) => {
@@ -159,7 +161,10 @@ function setupInlineCheckout() {
 function setupLiteInlineCheckout() {
   loadMaskitoMask();
   liteInlineCheckout = new LiteInlineCheckout(commonConfig);
-  liteInlineCheckout.configureCheckout({ customer: checkoutData.customer });
+  liteInlineCheckout.configureCheckout({
+    customer: checkoutData.customer,
+    secureToken: "eyJhbGc..."
+  });
   liteInlineCheckout.injectCheckout().then(() => {});
   liteInlineCheckout.verify3dsTransaction().then((response) => {
     console.log("Verify 3ds response", response);
