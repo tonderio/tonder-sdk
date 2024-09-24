@@ -66,7 +66,6 @@ export class BaseInlineCheckout {
     return new Promise(async (resolve, reject) => {
       try {
         this.#handleCustomer(data.customer);
-        this.#handleSecureToken(data.secureToken);
         this._setCartTotal(data.cart?.total);
         this.#setCartItems(data.cart?.items);
         this.#handleMetadata(data);
