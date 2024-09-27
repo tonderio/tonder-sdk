@@ -287,23 +287,19 @@ export class BaseInlineCheckout {
   }
 
   async #handle3dsRedirect(response) {
+    console.log('Handling 3DS redirect...');
     const iframe = response?.next_action?.iframe_resources?.iframe;
+    const threeDsChallenge = response?.next_action?.three_ds_challenge;
 
     if (iframe) {
-      this.process3ds
-        .loadIframe()
-        .then(() => {
-          //TODO: Check if this will be necessary on the frontend side
-          // after some the tests in production, since the 3DS process
-          // doesn't works properly on the sandbox environment
-          // setTimeout(() => {
-          //   process3ds.verifyTransactionStatus();
-          // }, 10000);
-          this.process3ds.verifyTransactionStatus();
-        })
-        .catch((error) => {
-          console.log("Error loading iframe:", error);
-        });
+      try {
+        await this.process3ds.loadIframe();
+        await this.process3ds.verifyTransactionStatus();
+      } catch (error) {
+        console.log("Error loading iframe:", error);
+      }
+    } else if (threeDsChallenge) {
+      await this.process3ds.handle3dsChallenge(threeDsChallenge);
     } else {
       const redirectUrl = this.process3ds.getRedirectUrl();
       if (redirectUrl) {
