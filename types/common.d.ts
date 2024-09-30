@@ -9,6 +9,7 @@ export interface IInlineCheckoutBaseOptions {
 
 export interface IConfigureCheckout {
   customer: ICustomer;
+  secureToken: string;
 }
 
 export interface IApiError {

@@ -6,7 +6,8 @@ export class ThreeDSHandler {
   }) {
     this.baseUrl = baseUrl,
     this.apiKey = apiKey,
-    this.payload = payload
+    this.payload = payload,
+    this.isTransactionPending = false
   }
 
   saveVerifyTransactionUrl() {
@@ -127,8 +128,6 @@ export class ThreeDSHandler {
     return response;
   }
 
-  // TODO: the method below needs to be tested with a real 3DS challenge
-  // since we couldn't get a test card that works with this feature
   async handle3dsChallenge(response_json) {
     // Create the form element:
     const form = document.createElement('form');
@@ -139,15 +138,17 @@ export class ThreeDSHandler {
     // Add hidden fields:
     const creqInput = document.createElement('input');
     creqInput.type = 'hidden';
-    creqInput.name = response_json.creq;
+    creqInput.name = 'creq';
     creqInput.value = response_json.creq;
     form.appendChild(creqInput);
 
-    const termUrlInput = document.createElement('input');
-    termUrlInput.type = 'hidden';
-    termUrlInput.name =  response_json.term_url;
-    termUrlInput.value = response_json.TermUrl;
-    form.appendChild(termUrlInput);
+    if (response_json.term_url) {
+      const termUrlInput = document.createElement('input');
+      termUrlInput.type = 'hidden';
+      termUrlInput.name = 'TermUrl';
+      termUrlInput.value = response_json.term_url;
+      form.appendChild(termUrlInput);
+    }
 
     // Append the form to the body:
     document.body.appendChild(form);
@@ -172,6 +173,14 @@ export class ThreeDSHandler {
   }
 
   async verifyTransactionStatus() {
+    console.log('Verificando la transacción...');
+
+    if (this.isTransactionPending) {
+      console.log('La transacción ya está en proceso');
+      return
+    }
+
+    this.isTransactionPending = true
     const verifyUrl = this.getUrlWithExpiration();
 
     if (verifyUrl) {
@@ -199,6 +208,8 @@ export class ThreeDSHandler {
     } else {
       console.log('No verify_transaction_status_url found');
     }
+
+    this.isTransactionPending = false
   }
 
   setPayload = (payload) => {
