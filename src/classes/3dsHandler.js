@@ -154,7 +154,6 @@ export class ThreeDSHandler {
     document.body.appendChild(form);
     form.submit();
 
-    await this.verifyTransactionStatus();
   }
 
   // TODO: This method could be removed

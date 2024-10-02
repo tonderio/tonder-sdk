@@ -294,12 +294,15 @@ export class BaseInlineCheckout {
     if (iframe) {
       try {
         await this.process3ds.loadIframe();
-        await this.process3ds.verifyTransactionStatus();
+        const res = await this.process3ds.verifyTransactionStatus();
+        return res;
       } catch (error) {
         console.log("Error loading iframe:", error);
       }
     } else if (threeDsChallenge) {
       await this.process3ds.handle3dsChallenge(threeDsChallenge);
+      const res = await this.process3ds.verifyTransactionStatus();
+      return res;
     } else {
       const redirectUrl = this.process3ds.getRedirectUrl();
       if (redirectUrl) {
