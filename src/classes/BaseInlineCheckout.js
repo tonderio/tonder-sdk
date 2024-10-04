@@ -47,8 +47,9 @@ export class BaseInlineCheckout {
     const result3ds = await this.process3ds.verifyTransactionStatus();
     const resultCheckout = await this.#resumeCheckout(result3ds);
     this.process3ds.setPayload(resultCheckout);
+    const response = await this.#handle3dsRedirect(resultCheckout);
     globalLoader.remove();
-    return this.#handle3dsRedirect(resultCheckout);
+    return response
   }
 
   /**
@@ -223,7 +224,7 @@ export class BaseInlineCheckout {
 
   async #resumeCheckout(response) {
     // Stop the routing process if the transaction is either hard declined or successful
-    if (response?.decline?.error_type === "Hard") {
+    if (response?.decline?.error_type === "Hard" || !!response?.checkout?.is_route_finished) {
       return response;
     }
 
