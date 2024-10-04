@@ -4,10 +4,9 @@ export class ThreeDSHandler {
     apiKey,
     baseUrl,
   }) {
-    this.baseUrl = baseUrl,
-    this.apiKey = apiKey,
-    this.payload = payload,
-    this.isTransactionPending = false
+    this.baseUrl = baseUrl
+    this.apiKey = apiKey
+    this.payload = payload
   }
 
   saveVerifyTransactionUrl() {
@@ -61,12 +60,12 @@ export class ThreeDSHandler {
 
   loadIframe() {
     const iframe = this.payload?.next_action?.iframe_resources?.iframe
-
     if (iframe) {
       return new Promise((resolve, reject) => {
         const iframe = this.payload?.next_action?.iframe_resources?.iframe
 
         if (iframe) {
+          // TODO: This is not working for Azul
           this.saveVerifyTransactionUrl()
           const container = document.createElement('div')
           container.innerHTML = iframe
@@ -153,13 +152,11 @@ export class ThreeDSHandler {
     // Append the form to the body:
     document.body.appendChild(form);
     form.submit();
-
   }
 
-  // TODO: This method could be removed
+  // TODO: This works for Azul
   async handleTransactionResponse(response) {
     const response_json = await response.json();
-
     // Azul property
     if (response_json.status === "Pending" && response_json.redirect_post_url) {
       return await this.handle3dsChallenge(response_json);
@@ -172,16 +169,7 @@ export class ThreeDSHandler {
   }
 
   async verifyTransactionStatus() {
-    console.log('Verificando la transacción...');
-
-    if (this.isTransactionPending) {
-      console.log('La transacción ya está en proceso');
-      return
-    }
-
-    this.isTransactionPending = true
     const verifyUrl = this.getUrlWithExpiration();
-
     if (verifyUrl) {
       const url = `${this.baseUrl}${verifyUrl}`;
       try {
@@ -207,8 +195,6 @@ export class ThreeDSHandler {
     } else {
       console.log('No verify_transaction_status_url found');
     }
-
-    this.isTransactionPending = false
   }
 
   setPayload = (payload) => {
