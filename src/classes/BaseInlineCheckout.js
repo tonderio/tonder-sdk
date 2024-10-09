@@ -160,6 +160,7 @@ export class BaseInlineCheckout {
         amount: total,
         date: dateString,
         order_id: jsonResponseOrder.id,
+        customer_order_reference: this.order_reference ? this.order_reference : reference,
       };
       const jsonResponsePayment = await createPayment(
         this.baseUrl,
@@ -273,6 +274,7 @@ export class BaseInlineCheckout {
 
   #handleMetadata(data) {
     this.metadata = data?.metadata;
+    this.order_reference = data?.order_reference;
   }
 
   #handleCurrency(data) {
