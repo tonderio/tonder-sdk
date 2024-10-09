@@ -98,6 +98,8 @@ const checkoutData = {
   // metadata: {
   //   order_id: 123456
   // }
+  // Reference from the merchant
+  order_reference: "ORD-123456"
 };
 
 // localhost
