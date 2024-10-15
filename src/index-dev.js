@@ -98,11 +98,13 @@ const checkoutData = {
   // metadata: {
   //   order_id: 123456
   // }
+  // Reference from the merchant
+  order_reference: "ORD-123456"
 };
 
 // localhost
 const apiKey = "11e3d3c3e95e0eaabbcae61ebad34ee5f93c3d27";
-const returnUrl = "http://127.0.0.1:8080/";
+const returnUrl = "http://localhost:8080/";
 // stage
 // const apiKey = "8365683bdc33dd6d50fe2397188d79f1a6765852";
 

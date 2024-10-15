@@ -47,8 +47,9 @@ export class BaseInlineCheckout {
     const result3ds = await this.process3ds.verifyTransactionStatus();
     const resultCheckout = await this.#resumeCheckout(result3ds);
     this.process3ds.setPayload(resultCheckout);
+    const response = await this.#handle3dsRedirect(resultCheckout);
     globalLoader.remove();
-    return this.#handle3dsRedirect(resultCheckout);
+    return response
   }
 
   /**
@@ -159,6 +160,7 @@ export class BaseInlineCheckout {
         amount: total,
         date: dateString,
         order_id: jsonResponseOrder.id,
+        customer_order_reference: this.order_reference ? this.order_reference : reference,
       };
       const jsonResponsePayment = await createPayment(
         this.baseUrl,
@@ -223,7 +225,7 @@ export class BaseInlineCheckout {
 
   async #resumeCheckout(response) {
     // Stop the routing process if the transaction is either hard declined or successful
-    if (response?.decline?.error_type === "Hard") {
+    if (response?.decline?.error_type === "Hard" || !!response?.checkout?.is_route_finished) {
       return response;
     }
 
@@ -272,6 +274,7 @@ export class BaseInlineCheckout {
 
   #handleMetadata(data) {
     this.metadata = data?.metadata;
+    this.order_reference = data?.order_reference;
   }
 
   #handleCurrency(data) {
@@ -294,12 +297,15 @@ export class BaseInlineCheckout {
     if (iframe) {
       try {
         await this.process3ds.loadIframe();
-        await this.process3ds.verifyTransactionStatus();
+        const res = await this.process3ds.verifyTransactionStatus();
+        return res;
       } catch (error) {
         console.log("Error loading iframe:", error);
       }
     } else if (threeDsChallenge) {
       await this.process3ds.handle3dsChallenge(threeDsChallenge);
+      const res = await this.process3ds.verifyTransactionStatus();
+      return res;
     } else {
       const redirectUrl = this.process3ds.getRedirectUrl();
       if (redirectUrl) {
