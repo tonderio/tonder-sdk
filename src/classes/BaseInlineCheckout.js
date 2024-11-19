@@ -13,6 +13,7 @@ import { getBrowserInfo, injectMercadoPagoSecurity } from "../helpers/utils";
 export class BaseInlineCheckout {
   baseUrl = "";
   cartTotal = "0";
+  secureToken = "";
   constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {} }) {
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
