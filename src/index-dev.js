@@ -167,7 +167,12 @@ function setupLiteInlineCheckout() {
     customer: checkoutData.customer,
     secureToken: "eyJhbGc..."
   });
-  liteInlineCheckout.injectCheckout().then(() => {});
+  liteInlineCheckout.injectCheckout().then(() => {
+    liteInlineCheckout.getCustomerCards().then((r) => {
+      console.log('customer cards', r)
+    });
+  });
+
   liteInlineCheckout.verify3dsTransaction().then((response) => {
     console.log("Verify 3ds response", response);
   });

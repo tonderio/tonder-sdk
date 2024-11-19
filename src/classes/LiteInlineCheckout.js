@@ -42,6 +42,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
       const response = await fetchCustomerCards(
         this.baseUrl,
         auth_token,
+        this.secureToken,
         this.merchantData.business.pk,
       );
       return {
@@ -87,6 +88,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
       return await saveCustomerCard(
         this.baseUrl,
         auth_token,
+        this.secureToken,
         business?.pk,
         skyflowTokens,
       );
@@ -117,6 +119,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
       return await removeCustomerCard(
         this.baseUrl,
         auth_token,
+        this.secureToken,
         skyflowId,
         business?.pk,
       );
