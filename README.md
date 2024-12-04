@@ -163,6 +163,9 @@ Both InlineCheckout and LiteCheckout accept the following configuration options:
 | customization.saveCards.showSaveCardOption | object  |                                 Show the option to save the card for future payments. Default value: `true`                                 |
 |      customization.saveCards.autoSave      | object  |                         Automatically save the card without showing the option to the user. Default value: `false`                          |
 
+> **Important Note about SaveCard functionality**: 
+> To properly implement the SaveCard feature, you must use a SecureToken. For detailed implementation instructions and best practices, please refer to our official documentation on [How to use SecureToken for secure card saving](https://docs.tonder.io/integration/sdks/secure-token#how-to-use-securetoken-for-secure-card-saving).
+
 ## Styling InlineCheckout
 
 You can customize the appearance of InlineCheckout by passing a `styles` object:
