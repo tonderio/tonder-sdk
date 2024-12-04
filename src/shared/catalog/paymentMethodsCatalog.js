@@ -237,11 +237,22 @@ const PAYMENT_METHODS_CATALOG = {
 };
 
 
-export const getPaymentMethodDetails = (scheme_data) => {
+export const getPaymentMethodDetails = (scheme_data, provider) => {
     const scheme = clearSpace(scheme_data.toUpperCase())
     const _default = {
         icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
         label: ""
     };
-    return PAYMENT_METHODS_CATALOG[scheme] || _default;
+    
+    let details = PAYMENT_METHODS_CATALOG[scheme] || _default;
+    
+    // Special handling for SPEI to show provider
+    if (scheme === 'SPEI' && provider) {
+        details = {
+            ...details,
+            label: `${details.label} (${provider})`
+        };
+    }
+    
+    return details;
 }

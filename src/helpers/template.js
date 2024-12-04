@@ -495,22 +495,19 @@ export const cardItemsTemplate = (cards) => {
 }
 
 export const apmItemsTemplate = (apms) => {
-
-  const apmItemsHTML = apms.reduce((total, apm) => {
-    const apm_data = getPaymentMethodDetails(apm.payment_method);
-    return `${total}
-    <div class="apm-item" id="card_container-${apm.pk}">
-        <input id="${apm.pk}" class="card_selected" name="card_selected" type="radio"/>
-        <label class="apm-item-label" for="${apm.pk}">
-          
-          <div class="apm-image">
-            <div class="apm-image-border"></div>
-            <img src="${apm_data.icon}" />
-          </div>
-          <div class="apm-name">${apm_data.label}</div>
-        </label>
-    </div>`
-  }, ``);
+    const apmItemsHTML = apms.reduce((total, apm) => {
+        return `${total}
+        <div class="apm-item" id="card_container-${apm.pk}">
+            <input id="${apm.pk}" class="card_selected" name="card_selected" type="radio"/>
+            <label class="apm-item-label" for="${apm.pk}">
+                <div class="apm-image">
+                    <div class="apm-image-border"></div>
+                    <img src="${apm.details.icon}" />
+                </div>
+                <div class="apm-name">${apm.details.label}</div>
+            </label>
+        </div>`
+    }, ``);
 
   const apmItemStyle = `
     <style>

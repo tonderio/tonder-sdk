@@ -16,6 +16,7 @@ import {
   fetchCustomerAPMs
 } from "../data";
 import { MESSAGES } from "../shared/constants/messages";
+import { getPaymentMethodDetails } from "../shared/catalog/paymentMethodsCatalog";
 
 export class InlineCheckout extends BaseInlineCheckout {
   static injected = false;
@@ -339,20 +340,24 @@ export class InlineCheckout extends BaseInlineCheckout {
   #loadAPMList(apms) {
     if (this.apmsInjected) return;
     const injectInterval = setInterval(() => {
-      const queryElement = document.querySelector(`#${this.collectorIds.apmsListContainer}`);
-      if (queryElement && InlineCheckout.injected) {
-        const filteredAndSortedApms = apms
-          .filter((apm) =>
-            clearSpace(apm.category.toLowerCase()) !== 'cards' && apm.status.toLowerCase() === 'active')
-          .sort((a, b) => a.priority - b.priority);
+        const queryElement = document.querySelector(`#${this.collectorIds.apmsListContainer}`);
+        if (queryElement && InlineCheckout.injected) {
+            const filteredAndSortedApms = apms
+                .filter((apm) =>
+                    clearSpace(apm.category.toLowerCase()) !== 'cards' && apm.status.toLowerCase() === 'active')
+                .sort((a, b) => a.priority - b.priority)
+                .map(apm => ({
+                    ...apm,
+                    details: getPaymentMethodDetails(apm.payment_method, apm.provider)
+                }));
 
-        queryElement.innerHTML = apmItemsTemplate(filteredAndSortedApms);
-        clearInterval(injectInterval);
-        this.#mountRadioButtons();
-        this.apmsInjected = true;
-      }
+            queryElement.innerHTML = apmItemsTemplate(filteredAndSortedApms);
+            clearInterval(injectInterval);
+            this.#mountRadioButtons();
+            this.apmsInjected = true;
+        }
     }, 500);
-  }
+}
 
   #mountRadioButtons(token = '') {
     const radioButtons = document.getElementsByName(`card_selected`);

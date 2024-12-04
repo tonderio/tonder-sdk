@@ -34,6 +34,7 @@ export interface ITransaction {
         billing_address?: null | string;
         order: number;
     };
+    checkout_id?: string;
     checkout: {
         id: string;
         created: string;
