@@ -269,12 +269,18 @@ export class InlineCheckout extends BaseInlineCheckout {
 
       const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk === this.radioChecked) : {};
 
-      const jsonResponseRouter = await this._handleCheckout({
+      const payload = {
         ...(selected_apm && Object.keys(selected_apm).length > 0
           ? { payment_method: selected_apm.payment_method }
           : { card: cardTokens }),
         customer: customerData
-      });
+      };
+
+      if (selected_apm?.provider === 'stp') {
+        payload.payment_method = 'stp';
+      }
+
+      const jsonResponseRouter = await this._handleCheckout(payload);
 
       if (jsonResponseRouter) {
         try {

@@ -200,11 +200,17 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
       }
     }
 
-    return await this._handleCheckout({
+    const payload = {
       card: skyflowTokens,
       payment_method,
       customer,
-    });
+    };
+
+    if (payment_method && payment_method.provider === 'stp') {
+      payload.payment_method = 'stp';
+    }
+
+    return await this._handleCheckout(payload);
   }
 
   async #getCustomer() {
