@@ -7,7 +7,7 @@ Tonder SDK helps to integrate the services Tonder offers in your own website
 1. [Installation](#installation)
 2. [Usage](#usage)
    - [InlineCheckout](#inlinecheckout)
-   - [LiteCheckout](#litecheckout)
+   - [LiteInlineCheckout](#Liteinlinecheckout)
 3. [Configuration Options](#configuration-options)
 4. [Styling InlineCheckout](#styling-inlinecheckout)
 5. [Payment Data Structure](#payment-data-structure)
@@ -96,16 +96,16 @@ inlineCheckout.verify3dsTransaction().then((response) => {
 const response = await inlineCheckout.payment(checkoutData);
 ```
 
-### LiteCheckout
+### LiteInlineCheckout
 
-LiteCheckout allows you to build a custom checkout interface using Tonder's core functionality.
+LiteInlineCheckout allows you to build a custom checkout interface using Tonder's core functionality.
 
 ```javascript
-import { LiteCheckout } from "tonder-web-sdk";
+import { LiteInlineCheckout } from "tonder-web-sdk";
 ```
 
 ```javascript
-const liteCheckout = new LiteCheckout({
+const LiteInlineCheckout = new LiteInlineCheckout({
   apiKey: "your-api-key", // Your api key getted from Tonder Dashboard
   returnUrl: "http://your-website.com/checkout",
 });
@@ -115,42 +115,42 @@ const liteCheckout = new LiteCheckout({
 inlineCheckout.configureCheckout({ customer: { email: "example@email.com" } });
 
 // Initialize the checkout
-await liteCheckout.injectCheckout();
+await LiteInlineCheckout.injectCheckout();
 ```
 
 ```javascript
 // Retrieve customer's saved cards
-const cards = await liteCheckout.getCustomerCards();
+const cards = await LiteInlineCheckout.getCustomerCards();
 ```
 
 ```javascript
 // Save a new card
-const newCard = await liteCheckout.saveCustomerCard(cardData);
+const newCard = await LiteInlineCheckout.saveCustomerCard(cardData);
 ```
 
 ```javascript
 // Remove a saved card
-await liteCheckout.removeCustomerCard(cardId);
+await LiteInlineCheckout.removeCustomerCard(cardId);
 ```
 
 ```javascript
 // Get available payment methods
-const paymentMethods = await liteCheckout.getCustomerPaymentMethods();
+const paymentMethods = await LiteInlineCheckout.getCustomerPaymentMethods();
 ```
 
 ```javascript
 // Process a payment
-const paymentResponse = await liteCheckout.payment(paymentData);
+const paymentResponse = await LiteInlineCheckout.payment(paymentData);
 ```
 
 ```javascript
 // Verify a 3DS transaction
-const verificationResult = await liteCheckout.verify3dsTransaction();
+const verificationResult = await LiteInlineCheckout.verify3dsTransaction();
 ```
 
 ## Configuration Options
 
-Both InlineCheckout and LiteCheckout accept the following configuration options:
+Both InlineCheckout and LiteInlineCheckout accept the following configuration options:
 
 |                  Property                  |  Type   |                                                                 Description                                                                 |
 | :----------------------------------------: | :-----: | :-----------------------------------------------------------------------------------------------------------------------------------------: |
@@ -255,15 +255,15 @@ When calling the `payment` method, use the following data structure:
 
 - **metadata**: Object for including any additional information about the transaction. This can be used for internal references or tracking.
 
-- **card**: (for LiteCheckout) Object containing card information. This is used differently depending on whether it's a new card or a saved card:
+- **card**: (for LiteInlineCheckout) Object containing card information. This is used differently depending on whether it's a new card or a saved card:
 
   - For a new card: Include `card_number`, `cvv`, `expiration_month`, `expiration_year`, and `cardholder_name`.
   - For a saved card: Include only the `skyflow_id` of the saved card.
   - This is only used when not paying with a payment_method.
 
-- **payment_method**: (for LiteCheckout) String indicating the alternative payment method to be used (e.g., "Spei"). This is only used when not paying with a card.
+- **payment_method**: (for LiteInlineCheckout) String indicating the alternative payment method to be used (e.g., "Spei"). This is only used when not paying with a card.
 
-Note: The exact fields required may vary depending on whether you're using InlineCheckout or LiteCheckout, and the specific payment method being used.
+Note: The exact fields required may vary depending on whether you're using InlineCheckout or LiteInlineCheckout, and the specific payment method being used.
 
 ```javascript
 const paymentData = {
@@ -315,7 +315,7 @@ const paymentData = {
 
 ## Field Validation Functions
 
-For LiteCheckout implementations, the SDK provides validation functions to ensure the integrity of card data before submitting:
+For LiteInlineCheckout implementations, the SDK provides validation functions to ensure the integrity of card data before submitting:
 
 - `validateCardNumber(cardNumber)`: Validates the card number using the Luhn algorithm.
 - `validateCardholderName(name)`: Checks if the cardholder name is valid.
@@ -360,7 +360,7 @@ if (
 - `payment(data)`: Process a payment
 - `verify3dsTransaction()`: Verify a 3DS transaction
 
-### LiteCheckout Methods
+### LiteInlineCheckout Methods
 
 - `configureCheckout(data)`: Set initial checkout data
 - `injectCheckout()`: Initialize the checkout
@@ -437,7 +437,7 @@ document
   });
 ```
 
-#### LiteCheckout Example (your-script.js)
+#### LiteInlineCheckout Example (your-script.js)
 
 ```javascript
 import { LiteInlineCheckout } from "tonder-web-sdk";
@@ -445,16 +445,16 @@ import { LiteInlineCheckout } from "tonder-web-sdk";
 const apiKey = "your-api-key";
 const returnUrl = "http://your-website.com/checkout";
 
-const liteCheckout = new LiteInlineCheckout({
+const LiteInlineCheckout = new LiteInlineCheckout({
   mode: "development",
   apiKey,
   returnUrl,
 });
 
-liteCheckout.configureCheckout({ customer: { email: "example@email.com" } });
-liteCheckout.injectCheckout();
+LiteInlineCheckout.configureCheckout({ customer: { email: "example@email.com" } });
+LiteInlineCheckout.injectCheckout();
 
-liteCheckout.verify3dsTransaction().then((response) => {
+LiteInlineCheckout.verify3dsTransaction().then((response) => {
   console.log("Verify 3ds response", response);
 });
 
@@ -472,7 +472,7 @@ document
 
     try {
       const paymentData = { ...checkoutData, card: cardData };
-      const response = await liteCheckout.payment(paymentData);
+      const response = await LiteInlineCheckout.payment(paymentData);
       console.log("Payment response:", response);
       alert("Payment successful");
     } catch (error) {
@@ -684,7 +684,7 @@ export class TonderService {
   // Add more functions, for example for lite sdk: get payment methods
 
   // getCustomerPaymentMethods(): Promise<IPaymentMethod[]> {
-  //     return this.liteCheckout.getCustomerPaymentMethods();
+  //     return this.LiteInlineCheckout.getCustomerPaymentMethods();
   // }
 }
 
