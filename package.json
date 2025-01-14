@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.15.3",
+  "version": "1.16.0",
   "description": "tonder sdk for integrations",
   "main": "src/index.js",
   "scripts": {
@@ -11,6 +11,7 @@
   "types": "types/index.d.ts",
   "license": "ISC",
   "dependencies": {
+    "accordion-js": "^3.4.0",
     "crypto-js": "^4.1.1",
     "dotenv": "^16.3.1"
   },

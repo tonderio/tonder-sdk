@@ -1,3 +1,4 @@
+import "accordion-js/dist/accordion.min.css";
 import { getCardType } from "./utils";
 import {getPaymentMethodDetails} from "../shared/catalog/paymentMethodsCatalog";
 
@@ -39,7 +40,7 @@ export const cardTemplate = (data) => `
   </div>
   <div id="apmsListContainer" class="apms-list-container"></div>
   <div class="container-pay-button">
-    <button id="tonderPayButton" class="pay-button">Pagar</button>
+    <button id="tonderPayButton" class="pay-button hidden">Pagar</button>
   </div>
 </div>
 
@@ -121,6 +122,8 @@ export const cardTemplate = (data) => `
   background-color: #000;
   color: #fff;
   margin-bottom: 0px;
+}
+.hidden{
   display: none;
 }
 
@@ -336,28 +339,104 @@ export const cardTemplate = (data) => `
 `
 
 export const cardItemsTemplate = (cards) => {
-  
+
+
   const cardItemsHTML = cards.reduce((total, card) => {
     return `${total}
-    <div class="card-item" id="card_container-${card.skyflow_id}">
-        <input id="${card.skyflow_id}" class="card_selected" name="card_selected" type="radio"/>
-        <label class="card-item-label" for="${card.skyflow_id}">
-          <img class="card-image" src="${getCardType(card.card_scheme)}" />
-          <div class="card-number">${card.card_number}</div>
-          <div class="card-expiration">Exp. ${card.expiration_month}/${card.expiration_year}</div>
-          <div class="card-delete-icon">
-            <button id="delete_button_${card.skyflow_id}" class="card-delete-button">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px">
-                <path fill="currentColor" d="M292.309-140.001q-30.308 0-51.308-21t-21-51.308V-720h-40v-59.999H360v-35.384h240v35.384h179.999V-720h-40v507.691q0 30.308-21 51.308t-51.308 21H292.309ZM376.155-280h59.999v-360h-59.999v360Zm147.691 0h59.999v-360h-59.999v360Z"/>
-              </svg>
-            </button>
-          </div>
-        </label>
+    <div class="ac" id="card_container-${card.skyflow_id}">
+      <div class="card-item" >
+          <input id="${card.skyflow_id}" class="card_selected" name="card_selected" type="radio"/>
+          <label class="card-item-label" for="${card.skyflow_id}">
+<!--            <div class="ac-trigger">-->
+              <img class="card-image" src="${getCardType(card.card_scheme)}" />
+              <div class="card-number">${card.card_number}</div>
+              <div class="card-expiration">Exp. ${card.expiration_month}/${card.expiration_year}</div>
+<!--            </div>-->
+            <div class="card-delete-icon">
+              <button id="delete_button_${card.skyflow_id}" class="card-delete-button">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px">
+                  <path fill="currentColor" d="M292.309-140.001q-30.308 0-51.308-21t-21-51.308V-720h-40v-59.999H360v-35.384h240v35.384h179.999V-720h-40v507.691q0 30.308-21 51.308t-51.308 21H292.309ZM376.155-280h59.999v-360h-59.999v360Zm147.691 0h59.999v-360h-59.999v360Z"/>
+                </svg>
+              </button>
+            </div>
+          </label>
+      </div>
+      <div class="ac-panel">
+        <div class="ac-card-panel-container" id="acContainer${card.skyflow_id}">
+           <div class="cvvContainer" id="cvvContainer${card.skyflow_id}">
+            <div id="collectCvv${card.skyflow_id}" class="empty-div"></div>
+            <svg class="cvvIcon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="24" viewBox="0 0 270 178">
+              <defs>
+                <linearGradient id="linear-gradient" x1="0.5" x2="0.5" y2="1" gradientUnits="objectBoundingBox">
+                  <stop offset="0" stop-color="#386bbf"/>
+                  <stop offset="1" stop-color="#032ea3"/>
+                </linearGradient>
+                <linearGradient id="linear-gradient-2" x1="0.5" y1="0.115" x2="0.5" y2="1" gradientUnits="objectBoundingBox">
+                  <stop offset="0" stop-color="#1c1c1c"/>
+                  <stop offset="1" stop-color="#151515"/>
+                </linearGradient>
+              </defs>
+              <g id="Grupo_3" data-name="Grupo 3" transform="translate(-69 -312)">
+                <g id="Grupo_2" data-name="Grupo 2">
+                  <rect id="Rectángulo_58" data-name="Rectángulo 58" width="253" height="165" rx="25" transform="translate(69 312)" fill="url(#linear-gradient)"/>
+                  <rect id="Rectángulo_61" data-name="Rectángulo 61" width="68" height="8" rx="4" transform="translate(86 437)" fill="#fff" opacity="0.877"/>
+                  <rect id="Rectángulo_66" data-name="Rectángulo 66" width="253" height="24" transform="translate(69 347)" fill="url(#linear-gradient-2)"/>
+                  <g id="Elipse_4" data-name="Elipse 4" transform="translate(221 374)" fill="#fff" stroke="#191919" stroke-width="1">
+                    <ellipse cx="59" cy="58" rx="59" ry="58" stroke="none"/>
+                    <ellipse cx="59" cy="58" rx="58.5" ry="57.5" fill="none"/>
+                  </g>
+                </g>
+                <text id="_123" data-name="123" transform="translate(240 448)" font-size="45" font-family="Menlo-Regular, Menlo"><tspan x="0" y="0">123</tspan></text>
+              </g>
+            </svg>
+           </div>
+           <div class="container-card-pay-button">
+            <button id="tonderPayButton${card.skyflow_id}" class="card-pay-button pay-button">Pagar</button>
+           </div> 
+        </div>
+      </div>
     </div>`
-  }, ``);
 
+  }, "");
   const cardItemStyle = `
     <style>
+      .ac {
+        background-color: transparent !important;
+        margin-bottom: 0 !important;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .ac-card-panel-container{
+        /*padding: 20px 60px 0px 60px;*/
+        padding: 20px 32px 0px 32px;
+      }
+      .cvvContainer{
+       max-width: 45%; 
+       position: relative;
+       padding: 0px 28px 0px 28px;
+      }
+      .cvvIcon {
+        position: absolute;
+        right: 16%;
+        top: 43%;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .cvvContainer.show .cvvIcon,
+      .ac-card-panel-container.show .card-pay-button {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0.3s;
+      }
+      .container-card-pay-button{
+        margin: 20px 0px;
+      }
+      .card-pay-button{
+        display: block;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
       .card-item-label {
         display: flex;
         justify-content: space-between;
@@ -368,14 +447,12 @@ export const cardItemsTemplate = (cards) => {
         margin-bottom: 15px;
         width: 100%;
       }
-
       .card-item {
         position: relative;
         display: flex;
         justify-content: start;
         align-items: center;
         gap: 33% 15px;
-        border-bottom: 1px solid #e2e8f0;
         padding: 0px 30px;
       }
 
@@ -488,7 +565,9 @@ export const cardItemsTemplate = (cards) => {
     </style>
   `
   const cardItem = `
-  ${cardItemsHTML}
+    <div class="accordion-container">
+    ${cardItemsHTML}
+  </div>
   ${cardItemStyle}
   `
   return cardItem;
