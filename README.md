@@ -153,10 +153,11 @@ const verificationResult = await liteCheckout.verify3dsTransaction();
 Both InlineCheckout and LiteCheckout accept the following configuration options:
 
 |                  Property                  |  Type   |                                                                 Description                                                                 |
-| :----------------------------------------: | :-----: | :-----------------------------------------------------------------------------------------------------------------------------------------: |
+|:------------------------------------------:|:-------:|:-------------------------------------------------------------------------------------------------------------------------------------------:|
 |                    mode                    | string  |                                Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage'                                |
 |                   apiKey                   | string  |                                                   Your API key from the Tonder Dashboard                                                    |
 |                 returnUrl                  | string  |                                            URL where the checkout form is mounted (used for 3DS)                                            |
+|            renderPaymentButton             | boolean |                                                   View the default Tonder payment button                                                    |
 |                   styles                   | object  |                                       (InlineCheckout only) Custom styles for the checkout interface                                        |
 |               customization                | object  | Object to customize the checkout behavior and UI. Default value `{saveCards: {showSaved: true, showSaveCardOption: true, autoSave: false}}` |
 |     customization.saveCards.showSaved      | boolean |                                         Show saved cards in the checkout UI. Default value: `true`                                          |
@@ -433,6 +434,59 @@ document
     }
   });
 ```
+
+
+#### InlineCheckout with default Tonder Payment button Example (your-script.js)
+> 💡 **Note:** It is important to send all payment data (customer, cart, metadata, etc) when configuring the checkout; this is necessary when using Tonder's default payment button.
+
+```javascript
+import { InlineCheckout } from "tonder-web-sdk";
+
+const apiKey = "your-api-key";
+const returnUrl = "http://your-website.com/checkout";
+
+const inlineCheckout = new InlineCheckout({
+  mode: "development",
+  apiKey,
+  returnUrl,
+  styles: customStyles,
+  renderPaymentButton: true, // activate default Tonder Payment button
+  callBack: (response) => {
+      console.log('Payment response', response)
+  }  
+});
+
+// It is important to send all payment data (customer, cart, metadata, etc) when configuring the checkout; this is necessary when using Tonder's default payment button.
+inlineCheckout.configureCheckout(
+    { 
+        customer: { email: "example@email.com" },
+        currency: "mxn",
+        cart: {
+            total: 399,
+            items: [
+                {
+                    description: "Black T-Shirt",
+                    quantity: 1,
+                    price_unit: 1,
+                    discount: 0,
+                    taxes: 0,
+                    product_reference: 1,
+                    name: "T-Shirt",
+                    amount_total: 399,
+                },
+            ],
+        },
+        metadata: {}, // Optional
+        order_reference: "" // Optional
+    }
+);
+inlineCheckout.injectCheckout();
+
+inlineCheckout.verify3dsTransaction().then((response) => {
+  console.log("Verify 3ds response", response);
+});
+```
+
 
 #### LiteCheckout Example (your-script.js)
 

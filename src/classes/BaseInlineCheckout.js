@@ -34,8 +34,8 @@ export class BaseInlineCheckout {
    * @public
    */
   configureCheckout(data) {
-    if ("customer" in data) this.#handleCustomer(data["customer"]);
     if ("secureToken" in data) this.#handleSecureToken(data["secureToken"]);
+    this.#setCheckoutData(data)
   }
 
   /**
@@ -67,12 +67,7 @@ export class BaseInlineCheckout {
   payment(data) {
     return new Promise(async (resolve, reject) => {
       try {
-        this.#handleCustomer(data.customer);
-        this._setCartTotal(data.cart?.total);
-        this.#setCartItems(data.cart?.items);
-        this.#handleMetadata(data);
-        this.#handleCurrency(data);
-        this.#handleCard(data);
+        this.#setCheckoutData(data)
         const response = await this._checkout(data);
         this.process3ds.setPayload(response);
         this.callBack(response);
@@ -213,6 +208,16 @@ export class BaseInlineCheckout {
       console.log(error);
       throw error;
     }
+  }
+
+  #setCheckoutData(data){
+    if(!data) return;
+    this.#handleCustomer(data.customer);
+    this._setCartTotal(data.cart?.total);
+    this.#setCartItems(data.cart?.items);
+    this.#handleMetadata(data);
+    this.#handleCurrency(data);
+    this.#handleCard(data);
   }
 
   async #fetchMerchantData() {

@@ -1,4 +1,5 @@
 import { ICustomer } from "./customer";
+import {IProcessPaymentRequest} from "./checkout";
 
 export interface IInlineCheckoutBaseOptions {
   mode?: "production" | "sandbox" | "stage" | "development";
@@ -7,7 +8,7 @@ export interface IInlineCheckoutBaseOptions {
   callBack?: (response: any) => void;
 }
 
-export interface IConfigureCheckout {
+export interface IConfigureCheckout extends IProcessPaymentRequest{
   customer: ICustomer;
   secureToken: string;
 }

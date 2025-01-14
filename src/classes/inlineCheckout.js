@@ -6,7 +6,7 @@ import {
   showError,
   showMessage
 } from '../helpers/utils';
-import { initSkyflow } from '../helpers/skyflow'
+import { initSkyflow, initUpdateSkyflow } from '../helpers/skyflow'
 import { globalLoader } from './globalLoader.js';
 import { BaseInlineCheckout } from "./BaseInlineCheckout";
 import {
@@ -16,16 +16,20 @@ import {
   fetchCustomerAPMs
 } from "../data";
 import { MESSAGES } from "../shared/constants/messages";
+import Accordion from "accordion-js";
 
 export class InlineCheckout extends BaseInlineCheckout {
   static injected = false;
   static cardsInjected = false
   static apmsInjected = false
   static apmsData = [];
+  accordionC = null;
+
   deletingCards = [];
   customer = {}
   items = []
   collectContainer = null
+  updateCollectContainer = null
   merchantData = {}
   cartTotal = null
   metadata = {}
@@ -73,17 +77,36 @@ export class InlineCheckout extends BaseInlineCheckout {
     } 
   }
 
-  #mountPayButton() {
+  #mountPayButton(cardId="") {
     if (!this.renderPaymentButton) return;
 
-    const payButton = document.querySelector("#tonderPayButton");
+    const btnID = `#tonderPayButton${cardId}`;
+    const payButton = document.querySelector(btnID);
+    const containerID = `#acContainer${cardId}`;
+    const container = document.querySelector(containerID);
+
     if (!payButton) {
       console.error("Pay button not found");
       return;
     }
 
+    if (cardId !== "") {
+      const sdkPayButton = document.querySelector(`#tonderPayButton`);
+      if(sdkPayButton){
+        sdkPayButton.style.display = "none";
+      }
+    }
+
     payButton.style.display = "block";
     payButton.textContent = `Pagar $${this.cartTotal}`;
+    document.querySelectorAll(".ac-card-panel-container").forEach((cont) => {
+      cont.classList.remove("show");
+    });
+
+    if (container) {
+      container.classList.add("show");
+    }
+
     payButton.onclick = async (event) => {
       event.preventDefault();
       await this.#handlePaymentClick(payButton);
@@ -94,7 +117,7 @@ export class InlineCheckout extends BaseInlineCheckout {
     const prevButtonContent = payButton.innerHTML;
     payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
     try {
-      const response = await this.payment(this.customer);
+      const response = await this.payment();
       this.callBack(response);
     } catch (error) {
       console.error("Payment error:", error);
@@ -229,10 +252,10 @@ export class InlineCheckout extends BaseInlineCheckout {
     console.log("InlineCheckout removed from DOM and cleaned up.");
   }
 
-  async #getCardTokens() {
+  async #getCardTokens(cardSelected) {
     if (this.card?.skyflow_id) return this.card
     try {
-      const collectResponse = await this.collectContainer.container.collect();
+      const collectResponse = cardSelected && cardSelected !== "new" ? await this.updateCollectContainer.container.collect():await this.collectContainer.container.collect();
       const cardTokens = await collectResponse["records"][0]["fields"];
       return cardTokens;
     } catch (error) {
@@ -250,8 +273,9 @@ export class InlineCheckout extends BaseInlineCheckout {
     let cardTokens;
 
     if (this.radioChecked === "new" || this.radioChecked === undefined) {
-      cardTokens = await this.#getCardTokens();
+      cardTokens = await this.#getCardTokens(this.radioChecked);
     } else {
+      await this.#getCardTokens(this.radioChecked);
       cardTokens = {
         skyflow_id: this.radioChecked
       }
@@ -329,11 +353,60 @@ export class InlineCheckout extends BaseInlineCheckout {
         if (queryElement && InlineCheckout.injected) {
           queryElement.innerHTML = cardItemsTemplate(cards)
           clearInterval(injectInterval)
+          this.#generateCardsAccordion()
           this.#mountRadioButtons(token)
           this.cardsInjected = true
         }
       }, 500);
     }
+  }
+
+  #generateCardsAccordion(){
+    this.accordionC = new Accordion(".accordion-container", {
+      triggerClass: "card-item-label",
+      duration: 300,
+      collapse: true,
+      showMultiple: false,
+      onOpen: async (currentElement) => {
+        await this.#handleOpenCardAccordion(currentElement)
+      }
+    });
+  }
+
+  async #handleOpenCardAccordion(currentElement){
+    const { vault_id, vault_url } = this.merchantData;
+    const container_radio_id = currentElement.id.replace("card_container-", "");
+
+    if (this.updateCollectContainer && "unmount" in this.updateCollectContainer?.elements?.cvvElement) {
+      await this.updateCollectContainer.elements.cvvElement.unmount()
+    }
+
+    document.querySelectorAll(".cvvContainer").forEach((container) => {
+      container.classList.remove("show");
+    });
+
+    const radio_card = document.getElementById(container_radio_id);
+    radio_card.checked = true;
+
+    try{
+      this.updateCollectContainer = await initUpdateSkyflow(
+          container_radio_id,
+          vault_id,
+          vault_url,
+          this.baseUrl,
+          this.apiKeyTonder,
+          this.abortController.signal,
+          this.customStyles
+      );
+      setTimeout(() => {
+        document.querySelector(`#cvvContainer${container_radio_id}`).classList.add("show");
+      }, 5)
+      this.#mountPayButton(container_radio_id)
+    }catch (e){
+      console.error("Ha ocurrido un error", e);
+    }
+
+    this.#handleRadioButtonClick(radio_card)
   }
 
   #loadAPMList(apms) {
@@ -359,7 +432,8 @@ export class InlineCheckout extends BaseInlineCheckout {
     for (const radio of radioButtons) {
       radio.style.display = "block";
       radio.onclick = async (event) => {
-        await this.#handleRadioButtonClick(radio);
+        const position = Array.from(radioButtons).indexOf(radio);
+        await this.#handleRadioButtonClick(radio, position);
       };
     }
     const cardsButtons = document.getElementsByClassName("card-delete-button");
@@ -372,19 +446,25 @@ export class InlineCheckout extends BaseInlineCheckout {
     }
   }
 
-  async #handleRadioButtonClick(radio) {
+  async #handleRadioButtonClick(radio, position = null) {
     if (radio.id === this.radioChecked || (radio.id === "new" && this.radioChecked === undefined)) return;
     const containerForm = document.querySelector(".container-form");
     if (containerForm) {
       containerForm.style.display = radio.id === "new" ? "block" : "none";
     }
+
     if (radio.id === "new") {
+      this.accordionC.closeAll()
       if (this.radioChecked !== radio.id) {
         globalLoader.show()
         this.#mountTonder(false);
         InlineCheckout.injected = true;
       }
     } else {
+      if (position !== null) {
+        this.accordionC.closeAll()
+        this.accordionC.open(position)
+      }
       this.#unmountForm();
     }
     this.radioChecked = radio.id;
