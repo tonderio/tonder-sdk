@@ -135,8 +135,8 @@ function setupInlineCheckout() {
     },
   });
   inlineCheckout.configureCheckout({
-    customer: checkoutData.customer,
-    secureToken: "eyJhbGc..."
+    secureToken: "eyJhbGc...",
+    ...checkoutData
   });
   inlineCheckout.injectCheckout();
   // ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']

@@ -351,7 +351,7 @@ export class InlineCheckout extends BaseInlineCheckout {
       const injectInterval = setInterval(() => {
         const queryElement = document.querySelector(`#${this.collectorIds.cardsListContainer}`);
         if (queryElement && InlineCheckout.injected) {
-          queryElement.innerHTML = cardItemsTemplate(cards)
+          queryElement.innerHTML = cardItemsTemplate(cards, {renderPaymentButton: this.renderPaymentButton})
           clearInterval(injectInterval)
           this.#generateCardsAccordion()
           this.#mountRadioButtons(token)

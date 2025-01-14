@@ -338,7 +338,7 @@ export const cardTemplate = (data) => `
 </style>
 `
 
-export const cardItemsTemplate = (cards) => {
+export const cardItemsTemplate = (cards, data) => {
 
 
   const cardItemsHTML = cards.reduce((total, card) => {
@@ -390,9 +390,13 @@ export const cardItemsTemplate = (cards) => {
               </g>
             </svg>
            </div>
-           <div class="container-card-pay-button">
-            <button id="tonderPayButton${card.skyflow_id}" class="card-pay-button pay-button">Pagar</button>
-           </div> 
+           ${ data?.renderPaymentButton ?
+              `<div class="container-card-pay-button">
+                <button id="tonderPayButton${card.skyflow_id}" class="card-pay-button pay-button">Pagar</button>
+               </div> `
+              :``
+           }
+          
         </div>
       </div>
     </div>`
@@ -406,8 +410,7 @@ export const cardItemsTemplate = (cards) => {
         border-bottom: 1px solid #e2e8f0;
       }
       .ac-card-panel-container{
-        /*padding: 20px 60px 0px 60px;*/
-        padding: 20px 32px 0px 32px;
+        padding: ${data?.renderPaymentButton ? '20px 32px 0px 32px':'20px 32px 20px 32px'};
       }
       .cvvContainer{
        max-width: 45%; 
