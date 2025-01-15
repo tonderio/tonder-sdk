@@ -11,18 +11,7 @@ export async function initSkyflow(
   customStyles = {},
   collectorIds,
 ) {
-  const skyflow = await Skyflow.init({
-    vaultID: vaultId,
-    vaultURL: vaultUrl,
-    getBearerToken: async () => {
-      // Pass the signal to the fetch call
-      return await getVaultToken(baseUrl, apiKey, signal)
-    },
-    options: {
-      logLevel: Skyflow.LogLevel.ERROR,
-      env: Skyflow.Env.DEV,
-    },
-  });
+  const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal);
 
   // Create collect Container.
   const collectContainer = await skyflow.container(
@@ -41,15 +30,8 @@ export async function initSkyflow(
       max: 70,
     },
   };
-  const regexEmpty = RegExp("^(?!\s*$).+");
 
-  const regexMatchRule = {
-    type: Skyflow.ValidationRuleType.REGEX_MATCH_RULE,
-    params: {
-      regex: regexEmpty,
-      error: "El campo es requerido" // Optional, default error is 'VALIDATION FAILED'.
-    }
-  }
+
 
   const cardHolderNameElement = await collectContainer.create({
     table: "cards",
@@ -136,13 +118,31 @@ export async function initSkyflow(
     collectStylesOptions.errorTextStyles
   );
 
-  await mountElements(
-    cardNumberElement,
-    cvvElement,
-    expiryMonthElement,
-    expiryYearElement,
-    cardHolderNameElement,
-  )
+
+  const elementsConfig = {
+    cardNumber: {
+      element: cardNumberElement,
+      container: "#collectCardNumber",
+    },
+    cvv: {
+      element: cvvElement,
+      container: "#collectCvv",
+    },
+    expiryMonth: {
+      element: expiryMonthElement,
+      container: "#collectExpirationMonth",
+    },
+    expiryYear: {
+      element: expiryYearElement,
+      container: "#collectExpirationYear",
+    },
+    cardHolderName: {
+      element: cardHolderNameElement,
+      container: "#collectCardholderName",
+    },
+  };
+
+  await mountElements(elementsConfig)
 
   return {
     container: collectContainer,
@@ -156,20 +156,92 @@ export async function initSkyflow(
   }
 }
 
-async function mountElements(
-  cardNumberElement,
-  cvvElement,
-  expiryMonthElement,
-  expiryYearElement,
-  cardHolderNameElement,
-) {
-  cardNumberElement.mount("#collectCardNumber");
-  cvvElement.mount("#collectCvv");
-  expiryMonthElement.mount("#collectExpirationMonth");
-  expiryYearElement.mount("#collectExpirationYear");
-  cardHolderNameElement.mount("#collectCardholderName");
+
+export async function initUpdateSkyflow(
+                                    skyflowId,
+                                    vaultId,
+                                    vaultUrl,
+                                    baseUrl,
+                                    apiKey,
+                                    signal,
+                                    customStyles = {},
+                                          ){
+
+
+  const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal);
+
+  var collectStylesOptions = Object.keys(customStyles).length === 0 ? defaultStyles : customStyles
+
+
+  // Create collect Container.
+  const collectContainer = await skyflow.container(
+      Skyflow.ContainerType.COLLECT
+  );
+
+  const cvvElement = await collectContainer.create({
+    table: "cards",
+    column: "cvv",
+    ...collectStylesOptions,
+    label: collectStylesOptions.labels?.cvvLabel,
+    placeholder: collectStylesOptions.placeholders?.cvvPlaceholder,
+    type: Skyflow.ElementType.CVV,
+    validations: [regexMatchRule],
+    skyflowID: skyflowId
+  });
+
+  handleSkyflowElementEvents(
+      cvvElement,
+      "",
+      collectStylesOptions.errorTextStyles
+  );
+
+  const elementsConfig = {
+    cvv: {
+      element: cvvElement,
+      container: `#collectCvv${skyflowId}`,
+    }
+  };
+  await mountElements(elementsConfig)
+
+  return {
+    container: collectContainer,
+    elements: {
+      cvvElement,
+    }
+  }
 }
 
+async function initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal){
+  return await Skyflow.init({
+    vaultID: vaultId,
+    vaultURL: vaultUrl,
+    getBearerToken: async () => {
+      // Pass the signal to the fetch call
+      return await getVaultToken(baseUrl, apiKey, signal)
+    },
+    options: {
+      logLevel: Skyflow.LogLevel.ERROR,
+      env: Skyflow.Env.DEV,
+    },
+  });
+}
+
+
+async function mountElements(elementsConfig) {
+  if (typeof elementsConfig !== "object" || elementsConfig === null) {
+    throw new Error("Invalid configuration object");
+  }
+
+  for (const [elementKey, { element, container }] of Object.entries(elementsConfig)) {
+    if (element && container) {
+      element.mount(container);
+    } else {
+      console.warn(
+          `Skipping mount for '${elementKey}' due to missing element or container.`
+      );
+    }
+  }
+}
 
 function handleSkyflowElementEvents(element, fieldMessage= "", error_styles = {}, resetOnFocus = true, requiredMessage = "El campo es requerido", invalidMessage= "El campo es inválido") {
   if ("on" in element) {
@@ -276,4 +348,14 @@ async function getFields(data, collectContainer) {
       })
   )
 }
+
+const regexEmpty = RegExp("^(?!\s*$).+");
+const regexMatchRule = {
+  type: Skyflow.ValidationRuleType.REGEX_MATCH_RULE,
+  params: {
+    regex: regexEmpty,
+    error: "El campo es requerido" // Optional, default error is 'VALIDATION FAILED'.
+  }
+}
+
 
