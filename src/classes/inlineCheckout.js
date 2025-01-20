@@ -23,7 +23,9 @@ export class InlineCheckout extends BaseInlineCheckout {
   static cardsInjected = false
   static apmsInjected = false
   static apmsData = [];
-  accordionC = null;
+  #cantCustomerCards = 0;
+  accordionCards = null;
+  accordionPaymentMethods = null;
 
   deletingCards = [];
   customer = {}
@@ -96,10 +98,9 @@ export class InlineCheckout extends BaseInlineCheckout {
         sdkPayButton.style.display = "none";
       }
     }
+    this.#updatePayButton({style: {display: "block"}, ...(cardId ? {cardId} : {})});
 
-    payButton.style.display = "block";
-    payButton.textContent = `Pagar $${this.cartTotal}`;
-    document.querySelectorAll(".ac-card-panel-container").forEach((cont) => {
+    document.querySelectorAll(".ac-option-panel-container").forEach((cont) => {
       cont.classList.remove("show");
     });
 
@@ -115,7 +116,6 @@ export class InlineCheckout extends BaseInlineCheckout {
 
   async #handlePaymentClick(payButton) {
     const prevButtonContent = payButton.innerHTML;
-    payButton.innerHTML = `<div class="lds-dual-ring"></div>`;
     try {
       const response = await this.payment();
       this.callBack(response);
@@ -131,11 +131,33 @@ export class InlineCheckout extends BaseInlineCheckout {
     this.#updatePayButton()
   }
 
-  #updatePayButton() {
-    const payButton = document.querySelector("#tonderPayButton");
-    if (!payButton) return
-    payButton.textContent = `Pagar $${this.cartTotal}`;
-  }
+  #updatePayButton(data) {
+    try{
+      const btnID = data?.cardId ? `#${this.collectorIds.tonderPayButton}${data.cardId}`: `#${this.collectorIds.tonderPayButton}`;
+      const updatedText = data?.updatedTextContent || true;
+      const btnTextContent = data?.textContent || `<div class="pay-button-text">Pagar $${this.cartTotal}</div>`;
+      const disabledBtn = data?.disabled;
+      const loadingHtml =  data?.loading ? `<div class="spinner-tndr"></div>`:"";
+      const btnStyle = data?.style || {};
+      const payButton= document.querySelector(btnID);
+      if (!payButton) return
+      if(loadingHtml !== "") {
+        payButton.innerHTML = loadingHtml;
+      }else if (updatedText) {
+        payButton.innerHTML = btnTextContent;
+      }
+      if(btnStyle){
+        Object.keys(btnStyle).forEach(btn => {
+          payButton.style[btn] = btnStyle[btn];
+        })
+      }
+      if (disabledBtn !== undefined && 'disabled' in payButton) {
+        payButton.disabled = disabledBtn;
+      }
+    }catch (e){
+      console.error("Pay button not found due to update", e);
+    }
+}
 
   setCallback(cb) {
     this.cb = cb
@@ -214,6 +236,7 @@ export class InlineCheckout extends BaseInlineCheckout {
         this.customStyles,
         this.collectorIds
       );
+
       setTimeout(() => {
         globalLoader.remove()
       }, 800)
@@ -265,17 +288,19 @@ export class InlineCheckout extends BaseInlineCheckout {
   }
 
   async _checkout() {
-    try {
-      document.querySelector("#tonderPayButton").disabled = true;
-    } catch (error) {
-    }
+    this.#updatePayButton({loading: true, disabled: true});
     const { business } = this.merchantData
     let cardTokens;
+    const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk === this.radioChecked) : {};
 
     if (this.radioChecked === "new" || this.radioChecked === undefined) {
       cardTokens = await this.#getCardTokens(this.radioChecked);
     } else {
-      await this.#getCardTokens(this.radioChecked);
+      this.#updatePayButton({cardId: this.radioChecked, loading: true, disabled: true});
+
+      if(!selected_apm){
+        await this.#getCardTokens(this.radioChecked);
+      }
       cardTokens = {
         skyflow_id: this.radioChecked
       }
@@ -290,7 +315,6 @@ export class InlineCheckout extends BaseInlineCheckout {
         await this.#handleSaveCard(auth_token, business.pk, cardTokens)
       }
 
-      const selected_apm = this.apmsData ? this.apmsData.find((iapm) => iapm.pk === this.radioChecked) : {};
 
       const jsonResponseRouter = await this._handleCheckout({
         ...(selected_apm && Object.keys(selected_apm).length > 0
@@ -298,11 +322,10 @@ export class InlineCheckout extends BaseInlineCheckout {
           : { card: cardTokens }),
         customer: customerData
       });
+      this.#updatePayButton({cardId: this.radioChecked, disabled: false});
+      this.#updatePayButton({disabled: false});
 
       if (jsonResponseRouter) {
-        try {
-          document.querySelector("#tonderPayButton").disabled = false;
-        } catch { }
         return jsonResponseRouter;
       } else {
         showError("No se ha podido procesar el pago")
@@ -348,12 +371,13 @@ export class InlineCheckout extends BaseInlineCheckout {
     let cards = []
     if("cards" in cardsResponse) {
       cards = cardsResponse.cards.map(mapCards)
+      this.#cantCustomerCards = cards.length;
       const injectInterval = setInterval(() => {
         const queryElement = document.querySelector(`#${this.collectorIds.cardsListContainer}`);
         if (queryElement && InlineCheckout.injected) {
           queryElement.innerHTML = cardItemsTemplate(cards, {renderPaymentButton: this.renderPaymentButton})
           clearInterval(injectInterval)
-          this.#generateCardsAccordion()
+          this.#generateAccordion()
           this.#mountRadioButtons(token)
           this.cardsInjected = true
         }
@@ -361,52 +385,94 @@ export class InlineCheckout extends BaseInlineCheckout {
     }
   }
 
-  #generateCardsAccordion(){
-    this.accordionC = new Accordion(".accordion-container", {
-      triggerClass: "card-item-label",
+  #generateAccordion(type = "cards", ){
+    const accordionByType = {
+      cards: {
+        accClass: "accordion-container",
+        triggerClass: "card-item-label"
+      },
+      paymentMethods: {
+        accClass: "accordion-container-apm",
+        triggerClass: "apm-item-label"
+      }
+    }
+    const accordion = new Accordion("."+accordionByType[type].accClass, {
+      triggerClass: accordionByType[type].triggerClass,
       duration: 300,
       collapse: true,
       showMultiple: false,
       onOpen: async (currentElement) => {
-        await this.#handleOpenCardAccordion(currentElement)
+        await this.#handleOpenCardAccordion(currentElement, type)
       }
     });
+
+    if (type === "cards") {
+      this.accordionCards = accordion
+    }else if (type === "paymentMethods") {
+      this.accordionPaymentMethods = accordion
+    }
   }
 
-  async #handleOpenCardAccordion(currentElement){
+  #removeClass(selectors = [], className = "show", ){
+    selectors.forEach((slcItem) => {
+      document.querySelectorAll("."+slcItem).forEach((container) => {
+        container.classList.remove(className);
+      });
+    })
+  }
+
+  async #handleOpenCardAccordion(currentElement, type= "cards") {
     const { vault_id, vault_url } = this.merchantData;
-    const container_radio_id = currentElement.id.replace("card_container-", "");
+    const container_radio_id = currentElement.id.replace("option_container-", "");
 
     if (this.updateCollectContainer && "unmount" in this.updateCollectContainer?.elements?.cvvElement) {
       await this.updateCollectContainer.elements.cvvElement.unmount()
     }
-
-    document.querySelectorAll(".cvvContainer").forEach((container) => {
-      container.classList.remove("show");
-    });
+    this.#removeClass(["cvvContainer", "cvvContainerCard"])
 
     const radio_card = document.getElementById(container_radio_id);
     radio_card.checked = true;
 
     try{
-      this.updateCollectContainer = await initUpdateSkyflow(
-          container_radio_id,
-          vault_id,
-          vault_url,
-          this.baseUrl,
-          this.apiKeyTonder,
-          this.abortController.signal,
-          this.customStyles
-      );
-      setTimeout(() => {
-        document.querySelector(`#cvvContainer${container_radio_id}`).classList.add("show");
-      }, 5)
+      if(type === 'cards'){
+        this.updateCollectContainer = await initUpdateSkyflow(
+            container_radio_id,
+            vault_id,
+            vault_url,
+            this.baseUrl,
+            this.apiKeyTonder,
+            this.abortController.signal,
+            this.customStyles
+        );
+        setTimeout(() => {
+          document.querySelector(`#cvvContainer${container_radio_id}`).classList.add("show");
+        }, 5)
+      }
+
       this.#mountPayButton(container_radio_id)
     }catch (e){
       console.error("Ha ocurrido un error", e);
     }
+    await this.#handleRadioButtonClick(radio_card, null, type)
+  }
 
-    this.#handleRadioButtonClick(radio_card)
+  #handleOpenCloseAccordion(type = "", position = null, closeAll = false, closeOthers = false){
+    const accordions = [{type: "cards", accordion: this.accordionCards}, {type: "paymentMethods", accordion: this.accordionPaymentMethods}];
+    accordions.forEach(({accordion, type: currentType}) => {
+      if (!accordion) return;
+
+      if (closeAll && accordion.closeAll) {
+        accordion.closeAll();
+      }
+
+      if (closeOthers && currentType !== type && accordion.closeAll) {
+        accordion.closeAll();
+      }
+
+      if (position !== null && currentType === type && accordion.open) {
+        accordion.open(currentType !== "paymentMethods" ? position: position - (this.#cantCustomerCards +1));
+      }
+    })
   }
 
   #loadAPMList(apms) {
@@ -419,9 +485,10 @@ export class InlineCheckout extends BaseInlineCheckout {
             clearSpace(apm.category.toLowerCase()) !== 'cards' && apm.status.toLowerCase() === 'active')
           .sort((a, b) => a.priority - b.priority);
 
-        queryElement.innerHTML = apmItemsTemplate(filteredAndSortedApms);
+        queryElement.innerHTML = apmItemsTemplate(filteredAndSortedApms, {renderPaymentButton: this.renderPaymentButton});
         clearInterval(injectInterval);
-        this.#mountRadioButtons();
+        this.#generateAccordion("paymentMethods")
+        this.#mountRadioButtons('');
         this.apmsInjected = true;
       }
     }, 500);
@@ -433,7 +500,8 @@ export class InlineCheckout extends BaseInlineCheckout {
       radio.style.display = "block";
       radio.onclick = async (event) => {
         const position = Array.from(radioButtons).indexOf(radio);
-        await this.#handleRadioButtonClick(radio, position);
+        const classType = radio.classList[0]
+        await this.#handleRadioButtonClick(radio, position, classType);
       };
     }
     const cardsButtons = document.getElementsByClassName("card-delete-button");
@@ -446,7 +514,7 @@ export class InlineCheckout extends BaseInlineCheckout {
     }
   }
 
-  async #handleRadioButtonClick(radio, position = null) {
+  async #handleRadioButtonClick(radio, position = null, type = "") {
     if (radio.id === this.radioChecked || (radio.id === "new" && this.radioChecked === undefined)) return;
     const containerForm = document.querySelector(".container-form");
     if (containerForm) {
@@ -454,16 +522,17 @@ export class InlineCheckout extends BaseInlineCheckout {
     }
 
     if (radio.id === "new") {
-      this.accordionC.closeAll()
+      this.#removeClass(["cvvContainer", "cvvContainerCard"])
+      this.#handleOpenCloseAccordion("", null, true)
       if (this.radioChecked !== radio.id) {
         globalLoader.show()
         this.#mountTonder(false);
         InlineCheckout.injected = true;
       }
     } else {
+      this.#handleOpenCloseAccordion(type, null, false, true)
       if (position !== null) {
-        this.accordionC.closeAll()
-        this.accordionC.open(position)
+        this.#handleOpenCloseAccordion(type, position, true)
       }
       this.#unmountForm();
     }
@@ -474,7 +543,7 @@ export class InlineCheckout extends BaseInlineCheckout {
     const id = button.attributes.getNamedItem("id")
     const skyflow_id = id?.value?.split("_")?.[2]
     if (skyflow_id) {
-      const cardClicked = document.querySelector(`#card_container-${skyflow_id}`);
+      const cardClicked = document.querySelector(`#option_container-${skyflow_id}`);
       if (cardClicked) {
         cardClicked.style.display = "none"
       }

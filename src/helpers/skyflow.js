@@ -15,14 +15,17 @@ export async function initSkyflow(
 
   // Create collect Container.
   const collectContainer = await skyflow.container(
-    Skyflow.ContainerType.COLLECT
-  );
+    Skyflow.ContainerType.COLLECT);
 
   // Custom styles for collect elements.
   var collectStylesOptions = Object.keys(customStyles).length === 0 ? defaultStyles : customStyles
 
   const stylesForCardNumber = { ...collectStylesOptions.inputStyles.base };
   stylesForCardNumber.textIndent = '44px';
+
+  const stylesForExpiryMonth = { ...collectStylesOptions.inputStyles.base, borderBottomRightRadius: 0,  borderTopRightRadius: 0};
+  const stylesForExpiryYear = { ...collectStylesOptions.inputStyles.base, borderBottomLeftRadius: 0,  borderTopLeftRadius: 0, borderLeft: "1px solid #CED0D1" };
+
 
   const lengthMatchRule = {
     type: Skyflow.ValidationRuleType.LENGTH_MATCH_RULE,
@@ -70,27 +73,15 @@ export async function initSkyflow(
     collectStylesOptions.errorTextStyles
   );
 
-  const cvvElement = await collectContainer.create({
-    table: "cards",
-    column: "cvv",
-    ...collectStylesOptions,
-    label: collectStylesOptions.labels?.cvvLabel,
-    placeholder: collectStylesOptions.placeholders?.cvvPlaceholder,
-    type: Skyflow.ElementType.CVV,
-    validations: [regexMatchRule],
-  });
-
-  handleSkyflowElementEvents(
-    cvvElement,
-    "",
-    collectStylesOptions.errorTextStyles
-  );
-
   const expiryMonthElement = await collectContainer.create({
     table: "cards",
     column: "expiration_month",
     ...collectStylesOptions,
-    label: collectStylesOptions.labels?.expiryDateLabel,
+    inputStyles: {
+      ...collectStylesOptions.inputStyles,
+      base: stylesForExpiryMonth
+    },
+    label: "",
     placeholder: collectStylesOptions.placeholders?.expiryMonthPlaceholder,
     type: Skyflow.ElementType.EXPIRATION_MONTH,
     validations: [regexMatchRule],
@@ -99,13 +90,19 @@ export async function initSkyflow(
   handleSkyflowElementEvents(
     expiryMonthElement,
     "",
-    collectStylesOptions.errorTextStyles
+    collectStylesOptions.errorTextStyles,
+      true,
+      "Campo requerido"
   );
 
   const expiryYearElement = await collectContainer.create({
     table: "cards",
     column: "expiration_year",
     ...collectStylesOptions,
+    inputStyles: {
+      ...collectStylesOptions.inputStyles,
+      base: stylesForExpiryYear
+    },
     label: "",
     placeholder: collectStylesOptions.placeholders?.expiryYearPlaceholder,
     type: Skyflow.ElementType.EXPIRATION_YEAR,
@@ -118,7 +115,21 @@ export async function initSkyflow(
     collectStylesOptions.errorTextStyles
   );
 
+  const cvvElement = await collectContainer.create({
+    table: "cards",
+    column: "cvv",
+    ...collectStylesOptions,
+    label: collectStylesOptions.labels?.cvvLabel,
+    placeholder: collectStylesOptions.placeholders?.cvvPlaceholder,
+    type: Skyflow.ElementType.CVV,
+    validations: [regexMatchRule],
+  });
 
+  handleSkyflowElementEvents(
+      cvvElement,
+      "",
+      collectStylesOptions.errorTextStyles
+  );
   const elementsConfig = {
     cardNumber: {
       element: cardNumberElement,
@@ -143,16 +154,15 @@ export async function initSkyflow(
   };
 
   await mountElements(elementsConfig)
-
   return {
     container: collectContainer,
-    elements: { 
-      cardHolderNameElement, 
-      cardNumberElement, 
-      cvvElement, 
-      expiryMonthElement, 
-      expiryYearElement 
-    } 
+    elements: {
+      cardHolderNameElement,
+      cardNumberElement,
+      cvvElement,
+      expiryMonthElement,
+      expiryYearElement
+    }
   }
 }
 
@@ -243,13 +253,23 @@ async function mountElements(elementsConfig) {
   }
 }
 
-function handleSkyflowElementEvents(element, fieldMessage= "", error_styles = {}, resetOnFocus = true, requiredMessage = "El campo es requerido", invalidMessage= "El campo es inválido") {
+function handleSkyflowElementEvents(
+    element,
+    fieldMessage= "",
+    error_styles = {},
+    resetOnFocus = true,
+    requiredMessage = "Campo requerido",
+    invalidMessage= "Campo inválido",
+    focusNextElement = null
+    ) {
+  console.log('element', element)
   if ("on" in element) {
     element.on(Skyflow.EventName.CHANGE, (state) => {
       updateErrorLabel(element, error_styles, "transparent")
     });
 
     element.on(Skyflow.EventName.BLUR, (state) => {
+      console.log('sssss')
       if (!state.isValid) {
         const msj_error = state.isEmpty ? requiredMessage : fieldMessage != "" ?`El campo ${fieldMessage} es inválido`: invalidMessage;
         element.setError(msj_error);
@@ -289,7 +309,7 @@ export async  function getSkyflowTokens({baseUrl, apiKey, vault_id, vault_url, d
     },
   });
 
-  const collectContainer = skyflow.container(Skyflow.ContainerType.COLLECT);
+  const collectContainer = skyflow.container(Skyflow.ContainerType.COMPOSABLE);
 
   const fieldPromises = await getFieldsPromise(data, collectContainer);
 

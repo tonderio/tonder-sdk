@@ -94,7 +94,7 @@ export const getCardType = (scheme) => {
   } else if (scheme === "American Express") { // Check if amex
     return "https://d35a75syrgujp0.cloudfront.net/cards/american_express.png"
   } else {
-    return "https://d35a75syrgujp0.cloudfront.net/cards/default_card.png"
+    return "https://d35a75syrgujp0.cloudfront.net/cards/default_card_tonder.png"
   }
 }
 export const clearSpace = (text) => {
