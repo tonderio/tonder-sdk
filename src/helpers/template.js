@@ -1,6 +1,8 @@
 import "accordion-js/dist/accordion.min.css";
 import { getCardType } from "./utils";
 import {getPaymentMethodDetails} from "../shared/catalog/paymentMethodsCatalog";
+import {defaultStyles} from "./styles";
+import {COMMON_LOGOS} from "../shared/catalog/commonLogosCatalog";
 
 export const cardTemplate = (data) => `
 <div class="container-tonder">
@@ -12,7 +14,7 @@ export const cardTemplate = (data) => `
     <input checked id="new" class="card_selected" name="card_selected" type="radio"/>
     <label class="card-item-label-new" for="new">
       <img class="card-image" src="${getCardType("XXXX")}" />
-      <div class="card-number">Pagar con tarjeta</div>
+      <div class="card-number">Tarjeta</div>
     </label>
   </div>
   <div id="global-loader" class="global-loader"></div>
@@ -20,9 +22,40 @@ export const cardTemplate = (data) => `
     <div id="collectCardholderName" class="empty-div"></div>
     <div id="collectCardNumber" class="empty-div"></div>
     <div class="collect-row">
-      <div id="collectExpirationMonth" class="empty-div"></div>
-      <div id="collectExpirationYear" class="expiration-year"></div>
-      <div id="collectCvv" class="empty-div"></div>
+      <div class="containerExpirationDate">
+        <label class="expirationDateLabel">${data?.customStyles?.labels?.expiryDateLabel && data?.customStyles?.labels?.expiryDateLabel !== "" ? data.customStyles?.labels?.expiryDateLabel: defaultStyles.labels.expiryDateLabel}</label>
+        <div class="containerExpirationDateInput">
+          <div id="collectExpirationMonth" class="empty-div empty-div-date"></div>
+          <div id="collectExpirationYear" class="empty-div empty-div-date"></div>
+        </div>
+      </div>
+      <div class="cvvContainerCard" id="cvvContainerCard">
+        <div id="collectCvv" class="empty-div"></div>
+        <svg class="cvvIconCard" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="24" viewBox="0 0 270 178">
+              <defs>
+                <linearGradient id="linear-gradient" x1="0.5" x2="0.5" y2="1" gradientUnits="objectBoundingBox">
+                  <stop offset="0" stop-color="#386bbf"/>
+                  <stop offset="1" stop-color="#032ea3"/>
+                </linearGradient>
+                <linearGradient id="linear-gradient-2" x1="0.5" y1="0.115" x2="0.5" y2="1" gradientUnits="objectBoundingBox">
+                  <stop offset="0" stop-color="#1c1c1c"/>
+                  <stop offset="1" stop-color="#151515"/>
+                </linearGradient>
+              </defs>
+              <g id="Grupo_3" data-name="Grupo 3" transform="translate(-69 -312)">
+                <g id="Grupo_2" data-name="Grupo 2">
+                  <rect id="Rectángulo_58" data-name="Rectángulo 58" width="253" height="165" rx="25" transform="translate(69 312)" fill="url(#linear-gradient)"/>
+                  <rect id="Rectángulo_61" data-name="Rectángulo 61" width="68" height="8" rx="4" transform="translate(86 437)" fill="#fff" opacity="0.877"/>
+                  <rect id="Rectángulo_66" data-name="Rectángulo 66" width="253" height="24" transform="translate(69 347)" fill="url(#linear-gradient-2)"/>
+                  <g id="Elipse_4" data-name="Elipse 4" transform="translate(221 374)" fill="#fff" stroke="#191919" stroke-width="1">
+                    <ellipse cx="59" cy="58" rx="59" ry="58" stroke="none"/>
+                    <ellipse cx="59" cy="58" rx="58.5" ry="57.5" fill="none"/>
+                  </g>
+                </g>
+                <text id="_123" data-name="123" transform="translate(240 448)" font-size="45" font-family="Menlo-Regular, Menlo"><tspan x="0" y="0">123</tspan></text>
+              </g>
+            </svg>
+      </div>
     </div>
     ${!!data.customization?.saveCards?.showSaveCardOption 
     ? `
@@ -34,50 +67,80 @@ export const cardTemplate = (data) => `
     </div>
     `
     :``}
-
+    <div class="container-pay-button">
+        <button id="tonderPayButton" class="pay-button hidden">Pagar</button>
+    </div>
     <div id="msgError"></div>
     <div id="msgNotification"></div>
   </div>
   <div id="apmsListContainer" class="apms-list-container"></div>
-  <div class="container-pay-button">
-    <button id="tonderPayButton" class="pay-button hidden">Pagar</button>
+  <div class="tndr-footer">
+    <div class="tndr-footer-secure">
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 33 33">
+          <image id="Material_Icon_Lock_1_" data-name="Material Icon Lock (1)" width="33" height="33" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAAAXNSR0IArs4c6QAAA5dJREFUeF7tnWFSwjAQRls4mHgZOpxCOQVTLqMejFbjEIep1mz7bXYzzccvRtkmvJfdpE2BtuHDlUDr2jobbyjAeRBQAAXICFwul8Nutzu0bfsUI8ZxPITnbdu+x7/dbrdzeH46nX7+JmvB51XFZ0Df969N07wsxROlBCElyyhWwFrwM6LOXdcFkcU9ihOgDH4KvDgRRQnIDD/KKEpCMQKM4H9LCPPD8Xh8LqEeFSHger2+xRWNIZQiMsFdgOXI/0OuuwRXAUvhh9IxjuNHADkMw3tcXk7PERZmk6sEbwHjgpIjBrVUbNd1bhzcGpZCCqN+zclUyIr9fv8izAax3AUDRvRSFwH3kvEm6CEMRiraKwtcBEhWPZpLRUl7X6tTWLZgQP16SbEChmF41rqGI804jywwFyCEoT4aJaVIU7o0G4oToFl6phAEpUhdfEqEuYAUhJwCUlmQs+05EcUJyDkZUkDTNKkMyFmHU/NPFRnQ9/2/Z7+5VyLe7U9LkXkJ8gbg3T4FOGcgBVAA54DHLOAcMKkJuRcBLEEsQSxBLEH/XKDZRAkKp/zhHk7hblTqepX7/+Ne9OM+tFanVCfh1LUWrU47H0f1iqmagErgq99dpyKgMviqEmABqSuMzuUia/MaEzYsoNLRr5YFsIDU9f2sQ9D54Br7B7CA1OVdZ0bZm0fLEAWAiigABIiGUwBKEIynABAgGk4BKEEwngJAgGg4BaAEwXgKAAGi4RSAEgTjKQAEiIZTAEoQjKcAECAaXquA89znhK33oWsTkNyPtd6fqElAEn4sJ5YSahEghm8tYfMCkF0ni82izQtAPjNmUYo2LwD5zJjFHRubF4C+wdxlCO1f8XvC6BukAPBUkyUoATD3COMk7C+gWVuGLG4aW9u3iLX4OeDeUZ6IzSWCQQmKTYslWKz/Y6dqyQCxBEv4oVO1Cfj+1tvw1ZV/XY5e8y3r4CKtPgEoMO346jJAGyB6PApACYLxFAACRMMpACUIxlMACBANpwCUIBhPASBANJwCUIJgPAWAANFwCkAJgvEUAAJEwykAJQjGuwuw2HUCGWULR24ai53S2BFb9WOb2ajYHli8STTXLVhAOLDhrpgt3kRryB0bahlwF1BjFsCjP7BTyYAKJajAVxVQkQQ1+OoCwgEff1bQ+uNCuSaIuA+d40eh1UpQrje/9eNSgLNhCqAAZwLOzTMDKMCZgHPzzAAKcCbg3PwnnbeGf25S3XwAAAAASUVORK5CYII="/>
+        </svg>
+        <p>Pagos seguros con Tonder</p>
+    </div>
+    <div class="tndr-footer-logos">
+        <img class="tndr-pci-logo" src="${COMMON_LOGOS.pci}" alt="pci"/>
+        <div class="tndr-footer-logos-divider"></div>
+        <img class="tndr-tonder-logo" src="${COMMON_LOGOS.tonderBlue}" alt="tonder"/>
+    </div>
   </div>
 </div>
 
 <style>
-
+${getCommonStyles(data)}
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 .container-tonder {
-  background-color: #F9F9F9;
+  background-color: #FFFFFF;
   margin: 0 auto !important;
   padding: 0px;
   overflow: hidden;
   transition: max-height 0.5s ease-out;
   max-width: 600px;
-  border: solid 1px #e3e3e3;
+  border: solid 1px #CED0D1;
   position: relative;
   font-family: ${getFontFamily(data)};
+  border-radius: 11px;
 }
 .container-pay-button{
-  padding: ${!!data['renderPaymentButton'] ? '30px 25px':''};
+  padding: ${!!data['renderPaymentButton'] ? '30px 0':''};
 }
 
 .container-form {
-  padding: 25px 25px 0px 25px;
+  padding:  ${data?.renderPaymentButton ? '20px 30px 0 30px':'20px 30px 20px 30px'}; 
 }
 
 .collect-row {
-  display: flex !important;
-  justify-content: space-between !important;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   width: 100% !important;
+  gap: 16px;
 }
 
 .collect-row > :first-child {
   min-width: 120px; !important
 }
-
+.containerExpirationDate{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.expirationDateLabel{
+  line-height: 22px;
+  color: #333333;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+}
+.containerExpirationDateInput{
+    display: flex;
+    align-items: center;
+}
 .expiration-year {
   position: relative !important;
-  padding-top: 25px !important;
+  /*padding-top: 12px !important;*/
 }
 
 .empty-div {
@@ -85,8 +148,9 @@ export const cardTemplate = (data) => `
   height: 80px !important;
   margin-top: 2px;
   margin-bottom: 4px;
-  margin-left: 10px !important;
-  margin-right: 10px !important;
+}
+.empty-div-date {
+  height: 58px !important;
 }
 
 .error-container {
@@ -111,46 +175,101 @@ export const cardTemplate = (data) => `
 
 .pay-button {
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 400;
   min-height: 2.3rem;
-  border-radius: 0.5rem;
+  border-radius: 5px;
   cursor: pointer;
   width: 100%;
-  padding: 1rem;
+  padding: .5em 1em;
   text-align: center;
   border: none;
   background-color: #000;
   color: #fff;
   margin-bottom: 0px;
+  font-family: "Inter", sans-serif;
+}
+.pay-button-text{
+  margin: .5em 0;  
 }
 .hidden{
   display: none;
 }
-
-.lds-dual-ring {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
+.cvvContainerCard{
+ position: relative;
+ padding: 0;
+ display: flex;
+ align-items: flex-end;
+}
+.cvvIconCard {
+  position: absolute;
+  left: 90%;
+  top: 54%;
+  transform: translate(-50%, -50%);
+}
+.spinner-tndr {
+    width: 30px;
+    height: 30px;
+    border: 2px solid #FFF;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: spin-tndr 1s linear infinite;
+}
+.tndr-footer{
+    padding: 70px 20px 40px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    border-top: solid 1px #CED0D1;
+}
+.tndr-footer .tndr-footer-secure {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.tndr-footer .tndr-footer-secure p {
+    margin: 0;
+    color: #999999;
+    font-size: 14px;
+}
+.tndr-footer .tndr-footer-logos {
+    display: flex;
+    align-items: center;
+    border: 1px solid #CCCCCC;
+    border-radius: 30px;
+    font-weight: 400;
+    gap: 12px;
+    padding: 8px 12px;
 }
 
-.lds-dual-ring:after {
-  content: " ";
-  display: block;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 6px solid #fff;
-  border-color: #fff transparent #fff transparent;
-  animation: lds-dual-ring 1.2s linear infinite;
+.tndr-footer .tndr-footer-logos img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
 }
-@keyframes lds-dual-ring {
+
+.tndr-pci-logo {
+    max-width: 30px;
+}
+.tndr-tonder-logo {
+    max-width: 80px;
+}
+.tndr-footer-logos-divider{
+    width: .1px;
+    height: 24px;
+    background-color: #CCCCCC;
+}
+
+@keyframes spin-tndr {
   0% {
-    transform: rotate(0deg);
+      transform: rotate(0deg);
   }
   100% {
-    transform: rotate(360deg);
+      transform: rotate(360deg);
   }
-}
+} 
 
 .global-loader {
   position: absolute;
@@ -173,17 +292,45 @@ export const cardTemplate = (data) => `
 }
 
 .checkbox label {
-  margin-left: 10px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1D1D1D;
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
 }
 
 .checkbox {
   margin-top: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   text-align: left;
-  padding: 0 8px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox input{
+    appearance: none;
+    margin: 0;
+    border-radius: 3px;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #CED0D1;
+    position: relative; 
+}
+
+.checkbox input:checked {
+  background-color: #000000;
+}
+
+.checkbox input:checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    width: 4px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
 .cards-list-container {
@@ -204,17 +351,16 @@ export const cardTemplate = (data) => `
   display: flex;
   justify-content: start;
   align-items: center;
-  color: #1D1D1D;
-  gap: 33% 15px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  padding: 0px 30px;
-  width: 100%;
+  color: #333333;
+  gap: 12px;
+  margin-top: 5px;
+  padding: 5px 30px;
   position: relative;
 }
 
 .pay-new-card .card-number {
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 600;
 }
 .card-image {
   width: 39px;
@@ -226,95 +372,12 @@ export const cardTemplate = (data) => `
   display: flex;
   justify-content: start;
   align-items: center;
-  color: #1D1D1D;
-  gap: 33% 20px;
+  color: #333333;
+  gap: 12px;
   margin-top: 10px;
   margin-bottom: 10px;
   width: 100%;
 }
-
-.card_selected {
-  position: relative;
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  appearance: none;
-  cursor: pointer;
-  border-radius: 100%;
-  border: 1px #bababa solid;
-  color: #3bc635;
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.card_selected:before {
-  width: 8px;
-  height: 8px;
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  transform: translate(-50%, -50%);
-  border-radius: 100%;
-  background-color: #3bc635;
-  opacity: 0;
-  transition-property: opacity;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.card_selected:checked {
-  border: 1px #3bc635 solid;
-  position: relative;
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  appearance: none;
-  cursor: pointer;
-  border-radius: 100%;
-  color: #3bc635;
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.card_selected:checked:before {
-  content: "";
-  border: 1px #3bc635 solid;
-  width: 8px;
-  height: 8px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  transform: translate(-50%, -50%);
-  border-radius: 100%;
-  background-color: #3bc635;
-  opacity: 50;
-  transition-property: opacity;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.card_selected:hover:before {
-  width: 8px;
-  height: 8px;
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  transform: translate(-50%, -50%);
-  border-radius: 100%;
-  background-color: #3bc635;
-  transition-property: opacity;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-  opacity: 10;
-}
-
 
 .error-custom-inputs-tonder {
   background-color: white;
@@ -335,6 +398,44 @@ export const cardTemplate = (data) => `
   font-size: 12px;
   color: red;
 }
+  @media screen and (max-width: 450px) and (min-width: 364px) {
+    .cvvIconCard {
+      top: 56%;
+    }
+    .tndr-footer-logos-divider{
+        width: 1px;
+    }
+  }
+  
+  @media screen and (max-width: 363px) {
+    .cvvIconCard {
+      top: 62%;
+    }
+    .tndr-footer-logos-divider{
+        width: 2px;
+    }
+  }
+  @media screen and (max-width: 450px) {
+    .cvvIconCard {
+      left: 84%;
+    }
+   
+  }
+  @media screen and (max-width: 420px) {
+    .tndr-footer{
+        gap: 0;
+    }
+    .tndr-pci-logo {
+        max-width: 25px;
+    }
+    .tndr-tonder-logo {
+        max-width: 60px;
+    }
+    .tndr-footer .tndr-footer-logos {
+        gap: 5px;
+    }
+ }
+
 </style>
 `
 
@@ -343,26 +444,26 @@ export const cardItemsTemplate = (cards, data) => {
 
   const cardItemsHTML = cards.reduce((total, card) => {
     return `${total}
-    <div class="ac" id="card_container-${card.skyflow_id}">
+    <div class="ac ac-cards" id="option_container-${card.skyflow_id}">
       <div class="card-item" >
-          <input id="${card.skyflow_id}" class="card_selected" name="card_selected" type="radio"/>
+          <input id="${card.skyflow_id}" class="cards card_selected" name="card_selected" type="radio"/>
           <label class="card-item-label" for="${card.skyflow_id}">
-<!--            <div class="ac-trigger">-->
+            <div class="card-item-data">
               <img class="card-image" src="${getCardType(card.card_scheme)}" />
               <div class="card-number">${card.card_number}</div>
               <div class="card-expiration">Exp. ${card.expiration_month}/${card.expiration_year}</div>
-<!--            </div>-->
+            </div>
             <div class="card-delete-icon">
               <button id="delete_button_${card.skyflow_id}" class="card-delete-button">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px">
-                  <path fill="currentColor" d="M292.309-140.001q-30.308 0-51.308-21t-21-51.308V-720h-40v-59.999H360v-35.384h240v35.384h179.999V-720h-40v507.691q0 30.308-21 51.308t-51.308 21H292.309ZM376.155-280h59.999v-360h-59.999v360Zm147.691 0h59.999v-360h-59.999v360Z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="18" viewBox="0 0 26.972 30.898">
+                  <path id="Delete_Icon" data-name="Delete Icon" d="M165.057-809.1a3.218,3.218,0,0,1-2.381-1.008,3.336,3.336,0,0,1-.99-2.425V-834.85H160v-3.433h8.429V-840h10.114v1.717h8.429v3.433h-1.686v22.315a3.336,3.336,0,0,1-.99,2.425,3.218,3.218,0,0,1-2.381,1.008Zm3.371-6.866H171.8v-15.449h-3.371Zm6.743,0h3.371v-15.449h-3.371Z" transform="translate(-160 840)"/>
                 </svg>
               </button>
             </div>
           </label>
       </div>
       <div class="ac-panel">
-        <div class="ac-card-panel-container" id="acContainer${card.skyflow_id}">
+        <div class="ac-option-panel-container" id="acContainer${card.skyflow_id}">
            <div class="cvvContainer" id="cvvContainer${card.skyflow_id}">
             <div id="collectCvv${card.skyflow_id}" class="empty-div"></div>
             <svg class="cvvIcon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="24" viewBox="0 0 270 178">
@@ -396,7 +497,6 @@ export const cardItemsTemplate = (cards, data) => {
                </div> `
               :``
            }
-          
         </div>
       </div>
     </div>`
@@ -404,69 +504,63 @@ export const cardItemsTemplate = (cards, data) => {
   }, "");
   const cardItemStyle = `
     <style>
-      .ac {
-        background-color: transparent !important;
-        margin-bottom: 0 !important;
-        border-bottom: 1px solid #e2e8f0;
-      }
-      .ac-card-panel-container{
-        padding: ${data?.renderPaymentButton ? '20px 32px 0px 32px':'20px 32px 20px 32px'};
+    ${getCommonStyles(data)}
+      .ac-cards{
+        border: none;
+        border-bottom: 1px solid #CED0D1;
       }
       .cvvContainer{
-       max-width: 45%; 
+       max-width: 50%; 
        position: relative;
-       padding: 0px 28px 0px 28px;
+       padding: 0 0 0 40px;
       }
       .cvvIcon {
         position: absolute;
-        right: 16%;
-        top: 43%;
+        left: 92%;
+        top: 54%;
         opacity: 0;
-        transform: translateY(10px);
+        transform: translate(-50%, 10px);
         transition: opacity 0.3s ease, transform 0.3s ease;
       }
-      .cvvContainer.show .cvvIcon,
-      .ac-card-panel-container.show .card-pay-button {
+      .cvvContainer.show .cvvIcon {
+        opacity: 1;
+        transform: translate(-50%,-50%);
+        transition-delay: 0.3s;
+      }
+      .ac-option-panel-container.show .card-pay-button {
         opacity: 1;
         transform: translateY(0);
         transition-delay: 0.3s;
       }
       .container-card-pay-button{
-        margin: 20px 0px;
-      }
-      .card-pay-button{
-        display: block;
-        opacity: 0;
-        transform: translateY(10px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
+         margin: 20px 0 40px 0;
       }
       .card-item-label {
+        justify-content: space-between;
+      }
+      .card-item-data{
         display: flex;
         justify-content: space-between;
         align-items: center;
-        color: #1D1D1D;
-        gap: 33% 20px;
-        margin-top: 15px;
-        margin-bottom: 15px;
-        width: 100%;
+        gap: 12px;
       }
       .card-item {
         position: relative;
         display: flex;
         justify-content: start;
         align-items: center;
-        gap: 33% 15px;
-        padding: 0px 30px;
+        gap: 12px;
+        padding: 5px 30px;
       }
 
-      .card-item .card-number {
-        font-size: 16px;
-      }
-
+      .card-item .card-number,
       .card-item .card-expiration {
-        font-size: 16px;
+        font-size: 14px;
+        font-weight: 600;
       }
-
+      .card-item .card-expiration {
+        margin-left: 2.5em;
+      }
       .card-image {
         width: 39px;
         height: 24px;
@@ -477,94 +571,30 @@ export const cardItemsTemplate = (cards, data) => {
         background-color: transparent !important;
         color: #000000 !important;
         border: none;
+        padding: 0;
+        display: flex;
+        align-items: center;
       }
 
       .card-delete-button:hover {
         background-color: transparent !important;
         color: #D91C1C !important;
       }
-      .card_selected {
-        position: relative;
-        width: 16px;
-        min-width: 16px;
-        height: 16px;
-        appearance: none;
-        cursor: pointer;
-        border-radius: 100%;
-        border: 1px #bababa solid;
-        color: #3bc635;
-        transition-property: all;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 150ms;
-      }
       
-      .card_selected:before {
-        width: 8px;
-        height: 8px;
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        transform: translate(-50%, -50%);
-        border-radius: 100%;
-        background-color: #3bc635;
-        opacity: 0;
-        transition-property: opacity;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 150ms;
+      @media screen and (max-width: 768px) {
+        .cvvContainer {
+          max-width: 60%;
+        }
       }
-      
-      .card_selected:checked {
-        border: 1px #3bc635 solid;
-        position: relative;
-        width: 16px;
-        height: 16px;
-        min-width: 16px;
-        appearance: none;
-        cursor: pointer;
-        border-radius: 100%;
-        color: #3bc635;
-        transition-property: all;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 150ms;
+    
+      @media screen and (max-width: 480px) {
+        .cvvContainer {
+          max-width: 100%;
+        }
+        .cvvIcon {
+            top: 56%;
+          }
       }
-      
-      .card_selected:checked:before {
-        content: "";
-        border: 1px #3bc635 solid;
-        width: 8px;
-        height: 8px;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        transform: translate(-50%, -50%);
-        border-radius: 100%;
-        background-color: #3bc635;
-        opacity: 50;
-        transition-property: opacity;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 150ms;
-      }
-      
-      .card_selected:hover:before {
-        width: 8px;
-        height: 8px;
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        display: block;
-        transform: translate(-50%, -50%);
-        border-radius: 100%;
-        background-color: #3bc635;
-        transition-property: opacity;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 150ms;
-        opacity: 10;
-      }
-
     </style>
   `
   const cardItem = `
@@ -576,53 +606,73 @@ export const cardItemsTemplate = (cards, data) => {
   return cardItem;
 }
 
-export const apmItemsTemplate = (apms) => {
+export const apmItemsTemplate = (apms, data) => {
 
   const apmItemsHTML = apms.reduce((total, apm) => {
     const apm_data = getPaymentMethodDetails(apm.payment_method);
     return `${total}
-    <div class="apm-item" id="card_container-${apm.pk}">
-        <input id="${apm.pk}" class="card_selected" name="card_selected" type="radio"/>
-        <label class="apm-item-label" for="${apm.pk}">
-          
-          <div class="apm-image">
-            <div class="apm-image-border"></div>
-            <img src="${apm_data.icon}" />
-          </div>
-          <div class="apm-name">${apm_data.label}</div>
-        </label>
+    <div class="ac ac-paymentMethods" id="option_container-${apm.pk}">
+      <div class="apm-item">
+          <input id="${apm.pk}" class="paymentMethods card_selected" name="card_selected" type="radio"/>
+          <label class="apm-item-label" for="${apm.pk}">
+            
+            <div class="apm-image">
+              <div class="apm-image-border"></div>
+              <img src="${apm_data.icon}" />
+            </div>
+            <div class="apm-name">${apm_data.label}</div>
+          </label>
+      </div>
+      <div class="ac-panel">
+        <div class="ac-option-panel-container" id="acContainer${apm.pk}">
+        <div class="tndr-hide-text">accordion</div>
+          ${ data?.renderPaymentButton ?
+              `<div class="container-pm-pay-button">
+                 <button id="tonderPayButton${apm.pk}" class="pm-pay-button pay-button">Pagar</button>
+               </div> `
+              :``
+          }
+        </div>
+      </div>   
     </div>`
   }, ``);
 
   const apmItemStyle = `
     <style>
-      .apm-item-label {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        color: #1D1D1D;
-        gap: 33% 10px;
-        margin-top: 15px;
-        margin-bottom: 15px;
-        width: 100%;
+      .ac-option-panel-container{
+        padding-top: 10px;
       }
-
+      .ac-paymentMethods{
+        border: none;
+        border-top: 1px solid #CED0D1;
+      }
+      ${getCommonStyles(data)}
+      .apm-item-label {
+        justify-content: flex-start;
+      }
       .apm-item {
         position: relative;
         display: flex;
         justify-content: start;
         align-items: center;
-        gap: 33% 15px;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 0px 30px;
+        gap: 22px;
+        padding: 5px 30px;
       }
-
-      .apm-item:first-child {
-        border-top: 1px solid #e2e8f0;
+     .container-pm-pay-button{
+        margin: 0 0 40px 0;
       }
+      .ac-option-panel-container.show .pm-pay-button {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      /*.apm-item:first-child {*/
+      /*  border-top: 1px solid #CED0D1;*/
+      /*}*/
 
       .apm-item .apm-name {
-        font-size: 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333333;
       }
       .apm-image {
         width: 30px;
@@ -645,25 +695,9 @@ export const apmItemsTemplate = (apms) => {
         width: 100%;
         height: 97%;
       }
-
-      .card_selected {
-        position: relative;
-        width: 16px;
-        min-width: 16px;
-        height: 16px;
-        appearance: none;
-        cursor: pointer;
-        border-radius: 100%;
-        border: 1px #bababa solid;
-        color: #3bc635;
-        transition-property: all;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 150ms;
-      }
-      
       .card_selected:before {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         content: "";
         position: absolute;
         top: 50%;
@@ -671,7 +705,7 @@ export const apmItemsTemplate = (apms) => {
         display: block;
         transform: translate(-50%, -50%);
         border-radius: 100%;
-        background-color: #3bc635;
+        background-color: #FFFFFF;
         opacity: 0;
         transition-property: opacity;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -679,7 +713,7 @@ export const apmItemsTemplate = (apms) => {
       }
       
       .card_selected:checked {
-        border: 1px #3bc635 solid;
+        border: 1px #000000 solid;
         position: relative;
         width: 16px;
         height: 16px;
@@ -687,7 +721,8 @@ export const apmItemsTemplate = (apms) => {
         appearance: none;
         cursor: pointer;
         border-radius: 100%;
-        color: #3bc635;
+        color: #FFFFFF;
+        background-color: #000000;
         transition-property: all;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         transition-duration: 150ms;
@@ -695,16 +730,16 @@ export const apmItemsTemplate = (apms) => {
       
       .card_selected:checked:before {
         content: "";
-        border: 1px #3bc635 solid;
-        width: 8px;
-        height: 8px;
+        border: 0;
+        width: 9px;
+        height: 9px;
         position: absolute;
         top: 50%;
         left: 50%;
         display: block;
         transform: translate(-50%, -50%);
         border-radius: 100%;
-        background-color: #3bc635;
+        background-color: #ffffff;
         opacity: 50;
         transition-property: opacity;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -712,8 +747,8 @@ export const apmItemsTemplate = (apms) => {
       }
       
       .card_selected:hover:before {
-        width: 8px;
-        height: 8px;
+        width: 9px;
+        height: 9px;
         content: "";
         position: absolute;
         top: 50%;
@@ -721,7 +756,7 @@ export const apmItemsTemplate = (apms) => {
         display: block;
         transform: translate(-50%, -50%);
         border-radius: 100%;
-        background-color: #3bc635;
+        background-color: #ffffff;
         transition-property: opacity;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         transition-duration: 150ms;
@@ -731,7 +766,9 @@ export const apmItemsTemplate = (apms) => {
     </style>
   `
   const apmItem = `
-  ${apmItemsHTML}
+  <div class="accordion-container-apm">
+    ${apmItemsHTML}
+  </div>
   ${apmItemStyle}
   `
   return apmItem;
@@ -741,3 +778,120 @@ const getFontFamily = (data) => {
   const base = data?.customStyles?.labelStyles?.base;
   return base?.fontFamily || '"Inter", sans-serif';
 };
+
+const getCommonStyles = (data) => `
+  .tndr-hide-text {
+    color: transparent;
+    font-size: 1px;
+  }
+  .card_selected {
+    background-color: #F5F5F5;
+    position: relative;
+    width: 25px;
+    height: 25px;
+    min-width: 25px;
+    appearance: none;
+    cursor: pointer;
+    border-radius: 100%;
+    border: 1px #000000 solid;
+    color: #FFFFFF;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+    margin: 0 3px 0 0;
+  }
+  .card_selected:focus {
+    outline: none;
+  }
+  .card_selected:before {
+    width: 10px;
+    height: 10px;
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+    background-color: #FFFFFF;
+    opacity: 0;
+    transition-property: opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  
+  .card_selected:checked {
+    border: 1px #000000 solid;
+    position: relative;
+    width: 25px;
+    height: 25px;
+    min-width: 25px;
+    appearance: none;
+    cursor: pointer;
+    border-radius: 100%;
+    color: #FFFFFF;
+    background-color: #000000;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  
+  .card_selected:checked:before {
+    content: "";
+    border: 0;
+    width: 9px;
+    height: 9px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+    background-color: #FFFFFF;
+    opacity: 50;
+    transition-property: opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  
+  .card_selected:hover:before {
+    width: 9px;
+    height: 9px;
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    transform: translate(-50%, -50%);
+    border-radius: 100%;
+    background-color: #FFFFFF;
+    transition-property: opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+    opacity: 10;
+  }
+  .card-item-label,
+  .apm-item-label {
+    display: flex;
+    align-items: center;
+    color: #333333;
+    gap: 12px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+  .ac {
+    background-color: transparent !important;
+    margin-bottom: 0 !important;
+  }
+  .ac-option-panel-container{
+    padding: ${data?.renderPaymentButton ? '20px 30px 0px 30px':'0px 30px 0px 30px'};
+  }
+  .pm-pay-button,
+  .card-pay-button{
+        display: block;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+`
