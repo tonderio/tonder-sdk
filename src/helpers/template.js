@@ -23,15 +23,18 @@ export const cardTemplate = (data) => `
     <div id="collectCardNumber" class="empty-div"></div>
     <div class="collect-row">
       <div class="containerExpirationDate">
-        <label class="expirationDateLabel">${data?.customStyles?.labels?.expiryDateLabel && data?.customStyles?.labels?.expiryDateLabel !== "" ? data.customStyles?.labels?.expiryDateLabel: defaultStyles.labels.expiryDateLabel}</label>
+        <label class="tndr-form-label">${data?.customStyles?.labels?.expiryDateLabel && data?.customStyles?.labels?.expiryDateLabel !== "" ? data.customStyles?.labels?.expiryDateLabel: defaultStyles.labels.expiryDateLabel}</label>
         <div class="containerExpirationDateInput">
           <div id="collectExpirationMonth" class="empty-div empty-div-date"></div>
           <div id="collectExpirationYear" class="empty-div empty-div-date"></div>
         </div>
       </div>
       <div class="cvvContainerCard" id="cvvContainerCard">
-        <div id="collectCvv" class="empty-div">
-        <svg class="cvvIconCard" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="24" viewBox="0 0 270 178">
+        <label class="tndr-form-label">${data?.customStyles?.labels?.cvvLabel && data?.customStyles?.labels?.cvvLabel !== "" ? data.customStyles?.labels?.cvvLabel: defaultStyles.labels.cvvLabel}</label>
+        <div id="collectCvv" class="empty-div card-collect-cvv empty-div-date">
+            <div class="tndr-simulate-input-cvv-container">
+                <div class="tndr-simulate-input-cvv">
+                    <svg class="cvvIconCard" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="24" viewBox="0 0 270 178">
               <defs>
                 <linearGradient id="linear-gradient" x1="0.5" x2="0.5" y2="1" gradientUnits="objectBoundingBox">
                   <stop offset="0" stop-color="#386bbf"/>
@@ -55,8 +58,10 @@ export const cardTemplate = (data) => `
                 <text id="_123" data-name="123" transform="translate(240 448)" font-size="45" font-family="Menlo-Regular, Menlo"><tspan x="0" y="0">123</tspan></text>
               </g>
             </svg>
-        
-</div>
+                    <input/>
+                </div>
+            </div>
+        </div>
       </div>
     </div>
     ${!!data.customization?.saveCards?.showSaveCardOption 
@@ -91,8 +96,8 @@ export const cardTemplate = (data) => `
   </div>
   </div>
 <style>
-${getCommonStyles(data)}
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+${getCommonStyles(data)}
 .container-tonder {
   background-color: #FFFFFF;
   margin: 0 auto !important;
@@ -110,7 +115,7 @@ ${getCommonStyles(data)}
 }
 
 .container-form {
-  padding:  ${data?.renderPaymentButton ? '20px 30px 0 30px':'20px 30px 20px 30px'}; 
+  padding:  ${data?.renderPaymentButton ? '0px 30px 0 30px':'0px 30px 20px 30px'}; 
 }
 
 .collect-row {
@@ -129,15 +134,17 @@ ${getCommonStyles(data)}
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    justify-content: flex-end;
 }
-.expirationDateLabel{
+.tndr-form-label{
   line-height: ${data?.customStyles?.labelStyles?.base?.lineHeight ? data?.customStyles?.labelStyles?.base?.lineHeight : '22px'};
-  color: ${data?.customStyles?.labelStyles?.base?.color ? data?.customStyles?.labelStyles?.base?.color : '#333333'};
-  font-size: ${data?.customStyles?.labelStyles?.base?.fontSize ? data?.customStyles?.labelStyles?.base?.fontSize : '12px'};
-  font-family: ${data?.customStyles?.labelStyles?.base?.fontFamily ? data?.customStyles?.labelStyles?.base?.fontFamily : '"Inter", sans-serif'};
-  font-weight: ${data?.customStyles?.labelStyles?.base?.fontWeight ? data?.customStyles?.labelStyles?.base?.fontWeight : 600};
+  color: ${data?.customStyles?.labelStyles?.base?.color ? data?.customStyles?.labelStyles?.base?.color : defaultStyles.labelStyles.base.color};
+  font-size: ${data?.customStyles?.labelStyles?.base?.fontSize ? data?.customStyles?.labelStyles?.base?.fontSize : defaultStyles.labelStyles.base.fontSize};
+  font-family: ${data?.customStyles?.labelStyles?.base?.fontFamily ? data?.customStyles?.labelStyles?.base?.fontFamily : defaultStyles.labelStyles.base.fontFamily};
+  font-weight: ${data?.customStyles?.labelStyles?.base?.fontWeight ? data?.customStyles?.labelStyles?.base?.fontWeight : defaultStyles.labelStyles.base.fontWeight};
   text-align: ${data?.customStyles?.labelStyles?.base?.textAlign ? data?.customStyles?.labelStyles?.base?.textAlign : 'start'};
 }
+
 .containerExpirationDateInput{
     display: flex;
     align-items: center;
@@ -154,6 +161,9 @@ ${getCommonStyles(data)}
 }
 .empty-div-date {
   height: 58px !important;
+}
+.card-collect-cvv{
+    width: 100%;
 }
 .error-container {
   color: red !important;
@@ -198,12 +208,14 @@ ${getCommonStyles(data)}
  position: relative;
  padding: 0;
  display: flex;
- align-items: flex-end;
+ flex-direction: column;
+ align-items: flex-start;
+ justify-content: flex-end;
 }
 .cvvIconCard {
   position: absolute;
   right: -12px;
-  top: 54%;
+  top: 55%;
   transform: translate(-50%, -50%);
 }
 .spinner-tndr {
@@ -262,6 +274,37 @@ ${getCommonStyles(data)}
     height: 24px;
     background-color: #CCCCCC;
 }
+.tndr-simulate-input-cvv-container{
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    pointer-events: none;
+    
+}
+.tndr-simulate-input-cvv {
+    width: 100%;
+    pointer-events: none;
+    position: relative;
+}
+.tndr-simulate-input-cvv-container label{
+  line-height: ${data?.customStyles?.labelStyles?.base?.lineHeight ? data?.customStyles?.labelStyles?.base?.lineHeight : ''};
+  color: transparent;
+  font-size: ${data?.customStyles?.labelStyles?.base?.fontSize ? data?.customStyles?.labelStyles?.base?.fontSize : defaultStyles.labelStyles.base.fontSize};
+  font-family: ${data?.customStyles?.labelStyles?.base?.fontFamily ? data?.customStyles?.labelStyles?.base?.fontFamily : defaultStyles.labelStyles.base.fontFamily};
+  font-weight: ${data?.customStyles?.labelStyles?.base?.fontWeight ? data?.customStyles?.labelStyles?.base?.fontWeight : defaultStyles.labelStyles.base.fontWeight};
+  text-align: ${data?.customStyles?.labelStyles?.base?.textAlign ? data?.customStyles?.labelStyles?.base?.textAlign : 'start'};
+  pointer-events: none;
+}
+.tndr-simulate-input-cvv input {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-height: 44px;
+    background-color: transparent;
+    pointer-events: none;
+}
+
 
 @keyframes spin-tndr {
   0% {
@@ -401,18 +444,12 @@ ${getCommonStyles(data)}
   color: red;
 }
   @media screen and (max-width: 450px) and (min-width: 364px) {
-    .cvvIconCard {
-      top: 56%;
-    }
     .tndr-footer-logos-divider{
         width: 1px;
     }
   }
   
   @media screen and (max-width: 363px) {
-    .cvvIconCard {
-      top: 62%;
-    }
     .tndr-footer-logos-divider{
         width: 2px;
     }
@@ -428,19 +465,9 @@ ${getCommonStyles(data)}
         padding: 70px 0 40px 0;
     }
   }
-  @media screen and (max-width: 450px) {
-    .cvvIconCard {
-      right: -12px;
-    }
-   
-  }
   @media screen and (max-width: 420px) {
-  
     .collect-row > * {
       flex: 1 1 100%;
-    }
-    .tndr-footer .tndr-footer-logos {
-        gap: 5px;
     }
     .collect-row {
        gap: 0;
@@ -603,7 +630,7 @@ export const cardItemsTemplate = (cards, data) => {
           max-width: 100%;
         }
         .cvvIcon {
-            top: 56%;
+            top: 58%;
           }
       }
     </style>

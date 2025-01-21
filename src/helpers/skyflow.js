@@ -119,7 +119,7 @@ export async function initSkyflow(
     table: "cards",
     column: "cvv",
     ...collectStylesOptions,
-    label: collectStylesOptions.labels?.cvvLabel,
+    label: "",
     placeholder: collectStylesOptions.placeholders?.cvvPlaceholder,
     type: Skyflow.ElementType.CVV,
     validations: [regexMatchRule],
