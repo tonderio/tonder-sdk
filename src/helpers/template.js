@@ -232,7 +232,6 @@ ${getCommonStyles(data)}
     padding: 70px 20px 40px 20px;
     display: flex;
     flex-wrap: wrap;
-    width: 100%;
     align-items: center;
     justify-content: center;
     gap: 20px;
