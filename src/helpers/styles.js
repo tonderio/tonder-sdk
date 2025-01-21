@@ -55,7 +55,7 @@ export const defaultStyles = {
   placeholders: {
     namePlaceholder: 'Nombre del titular de la tarjeta',
     cardPlaceholder: '1234 1234 1234 1234',
-    cvvPlaceholder: '3-4 dígitos',
+    cvvPlaceholder: 'CVV',
     expiryMonthPlaceholder: 'MM',
     expiryYearPlaceholder: 'AA'
   }
