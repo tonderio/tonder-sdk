@@ -30,7 +30,7 @@ export const cardTemplate = (data) => `
         </div>
       </div>
       <div class="cvvContainerCard" id="cvvContainerCard">
-        <div id="collectCvv" class="empty-div"></div>
+        <div id="collectCvv" class="empty-div">
         <svg class="cvvIconCard" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="40" height="24" viewBox="0 0 270 178">
               <defs>
                 <linearGradient id="linear-gradient" x1="0.5" x2="0.5" y2="1" gradientUnits="objectBoundingBox">
@@ -55,6 +55,8 @@ export const cardTemplate = (data) => `
                 <text id="_123" data-name="123" transform="translate(240 448)" font-size="45" font-family="Menlo-Regular, Menlo"><tspan x="0" y="0">123</tspan></text>
               </g>
             </svg>
+        
+</div>
       </div>
     </div>
     ${!!data.customization?.saveCards?.showSaveCardOption 
@@ -87,8 +89,7 @@ export const cardTemplate = (data) => `
         <img class="tndr-tonder-logo" src="${COMMON_LOGOS.tonderBlue}" alt="tonder"/>
     </div>
   </div>
-</div>
-
+  </div>
 <style>
 ${getCommonStyles(data)}
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
@@ -113,14 +114,16 @@ ${getCommonStyles(data)}
 }
 
 .collect-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+ display: flex;
+  flex-wrap: wrap; 
+  justify-content: space-between;
   width: 100% !important;
-  gap: 16px;
+  gap: 16px; 
 }
 
-.collect-row > :first-child {
-  min-width: 120px; !important
+.collect-row > * {
+  flex: 1 1 calc(50% - 8px);
+  box-sizing: border-box;
 }
 .containerExpirationDate{
     display: flex;
@@ -128,11 +131,12 @@ ${getCommonStyles(data)}
     align-items: flex-start;
 }
 .expirationDateLabel{
-  line-height: 22px;
-  color: #333333;
-  font-size: 14px;
-  font-family: "Inter", sans-serif;
-  font-weight: 600;
+  line-height: ${data?.customStyles?.labelStyles?.base?.lineHeight ? data?.customStyles?.labelStyles?.base?.lineHeight : '22px'};
+  color: ${data?.customStyles?.labelStyles?.base?.color ? data?.customStyles?.labelStyles?.base?.color : '#333333'};
+  font-size: ${data?.customStyles?.labelStyles?.base?.fontSize ? data?.customStyles?.labelStyles?.base?.fontSize : '12px'};
+  font-family: ${data?.customStyles?.labelStyles?.base?.fontFamily ? data?.customStyles?.labelStyles?.base?.fontFamily : '"Inter", sans-serif'};
+  font-weight: ${data?.customStyles?.labelStyles?.base?.fontWeight ? data?.customStyles?.labelStyles?.base?.fontWeight : 600};
+  text-align: ${data?.customStyles?.labelStyles?.base?.textAlign ? data?.customStyles?.labelStyles?.base?.textAlign : 'start'};
 }
 .containerExpirationDateInput{
     display: flex;
@@ -142,7 +146,6 @@ ${getCommonStyles(data)}
   position: relative !important;
   /*padding-top: 12px !important;*/
 }
-
 .empty-div {
   position: relative;
   height: 80px !important;
@@ -152,7 +155,6 @@ ${getCommonStyles(data)}
 .empty-div-date {
   height: 58px !important;
 }
-
 .error-container {
   color: red !important;
   background-color: #FFDBDB !important;
@@ -162,7 +164,6 @@ ${getCommonStyles(data)}
   border-radius: 10px !important;
   text-align: left !important;
 }
-
 .message-container{
   color: #3bc635 !important;
   background-color: #DAFCE4 !important;
@@ -172,7 +173,6 @@ ${getCommonStyles(data)}
   border-radius: 10px !important;
   text-align: left !important;
 }
-
 .pay-button {
   font-size: 16px;
   font-weight: 400;
@@ -202,7 +202,7 @@ ${getCommonStyles(data)}
 }
 .cvvIconCard {
   position: absolute;
-  left: 90%;
+  right: -12px;
   top: 54%;
   transform: translate(-50%, -50%);
 }
@@ -219,6 +219,8 @@ ${getCommonStyles(data)}
 .tndr-footer{
     padding: 70px 20px 40px 20px;
     display: flex;
+    flex-wrap: wrap;
+    width: 100%;
     align-items: center;
     justify-content: center;
     gap: 20px;
@@ -228,6 +230,7 @@ ${getCommonStyles(data)}
     display: flex;
     align-items: center;
     gap: 5px;
+    text-align: start;
 }
 .tndr-footer .tndr-footer-secure p {
     margin: 0;
@@ -243,13 +246,11 @@ ${getCommonStyles(data)}
     gap: 12px;
     padding: 8px 12px;
 }
-
 .tndr-footer .tndr-footer-logos img {
     width: 100%;
     height: auto;
     object-fit: contain;
 }
-
 .tndr-pci-logo {
     max-width: 30px;
 }
@@ -310,6 +311,7 @@ ${getCommonStyles(data)}
 .checkbox input{
     appearance: none;
     margin: 0;
+    min-width: 20px;
     border-radius: 3px;
     width: 20px;
     height: 20px;
@@ -415,27 +417,36 @@ ${getCommonStyles(data)}
         width: 2px;
     }
   }
-  @media screen and (max-width: 450px) {
-    .cvvIconCard {
-      left: 84%;
-    }
-   
-  }
-  @media screen and (max-width: 420px) {
-    .tndr-footer{
-        gap: 0;
-    }
-    .tndr-pci-logo {
+  @media screen and (max-width: 768px) {
+  .tndr-pci-logo {
         max-width: 25px;
     }
     .tndr-tonder-logo {
         max-width: 60px;
     }
+      .tndr-footer {
+        padding: 70px 0 40px 0;
+    }
+  }
+  @media screen and (max-width: 450px) {
+    .cvvIconCard {
+      right: -12px;
+    }
+   
+  }
+  @media screen and (max-width: 420px) {
+  
+    .collect-row > * {
+      flex: 1 1 100%;
+    }
     .tndr-footer .tndr-footer-logos {
         gap: 5px;
     }
+    .collect-row {
+       gap: 0;
+       flex-direction: column;
+    }
  }
-
 </style>
 `
 
@@ -516,7 +527,7 @@ export const cardItemsTemplate = (cards, data) => {
       }
       .cvvIcon {
         position: absolute;
-        left: 92%;
+        right: -12px;
         top: 54%;
         opacity: 0;
         transform: translate(-50%, 10px);
