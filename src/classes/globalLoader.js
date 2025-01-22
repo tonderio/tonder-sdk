@@ -1,4 +1,4 @@
-import { cardTemplateSkeleton } from '../helpers/template-skeleton.js'
+import { cardTemplateSkeleton } from "../helpers/template-skeleton.js";
 
 class GlobalLoader {
   constructor() {
@@ -10,7 +10,7 @@ class GlobalLoader {
     const checkoutContainer = document.querySelector("#global-loader");
     if (checkoutContainer) {
       checkoutContainer.innerHTML = cardTemplateSkeleton;
-      checkoutContainer.style.display = 'block';
+      checkoutContainer.style.display = "block";
     }
   }
 
@@ -18,9 +18,9 @@ class GlobalLoader {
     this.requestCount--;
     if (this.requestCount <= 0) {
       this.requestCount = 0;
-      const loader = document.querySelector('#global-loader');
+      const loader = document.querySelector("#global-loader");
       if (loader) {
-        loader.style.display = 'none';
+        loader.style.display = "none";
       }
     }
   }

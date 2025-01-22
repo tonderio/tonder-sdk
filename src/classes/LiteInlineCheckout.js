@@ -47,7 +47,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
       );
       return {
         ...response,
-        cards: response.cards.map((ic) => ({
+        cards: response.cards.map(ic => ({
           ...ic,
           icon: getCardType(ic.fields.card_scheme),
         })),
@@ -151,8 +151,8 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
           : [];
 
       return apms_results
-        .filter((apmItem) => apmItem.category.toLowerCase() !== "cards")
-        .map((apmItem) => {
+        .filter(apmItem => apmItem.category.toLowerCase() !== "cards")
+        .map(apmItem => {
           const apm = {
             id: apmItem.pk,
             payment_method: apmItem.payment_method,
@@ -178,10 +178,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
   }
 
   async _checkout({ card, payment_method }) {
-    const customer = await this._getCustomer(
-      this.customer,
-      this.abortController.signal,
-    );
+    const customer = await this._getCustomer(this.customer, this.abortController.signal);
     const { vault_id, vault_url } = this.merchantData;
     let skyflowTokens;
     if (!payment_method || payment_method !== "" || payment_method === null) {
@@ -193,7 +190,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
         skyflowTokens = await getSkyflowTokens({
           vault_id: vault_id,
           vault_url: vault_url,
-          data: {...card, card_number: card.card_number.replace(/\s+/g, '')},
+          data: { ...card, card_number: card.card_number.replace(/\s+/g, "") },
           baseUrl: this.baseUrl,
           apiKey: this.apiKeyTonder,
         });

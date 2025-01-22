@@ -23,7 +23,6 @@ export async function addScripts() {
       openPay2Script.onerror = reject;
       document.head.appendChild(openPay2Script);
     });
-
   } catch (error) {
     console.error("Error loading scripts", error);
   }
@@ -36,7 +35,7 @@ export function toCurrency(value) {
   var formatter = new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
-    minimumFractionDigits: 2
+    minimumFractionDigits: 2,
   });
   return formatter.format(value);
 }
@@ -56,7 +55,7 @@ export function showError(message) {
 
 export function showMessage(message, containerId) {
   const msgDiv = document.getElementById(`${containerId}`);
-  if(msgDiv) {
+  if (msgDiv) {
     msgDiv.classList.add("message-container");
     msgDiv.innerHTML = message;
     setTimeout(function () {
@@ -67,57 +66,64 @@ export function showMessage(message, containerId) {
 }
 export function getBrowserInfo() {
   const browserInfo = {
-    javascript_enabled: true,  // Assumed since JavaScript is running
+    javascript_enabled: true, // Assumed since JavaScript is running
     time_zone: new Date().getTimezoneOffset(),
-    language: navigator.language || 'en-US', // Fallback to 'en-US'
+    language: navigator.language || "en-US", // Fallback to 'en-US'
     color_depth: window.screen ? window.screen.colorDepth : null,
-    screen_width: window.screen ? window.screen.width * window.devicePixelRatio || window.screen.width : null,
-    screen_height: window.screen ? window.screen.height * window.devicePixelRatio || window.screen.height : null,
+    screen_width: window.screen
+      ? window.screen.width * window.devicePixelRatio || window.screen.width
+      : null,
+    screen_height: window.screen
+      ? window.screen.height * window.devicePixelRatio || window.screen.height
+      : null,
     user_agent: navigator.userAgent,
   };
   return browserInfo;
 }
 
-export const mapCards = (card) => {
+export const mapCards = card => {
   const newCard = { ...card.fields };
   const carArr = newCard.card_number.split("-");
   const last = carArr[carArr.length - 1];
   newCard.card_number = `••••${last}`;
   return newCard;
-}
+};
 
-export const getCardType = (scheme) => {
-  if(scheme === "Visa") { // Check if visa
-    return "https://d35a75syrgujp0.cloudfront.net/cards/visa.png"
-  } else if(scheme === "Mastercard") { // Check if master
-    return "https://d35a75syrgujp0.cloudfront.net/cards/mastercard.png"
-  } else if (scheme === "American Express") { // Check if amex
-    return "https://d35a75syrgujp0.cloudfront.net/cards/american_express.png"
+export const getCardType = scheme => {
+  if (scheme === "Visa") {
+    // Check if visa
+    return "https://d35a75syrgujp0.cloudfront.net/cards/visa.png";
+  } else if (scheme === "Mastercard") {
+    // Check if master
+    return "https://d35a75syrgujp0.cloudfront.net/cards/mastercard.png";
+  } else if (scheme === "American Express") {
+    // Check if amex
+    return "https://d35a75syrgujp0.cloudfront.net/cards/american_express.png";
   } else {
-    return "https://d35a75syrgujp0.cloudfront.net/cards/default_card_tonder.png"
+    return "https://d35a75syrgujp0.cloudfront.net/cards/default_card_tonder.png";
   }
-}
-export const clearSpace = (text) => {
-  return text.trim().replace(/\s+/g, '');
-}
-
+};
+export const clearSpace = text => {
+  return text.trim().replace(/\s+/g, "");
+};
 
 export function formatPublicErrorResponse(data, error) {
-  let code = 200
+  let code = 200;
   try {
-    code = Number(error?.code || 200)
-  }catch{}
+    code = Number(error?.code || 200);
+  } catch {}
 
   const default_res = {
     status: "error",
     code,
     message: "",
-    detail: error?.body?.detail || error?.body?.error || error.body || "Ocurrio un error inesperado."
-  }
+    detail:
+      error?.body?.detail || error?.body?.error || error.body || "Ocurrio un error inesperado.",
+  };
 
   return {
     ...default_res,
-    ...data
+    ...data,
   };
 }
 
@@ -138,7 +144,7 @@ export function buildErrorResponseFromCatch(e) {
   return {
     code: e?.status ? e.status : e.code,
     body: e?.body,
-    name: e ? typeof e == "string" ? "catch" : e.name : "Error",
+    name: e ? (typeof e == "string" ? "catch" : e.name) : "Error",
     message: e ? (typeof e == "string" ? e : e.message) : "Error",
     stack: typeof e == "string" ? undefined : e.stack,
   };
@@ -146,18 +152,17 @@ export function buildErrorResponseFromCatch(e) {
 
 export function injectMercadoPagoSecurity() {
   try {
-      const script = document.createElement('script');
-      script.src = "https://www.mercadopago.com/v2/security.js";
-      script.setAttribute('view', '');
-      script.onload = () => {
-          console.log("Mercado Pago script loaded successfully.");
-      };
-      script.onerror = (error) => {
-          console.error("Error loading Mercado Pago script:", error);
-      };
-      document.head.appendChild(script);
+    const script = document.createElement("script");
+    script.src = "https://www.mercadopago.com/v2/security.js";
+    script.setAttribute("view", "");
+    script.onload = () => {
+      console.log("Mercado Pago script loaded successfully.");
+    };
+    script.onerror = error => {
+      console.error("Error loading Mercado Pago script:", error);
+    };
+    document.head.appendChild(script);
   } catch (error) {
-      console.error("Error attempting to inject Mercado Pago script:", error);
+    console.error("Error attempting to inject Mercado Pago script:", error);
   }
 }
-

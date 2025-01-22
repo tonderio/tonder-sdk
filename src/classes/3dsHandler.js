@@ -1,103 +1,99 @@
 export class ThreeDSHandler {
-  constructor({
-    payload = null,
-    apiKey,
-    baseUrl,
-  }) {
-    this.baseUrl = baseUrl
-    this.apiKey = apiKey
-    this.payload = payload
+  constructor({ payload = null, apiKey, baseUrl }) {
+    this.baseUrl = baseUrl;
+    this.apiKey = apiKey;
+    this.payload = payload;
   }
 
   saveVerifyTransactionUrl() {
-    const url = this.payload?.next_action?.redirect_to_url?.verify_transaction_status_url
+    const url = this.payload?.next_action?.redirect_to_url?.verify_transaction_status_url;
     if (url) {
-      this.saveUrlWithExpiration(url)
+      this.saveUrlWithExpiration(url);
     } else {
-      const url = this.payload?.next_action?.iframe_resources?.verify_transaction_status_url
+      const url = this.payload?.next_action?.iframe_resources?.verify_transaction_status_url;
       if (url) {
-        this.saveUrlWithExpiration(url)
+        this.saveUrlWithExpiration(url);
       } else {
-        console.log('No verify_transaction_status_url found');
+        console.log("No verify_transaction_status_url found");
       }
     }
   }
 
   saveUrlWithExpiration(url) {
     try {
-      const now = new Date()
+      const now = new Date();
       const item = {
         url: url,
         // Expires after 20 minutes
-        expires: now.getTime() + 20 * 60 * 1000
-      }
-      localStorage.setItem('verify_transaction_status', JSON.stringify(item))
+        expires: now.getTime() + 20 * 60 * 1000,
+      };
+      localStorage.setItem("verify_transaction_status", JSON.stringify(item));
     } catch (error) {
-     console.log('error: ', error)
+      console.log("error: ", error);
     }
   }
 
   getUrlWithExpiration() {
-    const item = JSON.parse(localStorage.getItem("verify_transaction_status"))
-    if (!item) return
+    const item = JSON.parse(localStorage.getItem("verify_transaction_status"));
+    if (!item) return;
 
-    const now = new Date()
+    const now = new Date();
     if (now.getTime() > item.expires) {
-      this.removeVerifyTransactionUrl()
-      return null
+      this.removeVerifyTransactionUrl();
+      return null;
     } else {
-      return item.url
+      return item.url;
     }
   }
 
   removeVerifyTransactionUrl() {
-    localStorage.removeItem("verify_transaction_status")
+    localStorage.removeItem("verify_transaction_status");
   }
 
   getVerifyTransactionUrl() {
-    return localStorage.getItem("verify_transaction_status") 
+    return localStorage.getItem("verify_transaction_status");
   }
 
   loadIframe() {
-    const iframe = this.payload?.next_action?.iframe_resources?.iframe
+    const iframe = this.payload?.next_action?.iframe_resources?.iframe;
     if (iframe) {
       return new Promise((resolve, reject) => {
-        const iframe = this.payload?.next_action?.iframe_resources?.iframe
+        const iframe = this.payload?.next_action?.iframe_resources?.iframe;
 
         if (iframe) {
           // TODO: This is not working for Azul
-          this.saveVerifyTransactionUrl()
-          const container = document.createElement('div')
-          container.innerHTML = iframe
-          document.body.appendChild(container)
+          this.saveVerifyTransactionUrl();
+          const container = document.createElement("div");
+          container.innerHTML = iframe;
+          document.body.appendChild(container);
 
           // Create and append the script tag manually
-          const script = document.createElement('script')
-          script.textContent = 'document.getElementById("tdsMmethodForm").submit();'
-          container.appendChild(script)
+          const script = document.createElement("script");
+          script.textContent = 'document.getElementById("tdsMmethodForm").submit();';
+          container.appendChild(script);
 
           // Resolve the promise when the iframe is loaded
-          const iframeElement = document.getElementById('tdsMmethodTgtFrame')
-          iframeElement.onload = () => resolve(true)
+          const iframeElement = document.getElementById("tdsMmethodTgtFrame");
+          iframeElement.onload = () => resolve(true);
         } else {
-          console.log('No redirection found');
-          reject(false)
+          console.log("No redirection found");
+          reject(false);
         }
-      })
+      });
     }
   }
 
   getRedirectUrl() {
-    return this.payload?.next_action?.redirect_to_url?.url
+    return this.payload?.next_action?.redirect_to_url?.url;
   }
 
   redirectToChallenge() {
-    const url = this.getRedirectUrl()
+    const url = this.getRedirectUrl();
     if (url) {
-      this.saveVerifyTransactionUrl()
+      this.saveVerifyTransactionUrl();
       window.location = url;
     } else {
-      console.log('No redirection found');
+      console.log("No redirection found");
     }
   }
 
@@ -118,7 +114,7 @@ export class ThreeDSHandler {
   // TODO: Remove this duplication
   handleSuccessTransaction(response) {
     this.removeVerifyTransactionUrl();
-    console.log('Transacción autorizada');
+    console.log("Transacción autorizada");
     return response;
   }
 
@@ -129,22 +125,22 @@ export class ThreeDSHandler {
 
   async handle3dsChallenge(response_json) {
     // Create the form element:
-    const form = document.createElement('form');
-    form.name = 'frm';
-    form.method = 'POST';
+    const form = document.createElement("form");
+    form.name = "frm";
+    form.method = "POST";
     form.action = response_json.redirect_post_url;
 
     // Add hidden fields:
-    const creqInput = document.createElement('input');
-    creqInput.type = 'hidden';
-    creqInput.name = 'creq';
+    const creqInput = document.createElement("input");
+    creqInput.type = "hidden";
+    creqInput.name = "creq";
     creqInput.value = response_json.creq;
     form.appendChild(creqInput);
 
     if (response_json.term_url) {
-      const termUrlInput = document.createElement('input');
-      termUrlInput.type = 'hidden';
-      termUrlInput.name = 'TermUrl';
+      const termUrlInput = document.createElement("input");
+      termUrlInput.type = "hidden";
+      termUrlInput.name = "TermUrl";
       termUrlInput.value = response_json.term_url;
       form.appendChild(termUrlInput);
     }
@@ -164,7 +160,7 @@ export class ThreeDSHandler {
       return this.handleSuccessTransaction(response_json);
     } else {
       this.handleDeclinedTransaction();
-      return response_json
+      return response_json;
     }
   }
 
@@ -182,22 +178,22 @@ export class ThreeDSHandler {
           // body: JSON.stringify(data),
         });
         if (response.status !== 200) {
-          console.error('La verificación de la transacción falló.');
+          console.error("La verificación de la transacción falló.");
           this.removeVerifyTransactionUrl();
-          return response
+          return response;
         }
 
         return await this.handleTransactionResponse(response);
       } catch (error) {
-        console.error('Error al verificar la transacción:', error);
+        console.error("Error al verificar la transacción:", error);
         this.removeVerifyTransactionUrl();
       }
     } else {
-      console.log('No verify_transaction_status_url found');
+      console.log("No verify_transaction_status_url found");
     }
   }
 
-  setPayload = (payload) => {
-    this.payload = payload
-  }
+  setPayload = payload => {
+    this.payload = payload;
+  };
 }

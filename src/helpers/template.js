@@ -1,15 +1,12 @@
 import "accordion-js/dist/accordion.min.css";
 import { getCardType } from "./utils";
-import {getPaymentMethodDetails} from "../shared/catalog/paymentMethodsCatalog";
-import {defaultStyles} from "./styles";
-import {COMMON_LOGOS} from "../shared/catalog/commonLogosCatalog";
+import { getPaymentMethodDetails } from "../shared/catalog/paymentMethodsCatalog";
+import { defaultStyles } from "./styles";
+import { COMMON_LOGOS } from "../shared/catalog/commonLogosCatalog";
 
-export const cardTemplate = (data) => `
+export const cardTemplate = data => `
 <div class="container-tonder">
-  ${ data.customization?.saveCards?.showSaved ?
-    `<div id="cardsListContainer" class="cards-list-container"></div>`
-    :``
-  }
+  ${data.customization?.saveCards?.showSaved ? `<div id="cardsListContainer" class="cards-list-container"></div>` : ``}
   <div class="pay-new-card">
     <input checked id="new" class="card_selected" name="card_selected" type="radio"/>
     <label class="card-item-label-new" for="new">
@@ -23,14 +20,14 @@ export const cardTemplate = (data) => `
     <div id="collectCardNumber" class="empty-div"></div>
     <div class="collect-row">
       <div class="containerExpirationDate">
-        <label class="tndr-form-label">${data?.customStyles?.labels?.expiryDateLabel && data?.customStyles?.labels?.expiryDateLabel !== "" ? data.customStyles?.labels?.expiryDateLabel: defaultStyles.labels.expiryDateLabel}</label>
+        <label class="tndr-form-label">${data?.customStyles?.labels?.expiryDateLabel && data?.customStyles?.labels?.expiryDateLabel !== "" ? data.customStyles?.labels?.expiryDateLabel : defaultStyles.labels.expiryDateLabel}</label>
         <div class="containerExpirationDateInput">
           <div id="collectExpirationMonth" class="empty-div empty-div-date"></div>
           <div id="collectExpirationYear" class="empty-div empty-div-date"></div>
         </div>
       </div>
       <div class="cvvContainerCard" id="cvvContainerCard">
-        <label class="tndr-form-label">${data?.customStyles?.labels?.cvvLabel && data?.customStyles?.labels?.cvvLabel !== "" ? data.customStyles?.labels?.cvvLabel: defaultStyles.labels.cvvLabel}</label>
+        <label class="tndr-form-label">${data?.customStyles?.labels?.cvvLabel && data?.customStyles?.labels?.cvvLabel !== "" ? data.customStyles?.labels?.cvvLabel : defaultStyles.labels.cvvLabel}</label>
         <div id="collectCvv" class="empty-div card-collect-cvv empty-div-date">
             <div class="tndr-simulate-input-cvv-container">
                 <div class="tndr-simulate-input-cvv">
@@ -64,8 +61,9 @@ export const cardTemplate = (data) => `
         </div>
       </div>
     </div>
-    ${!!data.customization?.saveCards?.showSaveCardOption 
-    ? `
+    ${
+      !!data.customization?.saveCards?.showSaveCardOption
+        ? `
     <div class="checkbox" id="save-card-container">
       <input id="save-checkout-card" type="checkbox">
       <label for="save-checkout-card">
@@ -73,7 +71,8 @@ export const cardTemplate = (data) => `
       </label>
     </div>
     `
-    :``}
+        : ``
+    }
     <div class="container-pay-button">
         <button id="tonderPayButton" class="pay-button hidden">Pagar</button>
     </div>
@@ -111,11 +110,11 @@ ${getCommonStyles(data)}
   border-radius: 11px;
 }
 .container-pay-button{
-  padding: ${!!data['renderPaymentButton'] ? '30px 0':''};
+  padding: ${!!data["renderPaymentButton"] ? "30px 0" : ""};
 }
 
 .container-form {
-  padding:  ${data?.renderPaymentButton ? '0px 30px 0 30px':'0px 30px 20px 30px'}; 
+  padding:  ${data?.renderPaymentButton ? "0px 30px 0 30px" : "0px 30px 20px 30px"}; 
 }
 
 .collect-row {
@@ -137,12 +136,12 @@ ${getCommonStyles(data)}
     justify-content: flex-end;
 }
 .tndr-form-label{
-  line-height: ${data?.customStyles?.labelStyles?.base?.lineHeight ? data?.customStyles?.labelStyles?.base?.lineHeight : '22px'};
+  line-height: ${data?.customStyles?.labelStyles?.base?.lineHeight ? data?.customStyles?.labelStyles?.base?.lineHeight : "22px"};
   color: ${data?.customStyles?.labelStyles?.base?.color ? data?.customStyles?.labelStyles?.base?.color : defaultStyles.labelStyles.base.color};
   font-size: ${data?.customStyles?.labelStyles?.base?.fontSize ? data?.customStyles?.labelStyles?.base?.fontSize : defaultStyles.labelStyles.base.fontSize};
   font-family: ${data?.customStyles?.labelStyles?.base?.fontFamily ? data?.customStyles?.labelStyles?.base?.fontFamily : defaultStyles.labelStyles.base.fontFamily};
   font-weight: ${data?.customStyles?.labelStyles?.base?.fontWeight ? data?.customStyles?.labelStyles?.base?.fontWeight : defaultStyles.labelStyles.base.fontWeight};
-  text-align: ${data?.customStyles?.labelStyles?.base?.textAlign ? data?.customStyles?.labelStyles?.base?.textAlign : 'start'};
+  text-align: ${data?.customStyles?.labelStyles?.base?.textAlign ? data?.customStyles?.labelStyles?.base?.textAlign : "start"};
 }
 
 .containerExpirationDateInput{
@@ -286,12 +285,12 @@ ${getCommonStyles(data)}
     position: relative;
 }
 .tndr-simulate-input-cvv-container label{
-  line-height: ${data?.customStyles?.labelStyles?.base?.lineHeight ? data?.customStyles?.labelStyles?.base?.lineHeight : ''};
+  line-height: ${data?.customStyles?.labelStyles?.base?.lineHeight ? data?.customStyles?.labelStyles?.base?.lineHeight : ""};
   color: transparent;
   font-size: ${data?.customStyles?.labelStyles?.base?.fontSize ? data?.customStyles?.labelStyles?.base?.fontSize : defaultStyles.labelStyles.base.fontSize};
   font-family: ${data?.customStyles?.labelStyles?.base?.fontFamily ? data?.customStyles?.labelStyles?.base?.fontFamily : defaultStyles.labelStyles.base.fontFamily};
   font-weight: ${data?.customStyles?.labelStyles?.base?.fontWeight ? data?.customStyles?.labelStyles?.base?.fontWeight : defaultStyles.labelStyles.base.fontWeight};
-  text-align: ${data?.customStyles?.labelStyles?.base?.textAlign ? data?.customStyles?.labelStyles?.base?.textAlign : 'start'};
+  text-align: ${data?.customStyles?.labelStyles?.base?.textAlign ? data?.customStyles?.labelStyles?.base?.textAlign : "start"};
   pointer-events: none;
 }
 .tndr-simulate-input-cvv input {
@@ -474,11 +473,9 @@ ${getCommonStyles(data)}
     }
  }
 </style>
-`
+`;
 
 export const cardItemsTemplate = (cards, data) => {
-
-
   const cardItemsHTML = cards.reduce((total, card) => {
     return `${total}
     <div class="ac ac-cards" id="option_container-${card.skyflow_id}">
@@ -528,16 +525,16 @@ export const cardItemsTemplate = (cards, data) => {
               </g>
             </svg>
            </div>
-           ${ data?.renderPaymentButton ?
-              `<div class="container-card-pay-button">
+           ${
+             data?.renderPaymentButton
+               ? `<div class="container-card-pay-button">
                 <button id="tonderPayButton${card.skyflow_id}" class="card-pay-button pay-button">Pagar</button>
                </div> `
-              :``
+               : ``
            }
         </div>
       </div>
-    </div>`
-
+    </div>`;
   }, "");
   const cardItemStyle = `
     <style>
@@ -633,18 +630,17 @@ export const cardItemsTemplate = (cards, data) => {
           }
       }
     </style>
-  `
+  `;
   const cardItem = `
     <div class="accordion-container">
     ${cardItemsHTML}
   </div>
   ${cardItemStyle}
-  `
+  `;
   return cardItem;
-}
+};
 
 export const apmItemsTemplate = (apms, data) => {
-
   const apmItemsHTML = apms.reduce((total, apm) => {
     const apm_data = getPaymentMethodDetails(apm.payment_method);
     return `${total}
@@ -663,15 +659,16 @@ export const apmItemsTemplate = (apms, data) => {
       <div class="ac-panel">
         <div class="ac-option-panel-container" id="acContainer${apm.pk}">
         <div class="tndr-hide-text">accordion</div>
-          ${ data?.renderPaymentButton ?
-              `<div class="container-pm-pay-button">
+          ${
+            data?.renderPaymentButton
+              ? `<div class="container-pm-pay-button">
                  <button id="tonderPayButton${apm.pk}" class="pm-pay-button pay-button">Pagar</button>
                </div> `
-              :``
+              : ``
           }
         </div>
       </div>   
-    </div>`
+    </div>`;
   }, ``);
 
   const apmItemStyle = `
@@ -801,22 +798,22 @@ export const apmItemsTemplate = (apms, data) => {
       }
 
     </style>
-  `
+  `;
   const apmItem = `
   <div class="accordion-container-apm">
     ${apmItemsHTML}
   </div>
   ${apmItemStyle}
-  `
+  `;
   return apmItem;
-}
+};
 
-const getFontFamily = (data) => {
+const getFontFamily = data => {
   const base = data?.customStyles?.labelStyles?.base;
   return base?.fontFamily || '"Inter", sans-serif';
 };
 
-const getCommonStyles = (data) => `
+const getCommonStyles = data => `
   .tndr-hide-text {
     color: transparent;
     font-size: 1px;
@@ -922,7 +919,7 @@ const getCommonStyles = (data) => `
     margin-bottom: 0 !important;
   }
   .ac-option-panel-container{
-    padding: ${data?.renderPaymentButton ? '20px 30px 0px 30px':'0px 30px 0px 30px'};
+    padding: ${data?.renderPaymentButton ? "20px 30px 0px 30px" : "0px 30px 0px 30px"};
   }
   .pm-pay-button,
   .card-pay-button{
@@ -931,4 +928,4 @@ const getCommonStyles = (data) => `
         transform: translateY(10px);
         transition: opacity 0.3s ease, transform 0.3s ease;
   }
-`
+`;
