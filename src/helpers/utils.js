@@ -1,3 +1,6 @@
+import { defaultStyles } from "./styles";
+import get from "lodash.get";
+
 export async function addScripts() {
   try {
     const skyflowScript = document.createElement("script");
@@ -45,9 +48,6 @@ export function showError(message) {
   msgErrorDiv.classList.add("error-container");
   msgErrorDiv.innerHTML = message;
   setTimeout(function () {
-    try {
-      document.querySelector("#tonderPayButton").disabled = false;
-    } catch (error) {}
     msgErrorDiv.classList.remove("error-container");
     msgErrorDiv.innerHTML = "";
   }, 3000);
@@ -165,4 +165,46 @@ export function injectMercadoPagoSecurity() {
   } catch (error) {
     console.error("Error attempting to inject Mercado Pago script:", error);
   }
+}
+
+export function getCardFormLabels(customStyles) {
+  return {
+    labels: {
+      nameLabel: get(customStyles, "labels.nameLabel", defaultStyles.labels.nameLabel),
+      cardLabel: get(customStyles, "labels.cardLabel", defaultStyles.labels.cardLabel),
+      cvvLabel: get(customStyles, "labels.cvvLabel", defaultStyles.labels.cvvLabel),
+      expiryDateLabel: get(
+        customStyles,
+        "labels.expiryDateLabel",
+        defaultStyles.labels.expiryDateLabel,
+      ),
+    },
+    placeholders: {
+      namePlaceholder: get(
+        customStyles,
+        "placeholders.namePlaceholder",
+        defaultStyles.labels.namePlaceholder,
+      ),
+      cardPlaceholder: get(
+        customStyles,
+        "placeholders.cardPlaceholder",
+        defaultStyles.labels.cardPlaceholder,
+      ),
+      cvvPlaceholder: get(
+        customStyles,
+        "placeholders.cvvPlaceholder",
+        defaultStyles.placeholders.cvvPlaceholder,
+      ),
+      expiryMonthPlaceholder: get(
+        customStyles,
+        "placeholders.expiryMonthPlaceholder",
+        defaultStyles.placeholders.expiryMonthPlaceholder,
+      ),
+      expiryYearPlaceholder: get(
+        customStyles,
+        "placeholders.expiryYearPlaceholder",
+        defaultStyles.placeholders.expiryYearPlaceholder,
+      ),
+    },
+  };
 }

@@ -1,6 +1,6 @@
 import { defaultStyles } from "./styles";
 import { getVaultToken } from "../data/skyflowApi";
-import { buildErrorResponseFromCatch } from "./utils";
+import { buildErrorResponseFromCatch, getCardFormLabels } from "./utils";
 
 export async function initSkyflow(
   vaultId,
@@ -15,9 +15,12 @@ export async function initSkyflow(
 
   // Create collect Container.
   const collectContainer = await skyflow.container(Skyflow.ContainerType.COLLECT);
-
   // Custom styles for collect elements.
-  var collectStylesOptions = Object.keys(customStyles).length === 0 ? defaultStyles : customStyles;
+  let collectStylesOptions = {
+    ...defaultStyles,
+    ...(Object.keys(customStyles).length > 0 ? { ...customStyles } : {}),
+    ...getCardFormLabels(customStyles),
+  };
 
   const stylesForCardNumber = { ...collectStylesOptions.inputStyles.base };
   stylesForCardNumber.textIndent = "44px";
@@ -174,8 +177,10 @@ export async function initUpdateSkyflow(
 ) {
   const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal);
 
-  var collectStylesOptions = Object.keys(customStyles).length === 0 ? defaultStyles : customStyles;
-
+  let collectStylesOptions = {
+    ...defaultStyles,
+    ...(Object.keys(customStyles).length > 0 ? { ...customStyles } : {}),
+  };
   // Create collect Container.
   const collectContainer = await skyflow.container(Skyflow.ContainerType.COLLECT);
 
@@ -246,14 +251,12 @@ function handleSkyflowElementEvents(
   invalidMessage = "Campo inválido",
   focusNextElement = null,
 ) {
-  console.log("element", element);
   if ("on" in element) {
     element.on(Skyflow.EventName.CHANGE, state => {
       updateErrorLabel(element, error_styles, "transparent");
     });
 
     element.on(Skyflow.EventName.BLUR, state => {
-      console.log("sssss");
       if (!state.isValid) {
         const msj_error = state.isEmpty
           ? requiredMessage

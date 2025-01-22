@@ -86,10 +86,5 @@ export type CustomizationOptions = {
 
 export interface IInlineCheckoutOptions extends IInlineCheckoutBaseOptions {
   styles?: Record<string, string>;
-  /**
-   * @deprecated This option is deprecated and will be removed in a future release.
-   * Use the {@link customization.paymentButton} (show, text, showAmount) option
-   */
-  renderPaymentButton?: boolean;
   customization?: CustomizationOptions;
 }

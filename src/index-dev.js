@@ -52,10 +52,10 @@ const customStyles = {
     },
   },
   labels: {
-    nameLabel: "Nombre de la de Tarjeta",
-    cardLabel: "Número de Tarjeta",
-    cvvLabel: "Código de Seguridad",
-    expiryDateLabel: "Fecha de Expiración",
+    nameLabel: "",
+    cardLabel: "",
+    cvvLabel: "",
+    expiryDateLabel: "",
   },
   placeholders: {
     namePlaceholder: "Nombre como aparece en la tarjeta",
@@ -123,19 +123,39 @@ function getCheckoutMode() {
   return urlParams.get("mode") || "inline";
 }
 
-function setupInlineCheckout() {
+async function setupInlineCheckout() {
   inlineCheckout = new InlineCheckout({
     ...commonConfig,
     customization: {
       saveCards: {
-        showSaveCardOption: true, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
+        showSaveCardOption: false, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
         autoSave: false, // Usar para guardar automáticamente la tarjeta (sin necesidad de mostrar el checkbox)
-        showSaved: true, // Usar para mostrar/ocultar el listado de tarjetas guardadas
+        showSaved: false, // Usar para mostrar/ocultar el listado de tarjetas guardadas
+      },
+      paymentButton: {
+        show: true,
+        showAmount: true,
+        text: "Pagar",
+      },
+      cancelButton: {
+        show: true,
+        text: "Cancelar",
+      },
+      paymentMethods: {
+        show: false,
       },
     },
   });
+  let token_res = await fetch("https://stage.tonder.io/api/secure-token/", {
+    method: "POST",
+    headers: {
+      Authorization: `Token 197967d431010dc1a129e3f726cb5fd27987da92`,
+      "Content-Type": "application/json",
+    },
+  });
+  token_res = await token_res.json();
   inlineCheckout.configureCheckout({
-    secureToken: "eyJhbGc...",
+    secureToken: token_res.access,
     ...checkoutData,
   });
   inlineCheckout.injectCheckout();

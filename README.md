@@ -152,17 +152,20 @@ const verificationResult = await liteCheckout.verify3dsTransaction();
 
 Both InlineCheckout and LiteCheckout accept the following configuration options:
 
-|                  Property                  |  Type   |                                                                 Description                                                                 |
-|:------------------------------------------:|:-------:|:-------------------------------------------------------------------------------------------------------------------------------------------:|
-|                    mode                    | string  |                                Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage'                                |
-|                   apiKey                   | string  |                                                   Your API key from the Tonder Dashboard                                                    |
-|                 returnUrl                  | string  |                                            URL where the checkout form is mounted (used for 3DS)                                            |
-|            renderPaymentButton             | boolean |                                                   View the default Tonder payment button                                                    |
-|                   styles                   | object  |                                       (InlineCheckout only) Custom styles for the checkout interface                                        |
-|               customization                | object  | Object to customize the checkout behavior and UI. Default value `{saveCards: {showSaved: true, showSaveCardOption: true, autoSave: false}}` |
-|     customization.saveCards.showSaved      | boolean |                                         Show saved cards in the checkout UI. Default value: `true`                                          |
-| customization.saveCards.showSaveCardOption | object  |                                 Show the option to save the card for future payments. Default value: `true`                                 |
-|      customization.saveCards.autoSave      | object  |                         Automatically save the card without showing the option to the user. Default value: `false`                          |
+|                  Property                  |  Type   | Default                                                                     |                                  Description                                  |
+|:------------------------------------------:|:-------:|-----------------------------------------------------------------------------|:-----------------------------------------------------------------------------:|
+|                    mode                    | string  | stage                                                                       | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
+|                   apiKey                   | string  |                                                                             |                    Your API key from the Tonder Dashboard                     |
+|                 returnUrl                  | string  |                                                                             |             URL where the checkout form is mounted (used for 3DS)             |
+|                   styles                   | object  |                                                                             |        (InlineCheckout only) Custom styles for the checkout interface         |
+|               customization                | object  | `{saveCards: {showSaved: true, showSaveCardOption: true, autoSave: false}}` |               Object to customize the checkout behavior and UI.               |
+|     customization.saveCards.showSaved      | boolean | true                                                                        |                     Show saved cards in the checkout UI.                      |
+| customization.saveCards.showSaveCardOption | boolean | true                                                                        |             Show the option to save the card for future payments.             |
+|      customization.saveCards.autoSave      | boolean | false                                                                       |      Automatically save the card without showing the option to the user.      |
+|             **paymentButton**              |     
+|             paymentButton.show             | boolean | true                                                                        |                 Controls the visibility of the payment button                 |
+|             paymentButton.text             | string  | 'Pagar'                                                                     |                 Custom text to display on the payment button                  |
+|          paymentButton.showAmount          | boolean | true                                                                        |           Shows the payment amount on the button (e.g., "Pay $100")           |                                     |         |                                                                                                                                             |
 
 ## Styling InlineCheckout
 
@@ -450,7 +453,11 @@ const inlineCheckout = new InlineCheckout({
   apiKey,
   returnUrl,
   styles: customStyles,
-  renderPaymentButton: true, // activate default Tonder Payment button
+  customization: {
+    paymentButton: {
+      show: true
+    }
+  }, // activate default Tonder Payment button
   callBack: (response) => {
       console.log('Payment response', response)
   }  
