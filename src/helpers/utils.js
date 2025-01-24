@@ -1,5 +1,6 @@
 import { defaultStyles } from "./styles";
 import get from "lodash.get";
+import { HTML_IDS } from "../shared/constants/htmlTonderIds";
 
 export async function addScripts() {
   try {
@@ -43,25 +44,54 @@ export function toCurrency(value) {
   return formatter.format(value);
 }
 
-export function showError(message) {
-  var msgErrorDiv = document.getElementById("msgError");
-  msgErrorDiv.classList.add("error-container");
-  msgErrorDiv.innerHTML = message;
-  setTimeout(function () {
-    msgErrorDiv.classList.remove("error-container");
-    msgErrorDiv.innerHTML = "";
-  }, 3000);
+export function showError(
+  message,
+  selectedId = null,
+  containerId = HTML_IDS.msgError,
+  containerTextId = HTML_IDS.msgErrorText,
+) {
+  try {
+    const existSelectedId = selectedId && selectedId !== "new";
+    let msgErrorDiv = document.getElementById(`${containerId}${existSelectedId ? selectedId : ""}`);
+    let msgErrorText = document.getElementById(
+      `${containerTextId}${existSelectedId ? selectedId : ""}`,
+    );
+    msgErrorText.innerHTML = "";
+    msgErrorText.innerHTML = message;
+    msgErrorDiv.style.display = "flex";
+
+    setTimeout(function () {
+      msgErrorDiv.style.display = "none";
+      msgErrorText.innerHTML = "";
+    }, 3000);
+  } catch (error) {
+    console.warn("Error showing message error", error);
+  }
 }
 
-export function showMessage(message, containerId) {
-  const msgDiv = document.getElementById(`${containerId}`);
-  if (msgDiv) {
-    msgDiv.classList.add("message-container");
-    msgDiv.innerHTML = message;
-    setTimeout(function () {
-      msgDiv.classList.remove("message-container");
-      msgDiv.innerHTML = "";
-    }, 3000);
+export function showMessage(
+  message,
+  selectedId = null,
+  containerId = HTML_IDS.msgNotification,
+  containerTextId = HTML_IDS.msgNotificationText,
+) {
+  try {
+    const existSelectedId = selectedId && selectedId !== "new";
+    const msgDiv = document.getElementById(`${containerId}${existSelectedId ? selectedId : ""}`);
+    if (msgDiv) {
+      let msgText = document.getElementById(
+        `${containerTextId}${existSelectedId ? selectedId : ""}`,
+      );
+      msgDiv.style.display = "flex";
+      msgText.innerHTML = "";
+      msgText.innerHTML = message;
+      setTimeout(function () {
+        msgDiv.style.display = "none";
+        msgText.innerHTML = "";
+      }, 3000);
+    }
+  } catch (error) {
+    console.error("Error showing message", error);
   }
 }
 export function getBrowserInfo() {
@@ -89,7 +119,7 @@ export const mapCards = card => {
   return newCard;
 };
 
-export const getCardType = scheme => {
+export const getCardType = (scheme, isDark = false) => {
   if (scheme === "Visa") {
     // Check if visa
     return "https://d35a75syrgujp0.cloudfront.net/cards/visa.png";
@@ -100,7 +130,7 @@ export const getCardType = scheme => {
     // Check if amex
     return "https://d35a75syrgujp0.cloudfront.net/cards/american_express.png";
   } else {
-    return "https://d35a75syrgujp0.cloudfront.net/cards/default_card_tonder.png";
+    return `https://d35a75syrgujp0.cloudfront.net/cards/default_card_tonder${isDark ? "_purple" : ""}.png`;
   }
 };
 export const clearSpace = text => {
@@ -183,12 +213,12 @@ export function getCardFormLabels(customStyles) {
       namePlaceholder: get(
         customStyles,
         "placeholders.namePlaceholder",
-        defaultStyles.labels.namePlaceholder,
+        defaultStyles.placeholders.namePlaceholder,
       ),
       cardPlaceholder: get(
         customStyles,
         "placeholders.cardPlaceholder",
-        defaultStyles.labels.cardPlaceholder,
+        defaultStyles.placeholders.cardPlaceholder,
       ),
       cvvPlaceholder: get(
         customStyles,
@@ -208,3 +238,20 @@ export function getCardFormLabels(customStyles) {
     },
   };
 }
+
+export const executeCallback = async ({ callbacks, callback, data = null, throwError = false }) => {
+  try {
+    if (callbacks && callback in callbacks) {
+      if (data) {
+        await callbacks[callback](data);
+      } else {
+        await callbacks[callback]();
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    if (throwError) {
+      throw e;
+    }
+  }
+};

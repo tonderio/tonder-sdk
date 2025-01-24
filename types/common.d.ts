@@ -8,7 +8,7 @@ export interface IInlineCheckoutBaseOptions {
   callBack?: (response: any) => void;
 }
 
-export interface IConfigureCheckout extends IProcessPaymentRequest {
+export interface IConfigureCheckout extends Partial<IProcessPaymentRequest> {
   customer: ICustomer;
   secureToken: string;
 }
@@ -26,3 +26,5 @@ export interface IPublicError {
   message: string;
   detail: Record<string, any> | string;
 }
+
+export interface IBaseCallback {}

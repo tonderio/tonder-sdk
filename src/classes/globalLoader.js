@@ -1,5 +1,5 @@
 import { cardTemplateSkeleton } from "../helpers/template-skeleton.js";
-import { HTML_TONDER_IDS } from "../shared/constants/htmlTonderIds";
+import { HTML_IDS } from "../shared/constants/htmlTonderIds";
 
 class GlobalLoader {
   constructor() {
@@ -8,7 +8,7 @@ class GlobalLoader {
 
   show() {
     this.requestCount++;
-    const checkoutContainer = document.querySelector(`#${HTML_TONDER_IDS.globalLoader}`);
+    const checkoutContainer = document.querySelector(`#${HTML_IDS.globalLoader}`);
     if (checkoutContainer) {
       checkoutContainer.innerHTML = cardTemplateSkeleton;
       checkoutContainer.style.display = "block";
@@ -19,7 +19,7 @@ class GlobalLoader {
     this.requestCount--;
     if (this.requestCount <= 0) {
       this.requestCount = 0;
-      const loaders = document.querySelectorAll(`#${HTML_TONDER_IDS.globalLoader}`);
+      const loaders = document.querySelectorAll(`#${HTML_IDS.globalLoader}`);
 
       loaders.forEach(loader => {
         loader.style.display = "none";

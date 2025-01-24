@@ -8,7 +8,9 @@ Tonder SDK helps to integrate the services Tonder offers in your own website
 2. [Usage](#usage)
    - [InlineCheckout](#inlinecheckout)
    - [LiteCheckout](#litecheckout)
-3. [Configuration Options](#configuration-options)
+3. [Configuration Options](#configuration)
+   - [Inline Options](#inline-options)
+   - [Lite Options](#lite-options)
 4. [Styling InlineCheckout](#styling-inlinecheckout)
 5. [Payment Data Structure](#payment-data-structure)
 6. [Field Validation Functions](#field-validation-functions)
@@ -148,24 +150,112 @@ const paymentResponse = await liteCheckout.payment(paymentData);
 const verificationResult = await liteCheckout.verify3dsTransaction();
 ```
 
-## Configuration Options
+## Configuration
+### Inline Options
 
-Both InlineCheckout and LiteCheckout accept the following configuration options:
+|   Property    |         Type         | Required | Description                        | Default                                                                                                                                                                                                                                                                                |                                  Description                                  |
+|:-------------:|:--------------------:|----------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------:|
+|     mode      |        string        | Yes      | Environment mode for the SDK       | stage                                                                                                                                                                                                                                                                                  | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
+|    apiKey     |        string        | Yes      | Your Tonder Public API key         |                                                                                                                                                                                                                                                                                        |                    Your API key from the Tonder Dashboard                     |
+|   returnUrl   |        string        | Yes      | URL for 3DS redirect completion    |                                                                                                                                                                                                                                                                                        |             URL where the checkout form is mounted (used for 3DS)             |
+|    styles     |        object        | No       |                                    |                                                                                                                                                                                                                                                                                        |        (InlineCheckout only) Custom styles for the checkout interface         |
+| customization | CustomizationOptions | No       | UI customization options           | `{displayMode: 'light',saveCards: {showSaveCardOption: false,showSaved: false,autoSave: false,},paymentButton: {show: false,text: "Pagar",showAmount: true,},cancelButton: {show: false,text: "Cancelar",},paymentMethods: {show: true,},cardForm: {show: true,},showMessages: true,}` |               Object to customize the checkout behavior and UI.               |
+|   callbacks   |   IInlineCallbacks   | No       | Payment process callback functions |
+<details>
+<summary>View Interface Definition</summary>
 
-|                  Property                  |  Type   | Default                                                                     |                                  Description                                  |
-|:------------------------------------------:|:-------:|-----------------------------------------------------------------------------|:-----------------------------------------------------------------------------:|
-|                    mode                    | string  | stage                                                                       | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
-|                   apiKey                   | string  |                                                                             |                    Your API key from the Tonder Dashboard                     |
-|                 returnUrl                  | string  |                                                                             |             URL where the checkout form is mounted (used for 3DS)             |
-|                   styles                   | object  |                                                                             |        (InlineCheckout only) Custom styles for the checkout interface         |
-|               customization                | object  | `{saveCards: {showSaved: true, showSaveCardOption: true, autoSave: false}}` |               Object to customize the checkout behavior and UI.               |
-|     customization.saveCards.showSaved      | boolean | true                                                                        |                     Show saved cards in the checkout UI.                      |
-| customization.saveCards.showSaveCardOption | boolean | true                                                                        |             Show the option to save the card for future payments.             |
-|      customization.saveCards.autoSave      | boolean | false                                                                       |      Automatically save the card without showing the option to the user.      |
-|             **paymentButton**              |     
-|             paymentButton.show             | boolean | true                                                                        |                 Controls the visibility of the payment button                 |
-|             paymentButton.text             | string  | 'Pagar'                                                                     |                 Custom text to display on the payment button                  |
-|          paymentButton.showAmount          | boolean | true                                                                        |           Shows the payment amount on the button (e.g., "Pay $100")           |                                     |         |                                                                                                                                             |
+```typescript
+interface IInlineCheckoutBaseOptions {
+  mode?: "production" | "sandbox" | "stage" | "development";
+  apiKey: string;
+  returnUrl: string;
+  callBack?: (response: any) => void;
+}
+interface IInlineCheckoutOptions extends IInlineCheckoutBaseOptions {
+  styles?: Record<string, string>;
+  customization?: CustomizationOptions;
+  callbacks?: IInlineCallbacks;
+}
+```
+</details>
+
+### Inline Callbacks Structure
+
+| Callback   | Required | Parameters | Description                                | Return        |
+|------------|----------|------------|--------------------------------------------|---------------|
+| `onCancel` | No       | none       | Called when user clicked the cancel button | Promise<void> |
+<details>
+<summary>View Interface Definition</summary>
+
+```typescript
+interface IInlineCallbacks extends IBaseCallback {
+  onCancel?: () => Promise<void>;
+}
+```
+</details>
+
+### Inline Customization Options
+
+| Option                       | Type    | Default    | Description                                                                               |
+|------------------------------|---------|------------|-------------------------------------------------------------------------------------------|
+| **saveCards**                |
+| saveCards.showSaveCardOption | boolean | true       | Shows a checkbox allowing users to choose whether to save their card for future purchases |
+| saveCards.showSaved          | boolean | true       | Displays a list of previously saved cards for the customer                                |
+| saveCards.autoSave           | boolean | false      | Automatically saves the card without showing the save option to the user                  |
+| **paymentButton**            |
+| paymentButton.show           | boolean | true       | Controls the visibility of the payment button                                             |
+| paymentButton.text           | string  | 'Pagar'    | Custom text to display on the payment button                                              |
+| paymentButton.showAmount     | boolean | true       | Shows the payment amount on the button (e.g., "Pay $100")                                 |
+| **cancelButton**             |
+| cancelButton.show            | boolean | true       | Controls the visibility of the cancel button                                              |
+| cancelButton.text            | string  | 'Cancelar' | Custom text to display on the cancel button                                               |
+| **paymentMethods**           |
+| paymentMethods.show          | boolean | true       | Controls the visibility of alternative payment methods section                            |
+| **cardForm**                 |
+| cardForm.show                | boolean | true       | Controls the visibility of the card input form                                            |
+| **General**                  |
+| showMessages                 | boolean | true       | Controls the visibility of error and success messages                                     |
+| displayMode                  | string  | light      | Controls the display mode light or dark                                                   |
+
+<details>
+<summary>View Interface Definition</summary>
+
+```typescript
+export type CustomizationOptions = {
+  displayMode?: "light" | "dark";
+  saveCards?: {
+    showSaveCardOption?: boolean;
+    showSaved?: boolean;
+    autoSave?: boolean;
+  };
+  paymentButton?: {
+    show?: boolean;
+    text?: string;
+    showAmount?: boolean;
+  };
+  cancelButton?: {
+    show?: boolean;
+    text?: string;
+  };
+  paymentMethods?: {
+    show?: boolean;
+  };
+  cardForm?: {
+    show?: boolean;
+  };
+  showMessages?: boolean;
+};
+```
+</details>
+
+## Lite Options
+
+| Property  |  Type  | Required | Description                     | Default |                                  Description                                  |
+|:---------:|:------:|----------|---------------------------------|---------|:-----------------------------------------------------------------------------:|
+|   mode    | string | Yes      | Environment mode for the SDK    | stage   | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
+|  apiKey   | string | Yes      | Your Tonder Public API key      |         |                    Your API key from the Tonder Dashboard                     |
+| returnUrl | string | Yes      | URL for 3DS redirect completion |         |             URL where the checkout form is mounted (used for 3DS)             |
+
 
 ## Styling InlineCheckout
 

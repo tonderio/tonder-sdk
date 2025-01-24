@@ -52,10 +52,10 @@ const customStyles = {
     },
   },
   labels: {
-    nameLabel: "",
-    cardLabel: "",
-    cvvLabel: "",
-    expiryDateLabel: "",
+    nameLabel: "Nombre de la de Tarjeta",
+    cardLabel: "Número de Tarjeta",
+    cvvLabel: "Código de Seguridad",
+    expiryDateLabel: "Fecha de Expiración",
   },
   placeholders: {
     namePlaceholder: "Nombre como aparece en la tarjeta",
@@ -123,39 +123,41 @@ function getCheckoutMode() {
   return urlParams.get("mode") || "inline";
 }
 
-async function setupInlineCheckout() {
+function setupInlineCheckout() {
   inlineCheckout = new InlineCheckout({
     ...commonConfig,
     customization: {
+      displayMode: "light", // usar para cambiar el aspecto ligth/dark
       saveCards: {
-        showSaveCardOption: false, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
+        showSaveCardOption: true, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
         autoSave: false, // Usar para guardar automáticamente la tarjeta (sin necesidad de mostrar el checkbox)
-        showSaved: false, // Usar para mostrar/ocultar el listado de tarjetas guardadas
+        showSaved: true, // Usar para mostrar/ocultar el listado de tarjetas guardadas
       },
       paymentButton: {
-        show: true,
-        showAmount: true,
-        text: "Pagar",
+        show: false, // Usar para mostrar/ocultar el boton de pago
+        showAmount: true, // Usar para concatener el monto junto al texto del botón de pago
+        text: "Pagar", // Usar para cambiar el texto del botón de pago
       },
       cancelButton: {
-        show: true,
-        text: "Cancelar",
+        show: false, // Usar para mostrar/ocultar el boton de cancelar
+        text: "Cancelar", // Usar para concatener el monto junto al texto del botón de cancelar
       },
       paymentMethods: {
-        show: false,
+        show: true, // Usar para mostrar/ocultar el listado de métodos de pago
+      },
+      cardForm: {
+        show: true, // Usar para mostrar/ocultar el formulario de tarjeta
+      },
+    },
+    callbacks: {
+      // Usar para definir la acción a ejecutar cuando el usuario de click en el botón Cancelar
+      onCancel: () => {
+        console.log("onCancel");
       },
     },
   });
-  let token_res = await fetch("https://stage.tonder.io/api/secure-token/", {
-    method: "POST",
-    headers: {
-      Authorization: `Token 197967d431010dc1a129e3f726cb5fd27987da92`,
-      "Content-Type": "application/json",
-    },
-  });
-  token_res = await token_res.json();
   inlineCheckout.configureCheckout({
-    secureToken: token_res.access,
+    secureToken: "eyJhbGc...",
     ...checkoutData,
   });
   inlineCheckout.injectCheckout();

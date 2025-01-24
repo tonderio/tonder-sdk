@@ -37,6 +37,7 @@ export const defaultStyles = {
       fontWeight: "600",
       fontFamily: '"Inter", sans-serif',
       color: "#333333",
+      textAlign: "start",
     },
   },
   errorTextStyles: {
@@ -60,4 +61,30 @@ export const defaultStyles = {
     expiryMonthPlaceholder: "MM",
     expiryYearPlaceholder: "AA",
   },
+};
+
+export const getDefaultStyles = isDark => {
+  const darkBaseInputStyles = {
+    backgroundColor: "#5C5C5C",
+    color: "#FFFFFF",
+    "&::placeholder": {
+      color: "#AAAAAA",
+    },
+  };
+
+  const darkBaseLabelStyles = {
+    color: "#FFFFFF",
+  };
+
+  return {
+    ...defaultStyles,
+    inputStyles: {
+      ...defaultStyles.inputStyles,
+      base: { ...defaultStyles.inputStyles.base, ...(isDark ? { ...darkBaseInputStyles } : {}) },
+    },
+    labelStyles: {
+      ...defaultStyles.labelStyles,
+      base: { ...defaultStyles.labelStyles.base, ...(isDark ? { ...darkBaseLabelStyles } : {}) },
+    },
+  };
 };

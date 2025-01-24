@@ -4,7 +4,7 @@ import {
   cardTemplate,
   containerCheckoutTemplate,
 } from "../helpers/template.js";
-import { clearSpace, mapCards, showError, showMessage } from "../helpers/utils";
+import { clearSpace, executeCallback, mapCards, showError, showMessage } from "../helpers/utils";
 import { initSkyflow, initUpdateSkyflow } from "../helpers/skyflow";
 import { globalLoader } from "./globalLoader.js";
 import { BaseInlineCheckout } from "./BaseInlineCheckout";
@@ -17,7 +17,8 @@ import {
 import { MESSAGES } from "../shared/constants/messages";
 import Accordion from "accordion-js";
 import get from "lodash.get";
-import { HTML_TONDER_IDS } from "../shared/constants/htmlTonderIds";
+import { HTML_IDS } from "../shared/constants/htmlTonderIds";
+import { DISPLAY_MODE } from "../shared/constants/displayMode";
 
 export class InlineCheckout extends BaseInlineCheckout {
   static injected = false;
@@ -39,18 +40,22 @@ export class InlineCheckout extends BaseInlineCheckout {
   metadata = {};
   card = {};
   collectorIds = {
-    cardsListContainer: "cardsListContainer",
-    holderName: "collectCardholderName",
-    cardNumber: "collectCardNumber",
-    expirationMonth: "collectExpirationMonth",
-    expirationYear: "collectExpirationYear",
-    cvv: "collectCvv",
-    tonderPayButton: "tonderPayButton",
-    msgError: "msgError",
-    msgNotification: "msgNotification",
-    apmsListContainer: "apmsListContainer",
+    cardsListContainer: HTML_IDS.cardsListContainer,
+    holderName: HTML_IDS.collectCardholderName,
+    cardNumber: HTML_IDS.collectCardNumber,
+    expirationMonth: HTML_IDS.collectExpirationMonth,
+    expirationYear: HTML_IDS.collectExpirationYear,
+    cvv: HTML_IDS.collectCvv,
+    tonderPayButton: HTML_IDS.tonderPayButton,
+    tonderCancelButton: HTML_IDS.tonderCancelButton,
+    msgError: HTML_IDS.msgError,
+    msgNotification: HTML_IDS.msgNotification,
+    msgErrorText: HTML_IDS.msgErrorText,
+    msgNotificationText: HTML_IDS.msgNotificationText,
+    apmsListContainer: HTML_IDS.apmsListContainer,
   };
   customization = {
+    displayMode: DISPLAY_MODE.light,
     saveCards: {
       showSaveCardOption: false,
       showSaved: false,
@@ -73,9 +78,21 @@ export class InlineCheckout extends BaseInlineCheckout {
     },
     showMessages: true,
   };
-  constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {}, styles, customization }) {
+  callbacks = {
+    onCancel: () => {},
+  };
+  constructor({
+    mode = "stage",
+    apiKey,
+    returnUrl,
+    callBack = () => {},
+    styles,
+    customization,
+    callbacks,
+  }) {
     super({ mode, apiKey, returnUrl, callBack });
     this.customStyles = styles;
+    this.callbacks = { ...this.callbacks, ...(callbacks ? { ...callbacks } : {}) };
     this.abortRefreshCardsController = new AbortController();
     // TODO: Wait until SaveCards is ready (server token).
     this.customization = {
@@ -108,13 +125,13 @@ export class InlineCheckout extends BaseInlineCheckout {
    */
   async injectCheckout() {
     if (InlineCheckout.injected) return;
-    const containerTonderCheckout = document.querySelector(`#${HTML_TONDER_IDS.tonderCheckout}`);
+    const containerTonderCheckout = document.querySelector(`#${HTML_IDS.tonderCheckout}`);
     if (containerTonderCheckout) {
       await this.#mount(containerTonderCheckout);
       return;
     }
     const observer = new MutationObserver(async (mutations, obs) => {
-      const containerTonderCheckout = document.querySelector(`#${HTML_TONDER_IDS.tonderCheckout}`);
+      const containerTonderCheckout = document.querySelector(`#${HTML_IDS.tonderCheckout}`);
       if (containerTonderCheckout) {
         await this.#mount(containerTonderCheckout);
         obs.disconnect();
@@ -159,11 +176,14 @@ export class InlineCheckout extends BaseInlineCheckout {
   }
 
   async #mount(containerTonderCheckout) {
-    containerTonderCheckout.innerHTML = containerCheckoutTemplate();
+    containerTonderCheckout.innerHTML = containerCheckoutTemplate({
+      customStyles: this.customStyles,
+      customization: this.customization,
+    });
     globalLoader.show();
     await this._initializeCheckout();
     await this.#loadInitialData();
-    const currentContent = document.querySelector(`#${HTML_TONDER_IDS.tonderContainer}`);
+    const currentContent = document.querySelector(`#${HTML_IDS.tonderContainer}`);
     currentContent.innerHTML = `
       ${currentContent.innerHTML}
       ${cardTemplate({
@@ -171,6 +191,7 @@ export class InlineCheckout extends BaseInlineCheckout {
         customization: this.customization,
         cardsData: this.#cardsData,
         paymentMethodsData: this.#paymentMethodsData,
+        collectorIds: this.collectorIds,
       })}
     `;
     await this.#mountTonder();
@@ -184,7 +205,7 @@ export class InlineCheckout extends BaseInlineCheckout {
       if (this.email && this.#cardsData.length > 0) {
         await this.#loadCardsList();
       }
-      this.#mountPayButton();
+      this.#mountButtons();
       await this.#loadAPMList();
 
       this.collectContainer = await initSkyflow(
@@ -195,6 +216,7 @@ export class InlineCheckout extends BaseInlineCheckout {
         this.abortController.signal,
         this.customStyles,
         this.collectorIds,
+        this.customization.displayMode,
       );
 
       setTimeout(() => {
@@ -203,35 +225,26 @@ export class InlineCheckout extends BaseInlineCheckout {
     } catch (e) {
       if (e && e.name !== "AbortError") {
         globalLoader.remove();
-        showError("No se pudieron cargar los datos del comercio.");
+        showError("No se pudieron cargar los datos del comercio.", this.radioChecked);
       }
     }
   }
 
-  #mountPayButton(cardId = "") {
-    if (!this.customization.paymentButton.show) return;
-
-    const btnID = `#tonderPayButton${cardId}`;
-    const payButton = document.querySelector(btnID);
+  #mountButtons(cardId = "") {
+    if (this.customization.paymentButton.show) {
+      this.#mountButton(this.collectorIds.tonderPayButton, cardId, this.#handlePaymentClick);
+    }
+    if (this.customization.cancelButton.show) {
+      this.#mountButton(this.collectorIds.tonderCancelButton, cardId, async () => {
+        await executeCallback({
+          callbacks: this.callbacks,
+          callback: "onCancel",
+          throwError: true,
+        });
+      });
+    }
     const containerID = `#acContainer${cardId}`;
     const container = document.querySelector(containerID);
-
-    if (!payButton) {
-      console.error("Pay button not found");
-      return;
-    }
-
-    if (cardId !== "") {
-      const sdkPayButton = document.querySelector(`#tonderPayButton`);
-      if (sdkPayButton) {
-        sdkPayButton.style.display = "none";
-      }
-    }
-    this.#updatePayButton({
-      style: { display: "block" },
-      ...(cardId ? { cardId } : {}),
-    });
-
     document.querySelectorAll(".ac-option-panel-container").forEach(cont => {
       cont.classList.remove("show");
     });
@@ -239,38 +252,58 @@ export class InlineCheckout extends BaseInlineCheckout {
     if (container) {
       container.classList.add("show");
     }
+  }
 
-    payButton.onclick = async event => {
+  #mountButton(buttonId = "", cardId = "", fn = () => {}) {
+    if (!this.customization.paymentButton.show) return;
+
+    const btnID = `#${buttonId}${cardId}`;
+    const findButton = document.querySelector(btnID);
+
+    if (!findButton) {
+      console.error(`${buttonId} not found`);
+      return;
+    }
+
+    this.#updateButton({
+      style: { display: "block" },
+      buttonId,
+      ...(cardId ? { cardId } : {}),
+    });
+
+    findButton.onclick = async event => {
       event.preventDefault();
-      await this.#handlePaymentClick(payButton);
+      await fn();
     };
   }
 
-  async #handlePaymentClick(payButton) {
-    const prevButtonContent = payButton.innerHTML;
+  #handlePaymentClick = async () => {
     try {
       const response = await this.payment();
       this.callBack(response);
     } catch (error) {
       console.error("Payment error:", error);
     }
-  }
+  };
 
   _setCartTotal(total) {
     this.cartTotal = total;
-    this.#updatePayButton();
+    this.#updateButton();
   }
 
-  #updatePayButton(data) {
+  #updateButton(data) {
     try {
-      const btnID = data?.cardId
-        ? `#${this.collectorIds.tonderPayButton}${data.cardId}`
-        : `#${this.collectorIds.tonderPayButton}`;
+      const buttonDataId = data?.buttonId || this.collectorIds.tonderPayButton;
+      const btnID =
+        data?.cardId && data?.cardId !== "new"
+          ? `#${buttonDataId}${data.cardId}`
+          : `#${buttonDataId}`;
+      const textButton =
+        buttonDataId === this.collectorIds.tonderPayButton
+          ? `<div class="pay-button-text">${this.customization.paymentButton.text}${this.customization.paymentButton.showAmount ? ` $${this.cartTotal}` : ""}</div>`
+          : `<div class="cancel-button-text">${this.customization.cancelButton.text}</div>`;
 
-      const updatedText = data?.updatedTextContent || true;
-      const btnTextContent =
-        data?.textContent ||
-        `<div class="pay-button-text">${this.customization.paymentButton.text}${this.customization.paymentButton.showAmount ? ` $${this.cartTotal}` : ""}</div>`;
+      const btnTextContent = data?.textContent || textButton;
       const disabledBtn = data?.disabled;
       const loadingHtml = data?.loading ? `<div class="spinner-tndr"></div>` : "";
       const btnStyle = data?.style || {};
@@ -278,7 +311,7 @@ export class InlineCheckout extends BaseInlineCheckout {
       if (!payButton) return;
       if (loadingHtml !== "") {
         payButton.innerHTML = loadingHtml;
-      } else if (updatedText) {
+      } else {
         payButton.innerHTML = btnTextContent;
       }
       if (btnStyle) {
@@ -303,13 +336,17 @@ export class InlineCheckout extends BaseInlineCheckout {
           : await this.collectContainer.container.collect();
       return await collectResponse["records"][0]["fields"];
     } catch (error) {
-      showError("Por favor, verifica todos los campos de tu tarjeta");
+      showError("Por favor, verifica todos los campos de tu tarjeta", this.radioChecked);
       throw error;
     }
   }
 
   async _checkout() {
-    this.#updatePayButton({ loading: true, disabled: true });
+    this.#updateButton({
+      cardId: this.radioChecked,
+      loading: true,
+      disabled: true,
+    });
     try {
       const { business } = this.merchantData;
       let cardTokens;
@@ -320,12 +357,6 @@ export class InlineCheckout extends BaseInlineCheckout {
       if (this.radioChecked === "new" || this.radioChecked === undefined) {
         cardTokens = await this.#getCardTokens(this.radioChecked);
       } else {
-        this.#updatePayButton({
-          cardId: this.radioChecked,
-          loading: true,
-          disabled: true,
-        });
-
         if (!selected_apm) {
           await this.#getCardTokens(this.radioChecked);
         }
@@ -349,17 +380,16 @@ export class InlineCheckout extends BaseInlineCheckout {
       if (jsonResponseRouter) {
         return jsonResponseRouter;
       } else {
-        showError("No se ha podido procesar el pago");
+        showError("No se ha podido procesar el pago", this.radioChecked);
         return false;
       }
     } catch (error) {
       console.log("Error payment", error);
 
-      showError("Ha ocurrido un error");
+      showError("Ha ocurrido un error", this.radioChecked);
       throw error;
     } finally {
-      this.#updatePayButton({ cardId: this.radioChecked, disabled: false });
-      this.#updatePayButton({ disabled: false });
+      this.#updateButton({ cardId: this.radioChecked, disabled: false });
     }
   }
 
@@ -380,10 +410,10 @@ export class InlineCheckout extends BaseInlineCheckout {
             skyflow_id: cardTokens.skyflow_id,
           },
         );
-        showMessage(MESSAGES.cardSaved, this.collectorIds.msgNotification);
+        showMessage(MESSAGES.cardSaved, this.radioChecked);
       } catch (error) {
         if (error?.message) {
-          showError(error.message);
+          showError(error.message, this.radioChecked);
         }
       }
 
@@ -403,6 +433,8 @@ export class InlineCheckout extends BaseInlineCheckout {
           queryElement.innerHTML = cardItemsTemplate({
             cards: cards,
             customization: this.customization,
+            collectorIds: this.collectorIds,
+            customStyles: this.customStyles,
           });
           clearInterval(injectInterval);
           this.#generateAccordion();
@@ -431,6 +463,7 @@ export class InlineCheckout extends BaseInlineCheckout {
           queryElement.innerHTML = apmItemsTemplate({
             paymentMethods: filteredAndSortedApms,
             customization: this.customization,
+            collectorIds: this.collectorIds,
           });
           clearInterval(injectInterval);
           this.#generateAccordion("paymentMethods");
@@ -624,13 +657,14 @@ export class InlineCheckout extends BaseInlineCheckout {
           this.apiKeyTonder,
           this.abortController.signal,
           this.customStyles,
+          this.customization.displayMode,
         );
         setTimeout(() => {
           document.querySelector(`#cvvContainer${container_radio_id}`).classList.add("show");
         }, 5);
       }
 
-      this.#mountPayButton(container_radio_id);
+      this.#mountButtons(container_radio_id);
     } catch (e) {
       console.error("Ha ocurrido un error", e);
     }
@@ -655,7 +689,7 @@ export class InlineCheckout extends BaseInlineCheckout {
 
       if (position !== null && currentType === type && accordion.open) {
         accordion.open(
-          currentType !== "paymentMethods" ? position : position - (this.#cardsData + 1),
+          currentType !== "paymentMethods" ? position : position - (this.#cardsData.length + 1),
         );
       }
     });

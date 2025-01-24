@@ -1,6 +1,18 @@
-export const HTML_TONDER_IDS = Object.freeze({
+export const HTML_IDS = Object.freeze({
   globalLoader: "global-loader",
   tonderContainer: "tndr-container",
   tonderCheckout: "tonder-checkout",
   tonderPayButton: "tonderPayButton",
+  tonderCancelButton: "tonderCancelButton",
+  msgError: "msgError",
+  msgErrorText: "tndr-msgErrorText",
+  msgNotification: "msgNotification",
+  msgNotificationText: "tndr-msgNotificationText",
+  cardsListContainer: "cardsListContainer",
+  collectCardholderName: "collectCardholderName",
+  collectCardNumber: "collectCardNumber",
+  collectExpirationMonth: "collectExpirationMonth",
+  collectExpirationYear: "collectExpirationYear",
+  collectCvv: "collectCvv",
+  apmsListContainer: "apmsListContainer",
 });

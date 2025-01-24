@@ -1,6 +1,7 @@
-import { defaultStyles } from "./styles";
+import { getDefaultStyles } from "./styles";
 import { getVaultToken } from "../data/skyflowApi";
 import { buildErrorResponseFromCatch, getCardFormLabels } from "./utils";
+import { DISPLAY_MODE } from "../shared/constants/displayMode";
 
 export async function initSkyflow(
   vaultId,
@@ -10,6 +11,7 @@ export async function initSkyflow(
   signal,
   customStyles = {},
   collectorIds,
+  displayMode,
 ) {
   const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal);
 
@@ -17,11 +19,10 @@ export async function initSkyflow(
   const collectContainer = await skyflow.container(Skyflow.ContainerType.COLLECT);
   // Custom styles for collect elements.
   let collectStylesOptions = {
-    ...defaultStyles,
+    ...getDefaultStyles(displayMode === DISPLAY_MODE.dark),
     ...(Object.keys(customStyles).length > 0 ? { ...customStyles } : {}),
     ...getCardFormLabels(customStyles),
   };
-
   const stylesForCardNumber = { ...collectStylesOptions.inputStyles.base };
   stylesForCardNumber.textIndent = "44px";
 
@@ -174,12 +175,14 @@ export async function initUpdateSkyflow(
   apiKey,
   signal,
   customStyles = {},
+  displayMode,
 ) {
   const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal);
 
   let collectStylesOptions = {
-    ...defaultStyles,
+    ...getDefaultStyles(displayMode === DISPLAY_MODE.dark),
     ...(Object.keys(customStyles).length > 0 ? { ...customStyles } : {}),
+    ...getCardFormLabels(customStyles),
   };
   // Create collect Container.
   const collectContainer = await skyflow.container(Skyflow.ContainerType.COLLECT);
@@ -188,7 +191,7 @@ export async function initUpdateSkyflow(
     table: "cards",
     column: "cvv",
     ...collectStylesOptions,
-    label: collectStylesOptions.labels?.cvvLabel,
+    label: "",
     placeholder: collectStylesOptions.placeholders?.cvvPlaceholder,
     type: Skyflow.ElementType.CVV,
     validations: [regexMatchRule],

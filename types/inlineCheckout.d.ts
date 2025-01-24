@@ -1,4 +1,4 @@
-import { IConfigureCheckout, IInlineCheckoutBaseOptions } from "./common";
+import { IBaseCallback, IConfigureCheckout, IInlineCheckoutBaseOptions } from "./common";
 import { IProcessPaymentRequest, IStartCheckoutResponse } from "./checkout";
 import { ITransaction } from "./transaction";
 
@@ -83,8 +83,12 @@ export type CustomizationOptions = {
   };
   showMessages?: boolean;
 };
+export interface IInlineCallbacks extends IBaseCallback {
+  onCancel?: () => Promise<void>;
+}
 
 export interface IInlineCheckoutOptions extends IInlineCheckoutBaseOptions {
   styles?: Record<string, string>;
   customization?: CustomizationOptions;
+  callbacks?: IInlineCallbacks;
 }
