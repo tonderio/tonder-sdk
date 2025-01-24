@@ -6,12 +6,7 @@
  * @param {AbortSignal} signal - The abort signal to cancel the request.
  * @returns {Promise<Object>} The registered or fetched customer data.
  */
-export async function registerOrFetchCustomer(
-  baseUrl,
-  apiKey,
-  customer,
-  signal = null,
-) {
+export async function registerOrFetchCustomer(baseUrl, apiKey, customer, signal = null) {
   const url = `${baseUrl}/api/v1/customer/`;
   const data = {
     email: customer.email,

@@ -1,7 +1,4 @@
-import {
-  buildErrorResponse,
-  buildErrorResponseFromCatch,
-} from "../helpers/utils";
+import { buildErrorResponse, buildErrorResponseFromCatch } from "../helpers/utils";
 
 /**
  * Fetches Alternative Payment Methods (APMs) of a customer.
@@ -23,17 +20,14 @@ export async function fetchCustomerAPMs(
   try {
     const queryString = new URLSearchParams(params).toString();
 
-    const response = await fetch(
-      `${baseUrl}/api/v1/payment_methods?${queryString}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Token ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        signal,
+    const response = await fetch(`${baseUrl}/api/v1/payment_methods?${queryString}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Token ${apiKey}`,
+        "Content-Type": "application/json",
       },
-    );
+      signal,
+    });
 
     if (response.ok) return await response.json();
     const res_json = await response.json();

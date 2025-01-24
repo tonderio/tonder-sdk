@@ -35,7 +35,7 @@ export class BaseInlineCheckout {
    */
   configureCheckout(data) {
     if ("secureToken" in data) this.#handleSecureToken(data["secureToken"]);
-    this.#setCheckoutData(data)
+    this.#setCheckoutData(data);
   }
 
   /**
@@ -50,7 +50,7 @@ export class BaseInlineCheckout {
     this.process3ds.setPayload(resultCheckout);
     const response = await this.#handle3dsRedirect(resultCheckout);
     globalLoader.remove();
-    return response
+    return response;
   }
 
   /**
@@ -67,7 +67,7 @@ export class BaseInlineCheckout {
   payment(data) {
     return new Promise(async (resolve, reject) => {
       try {
-        this.#setCheckoutData(data)
+        this.#setCheckoutData(data);
         const response = await this._checkout(data);
         this.process3ds.setPayload(response);
         this.callBack(response);
@@ -90,24 +90,15 @@ export class BaseInlineCheckout {
   }
 
   async _getCustomer(customer, signal) {
-    return await registerOrFetchCustomer(
-      this.baseUrl,
-      this.apiKeyTonder,
-      customer,
-      signal,
-    );
+    return await registerOrFetchCustomer(this.baseUrl, this.apiKeyTonder, customer, signal);
   }
 
   async _checkout() {
-    throw new Error(
-      "The #checkout method should be implement in child classes.",
-    );
+    throw new Error("The #checkout method should be implement in child classes.");
   }
 
   _setCartTotal(total) {
-    throw new Error(
-      "The #setCartTotal method should be implement in child classes.",
-    );
+    throw new Error("The #setCartTotal method should be implement in child classes.");
   }
 
   async _handleCheckout({ card, payment_method, customer }) {
@@ -115,11 +106,7 @@ export class BaseInlineCheckout {
     const total = Number(this.cartTotal);
     try {
       let deviceSessionIdTonder;
-      if (
-        !deviceSessionIdTonder &&
-        openpay_keys.merchant_id &&
-        openpay_keys.public_key
-      ) {
+      if (!deviceSessionIdTonder && openpay_keys.merchant_id && openpay_keys.public_key) {
         deviceSessionIdTonder = await getOpenpayDeviceSessionID(
           openpay_keys.merchant_id,
           openpay_keys.public_key,
@@ -140,11 +127,7 @@ export class BaseInlineCheckout {
         is_oneclick: true,
         items: this.cartItems,
       };
-      const jsonResponseOrder = await createOrder(
-        this.baseUrl,
-        this.apiKeyTonder,
-        orderItems,
-      );
+      const jsonResponseOrder = await createOrder(this.baseUrl, this.apiKeyTonder, orderItems);
 
       // Create payment
       const now = new Date();
@@ -210,8 +193,8 @@ export class BaseInlineCheckout {
     }
   }
 
-  #setCheckoutData(data){
-    if(!data) return;
+  #setCheckoutData(data) {
+    if (!data) return;
     this.#handleCustomer(data.customer);
     this._setCartTotal(data.cart?.total);
     this.#setCartItems(data.cart?.items);
@@ -245,11 +228,7 @@ export class BaseInlineCheckout {
         checkout_id: response?.checkout?.id,
       };
       try {
-        return await startCheckoutRouter(
-          this.baseUrl,
-          this.apiKeyTonder,
-          routerItems,
-        );
+        return await startCheckoutRouter(this.baseUrl, this.apiKeyTonder, routerItems);
       } catch (error) {
         // throw error
       } finally {
@@ -296,7 +275,7 @@ export class BaseInlineCheckout {
   }
 
   async #handle3dsRedirect(response) {
-    console.log('Handling 3DS redirect...');
+    console.log("Handling 3DS redirect...");
     const iframe = response?.next_action?.iframe_resources?.iframe;
     const threeDsChallenge = response?.next_action?.three_ds_challenge;
 

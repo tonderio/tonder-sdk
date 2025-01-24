@@ -99,7 +99,7 @@ const checkoutData = {
   //   order_id: 123456
   // }
   // Reference from the merchant
-  order_reference: "ORD-123456"
+  order_reference: "ORD-123456",
 };
 
 // localhost
@@ -127,20 +127,42 @@ function setupInlineCheckout() {
   inlineCheckout = new InlineCheckout({
     ...commonConfig,
     customization: {
+      displayMode: "light", // usar para cambiar el aspecto ligth/dark
       saveCards: {
         showSaveCardOption: true, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
-        autoSave: false,           // Usar para guardar automáticamente la tarjeta (sin necesidad de mostrar el checkbox)
-        showSaved: true           // Usar para mostrar/ocultar el listado de tarjetas guardadas
+        autoSave: false, // Usar para guardar automáticamente la tarjeta (sin necesidad de mostrar el checkbox)
+        showSaved: true, // Usar para mostrar/ocultar el listado de tarjetas guardadas
+      },
+      paymentButton: {
+        show: false, // Usar para mostrar/ocultar el boton de pago
+        showAmount: true, // Usar para concatener el monto junto al texto del botón de pago
+        text: "Pagar", // Usar para cambiar el texto del botón de pago
+      },
+      cancelButton: {
+        show: false, // Usar para mostrar/ocultar el boton de cancelar
+        text: "Cancelar", // Usar para concatener el monto junto al texto del botón de cancelar
+      },
+      paymentMethods: {
+        show: true, // Usar para mostrar/ocultar el listado de métodos de pago
+      },
+      cardForm: {
+        show: true, // Usar para mostrar/ocultar el formulario de tarjeta
+      },
+    },
+    callbacks: {
+      // Usar para definir la acción a ejecutar cuando el usuario de click en el botón Cancelar
+      onCancel: () => {
+        console.log("onCancel");
       },
     },
   });
   inlineCheckout.configureCheckout({
     secureToken: "eyJhbGc...",
-    ...checkoutData
+    ...checkoutData,
   });
   inlineCheckout.injectCheckout();
   // ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
-  inlineCheckout.verify3dsTransaction().then((response) => {
+  inlineCheckout.verify3dsTransaction().then(response => {
     console.log("Verify 3ds response", response);
   });
 
@@ -165,15 +187,15 @@ function setupLiteInlineCheckout() {
   liteInlineCheckout = new LiteInlineCheckout(commonConfig);
   liteInlineCheckout.configureCheckout({
     customer: checkoutData.customer,
-    secureToken: "eyJhbGc..."
+    secureToken: "eyJhbGc...",
   });
   liteInlineCheckout.injectCheckout().then(() => {
-    liteInlineCheckout.getCustomerCards().then((r) => {
-      console.log('customer cards', r)
+    liteInlineCheckout.getCustomerCards().then(r => {
+      console.log("customer cards", r);
     });
   });
 
-  liteInlineCheckout.verify3dsTransaction().then((response) => {
+  liteInlineCheckout.verify3dsTransaction().then(response => {
     console.log("Verify 3ds response", response);
   });
 
@@ -210,7 +232,7 @@ function setupLiteInlineCheckout() {
 
 function setupCheckout() {
   const mode = getCheckoutMode();
-  document.querySelectorAll(".tab-content").forEach((content) => {
+  document.querySelectorAll(".tab-content").forEach(content => {
     content.style.display = "none";
   });
 
@@ -289,7 +311,7 @@ function loadMaskitoMask() {
 }
 function updateActiveTab() {
   const mode = getCheckoutMode();
-  document.querySelectorAll(".tab").forEach((tab) => {
+  document.querySelectorAll(".tab").forEach(tab => {
     tab.classList.remove("active");
   });
   document.querySelector(`[data-mode="${mode}"]`).classList.add("active");

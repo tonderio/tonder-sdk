@@ -1,0 +1,15 @@
+export const COLORS = Object.freeze({
+  white: "#FFFFFF",
+  grayDark: "#1A1A1A",
+  borderLight: "#CED0D1",
+  grayExtraLight: "#B9B9B9",
+  borderMedium: "#B9B9B9",
+  borderDark: "#B0B2B3",
+  grayMedium: "#333333",
+  purple: "#5E48FC",
+  redExtraLight: "#FDE7E7",
+  red: "#832828",
+  greenExtraLight: "#ECFDE7",
+  green: "#28832C",
+  black: "#000000",
+});

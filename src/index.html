@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <style>
       #checkout-container {
         display: flex;
@@ -109,7 +109,7 @@
       .input-md {
         max-width: 100%;
       }
-      .invalid{
+      .invalid {
         border: 2px solid red !important;
       }
     </style>
@@ -118,8 +118,16 @@
   <body>
     <div class="checkout-container">
       <div class="tab-container">
-        <a href="?mode=inline" class="tab" data-mode="inline" onclick="switchTab('inline'); return false;">Inline Checkout</a>
-        <a href="?mode=lite" class="tab" data-mode="lite" onclick="switchTab('lite'); return false;">Lite Inline Checkout</a>
+        <a
+          href="?mode=inline"
+          class="tab"
+          data-mode="inline"
+          onclick="switchTab('inline'); return false;"
+          >Inline Checkout</a
+        >
+        <a href="?mode=lite" class="tab" data-mode="lite" onclick="switchTab('lite'); return false;"
+          >Lite Inline Checkout</a
+        >
       </div>
 
       <div id="lite-content" class="tab-content">
@@ -130,23 +138,23 @@
         <form id="lite-payment-form" class="card-form">
           <div class="form-group">
             <label for="card-number">Número de Tarjeta</label>
-            <input type="text" id="card-number" placeholder="1234 5678 9012 3456" required>
+            <input type="text" id="card-number" placeholder="1234 5678 9012 3456" required />
           </div>
           <div class="form-group">
             <label for="card-name">Nombre en la Tarjeta</label>
-            <input type="text" id="card-name" placeholder="John Doe" required>
+            <input type="text" id="card-name" placeholder="John Doe" required />
           </div>
           <div class="form-row">
             <div class="form-group">
               <label for="month">Fecha de Expiración</label>
               <div class="form-row">
-                <input class="input-md" type="text" id="month" placeholder="MM" required>
-                <input class="input-md" type="text" id="year" placeholder="AA" required>
+                <input class="input-md" type="text" id="month" placeholder="MM" required />
+                <input class="input-md" type="text" id="year" placeholder="AA" required />
               </div>
             </div>
             <div class="form-group">
               <label for="cvv">CVV</label>
-              <input class="input-md" type="text" id="cvv" placeholder="123" required>
+              <input class="input-md" type="text" id="cvv" placeholder="123" required />
             </div>
           </div>
           <button type="submit" class="btn" id="pay-button-lite">Pagar Ahora</button>
