@@ -350,7 +350,7 @@ export const cardTemplate = data => {
                           </svg>
                           `
                         }
-                        <input/>
+                        <input tabindex="-1"/>
                     </div>
                 </div>
             </div>
@@ -785,7 +785,7 @@ export const cardItemsTemplate = data => {
       <div class="ac-panel">
         <div class="ac-option-panel-container" id="acContainer${card.skyflow_id}">
            <div class="cvvContainer" id="cvvContainer${card.skyflow_id}">
-           <label class="tndr-form-label">${cvvLabel}</label>
+           <label class="tndr-form-label label-cvv-cards">${cvvLabel}</label>
             <div id="${data.collectorIds.cvv}${card.skyflow_id}" class="empty-div">
               <div class="tndr-simulate-input-cvv-container">
                 <div class="tndr-simulate-input-cvv">
@@ -823,6 +823,7 @@ export const cardItemsTemplate = data => {
                         </svg>
                       `
                     }
+                    <input tabindex="-1"/>
                 </div>
               </div>
             </div>
@@ -858,6 +859,9 @@ export const cardItemsTemplate = data => {
        position: relative;
        padding: 0 0 0 40px;
       }
+      .label-cvv-cards {
+        opacity: 0;
+      }
       .cvvIcon {
         position: absolute;
         right: -12px;
@@ -865,6 +869,10 @@ export const cardItemsTemplate = data => {
         opacity: 0;
         transform: translate(-50%, 10px);
         transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .cvvContainer.show .label-cvv-cards{
+        opacity: 1;
+        transition-delay: 0.3s;
       }
       .cvvContainer.show .cvvIcon {
         opacity: 1;
