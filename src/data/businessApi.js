@@ -6,14 +6,11 @@
  * @returns {Promise<Object>} The business information.
  */
 export async function fetchBusiness(baseUrl, apiKey, signal) {
-  const getBusiness = await fetch(
-    `${baseUrl}/api/v1/payments/business/${apiKey}`,
-    {
-      headers: {
-        Authorization: `Token ${apiKey}`,
-      },
-      signal: signal,
+  const getBusiness = await fetch(`${baseUrl}/api/v1/payments/business/${apiKey}`, {
+    headers: {
+      Authorization: `Token ${apiKey}`,
     },
-  );
+    signal: signal,
+  });
   return await getBusiness.json();
 }

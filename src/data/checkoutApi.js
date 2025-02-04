@@ -6,22 +6,22 @@
  * @returns {Promise<Object>} The created order data.
  */
 export async function createOrder(baseUrl, apiKey, orderItems) {
-    const url = `${baseUrl}/api/v1/orders/`;
-    const data = orderItems;
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${apiKey}`,
-        },
-        body: JSON.stringify(data),
-    });
-    if (response.status === 201) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-    } else {
-        throw new Error(`Error: ${response.statusText}`);
-    }
+  const url = `${baseUrl}/api/v1/orders/`;
+  const data = orderItems;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Token ${apiKey}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (response.status === 201) {
+    const jsonResponse = await response.json();
+    return jsonResponse;
+  } else {
+    throw new Error(`Error: ${response.statusText}`);
+  }
 }
 
 /**
@@ -32,22 +32,22 @@ export async function createOrder(baseUrl, apiKey, orderItems) {
  * @returns {Promise<Object>} The created payment data.
  */
 export async function createPayment(baseUrl, apiKey, paymentItems) {
-    const url = `${baseUrl}/api/v1/business/${paymentItems.business_pk}/payments/`;
-    const data = paymentItems;
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${apiKey}`,
-        },
-        body: JSON.stringify(data),
-    });
-    if (response.status >= 200 && response.status <=299) {
-        const jsonResponse = await response.json();
-        return jsonResponse;
-    } else {
-        throw new Error(`Error: ${response.statusText}`);
-    }
+  const url = `${baseUrl}/api/v1/business/${paymentItems.business_pk}/payments/`;
+  const data = paymentItems;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Token ${apiKey}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (response.status >= 200 && response.status <= 299) {
+    const jsonResponse = await response.json();
+    return jsonResponse;
+  } else {
+    throw new Error(`Error: ${response.statusText}`);
+  }
 }
 
 /**
@@ -67,26 +67,26 @@ export async function createPayment(baseUrl, apiKey, paymentItems) {
  * @property {import("../../types").IStartCheckoutErrorResponse} error.details - The response body from the server when an error occurs.
  */
 export async function startCheckoutRouter(baseUrl, apiKey, routerItems) {
-    try {
-        const url = `${baseUrl}/api/v1/checkout-router/`;
-        const data = routerItems;
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Token ${apiKey}`,
-            },
-            body: JSON.stringify(data),
-        });
-        if (response.status >= 200 && response.status <= 299) {
-            return await response.json();
-        } else {
-            const errorResponse = await response.json();
-            const error = new Error("Failed to start checkout router");
-            error.details = errorResponse;
-            throw error;
-        }
-    } catch (error) {
-        throw error
+  try {
+    const url = `${baseUrl}/api/v1/checkout-router/`;
+    const data = routerItems;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${apiKey}`,
+      },
+      body: JSON.stringify(data),
+    });
+    if (response.status >= 200 && response.status <= 299) {
+      return await response.json();
+    } else {
+      const errorResponse = await response.json();
+      const error = new Error("Failed to start checkout router");
+      error.details = errorResponse;
+      throw error;
     }
+  } catch (error) {
+    throw error;
+  }
 }

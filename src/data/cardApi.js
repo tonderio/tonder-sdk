@@ -1,8 +1,5 @@
-import {
-  buildErrorResponse,
-  buildErrorResponseFromCatch,
-} from "../helpers/utils";
-import {MESSAGES} from "../shared/constants/messages";
+import { buildErrorResponse, buildErrorResponseFromCatch } from "../helpers/utils";
+import { MESSAGES } from "../shared/constants/messages";
 
 /**
  * Saves or updates a customer's card information.
@@ -18,13 +15,7 @@ import {MESSAGES} from "../shared/constants/messages";
  *
  * @throws {import("../../types").IApiError} Throws an error object if the save/update operation fails.
  */
-export async function saveCustomerCard(
-  baseUrl,
-  customerToken,
-  secureToken,
-  businessId,
-  data,
-) {
+export async function saveCustomerCard(baseUrl, customerToken, secureToken, businessId, data) {
   try {
     const url = `${baseUrl}/api/v1/business/${businessId}/cards/`;
     const response = await fetch(url, {
@@ -86,7 +77,7 @@ export async function removeCustomerCard(
       },
     });
 
-    if(response.status === 204) return MESSAGES.cardSaved;
+    if (response.status === 204) return MESSAGES.cardSaved;
     if (response.ok && "json" in response) return await response.json();
     const res_json = await response.json();
 
@@ -112,7 +103,7 @@ export async function fetchCustomerCards(
   customerToken,
   secureToken,
   businessId,
-  signal= null,
+  signal = null,
 ) {
   try {
     const url = `${baseUrl}/api/v1/business/${businessId}/cards/`;
