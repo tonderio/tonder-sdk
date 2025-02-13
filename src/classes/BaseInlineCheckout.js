@@ -70,10 +70,9 @@ export class BaseInlineCheckout {
         this.#setCheckoutData(data);
         const response = await this._checkout(data);
         this.process3ds.setPayload(response);
-        const result3ds = await this.#handle3dsRedirect(response);
-        if (result3ds) {
-          resolve(result3ds);
-          this.callBack(result3ds);
+        const result = await this.#handle3dsRedirect(response);
+        if (result) {
+          resolve(result);
         }
       } catch (error) {
         reject(error);
