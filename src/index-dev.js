@@ -150,8 +150,12 @@ function setupInlineCheckout() {
       },
     },
     callBack: async response => {
-      console.log("Respuesta del pago:", response);
-      alert("Pago realizado con éxito");
+      console.log("Payment response", JSON.stringify(response, null, 2));
+      if (response.error) {
+        console.log("Payment error", response.error?.details);
+        return;
+      }
+      alert("Payment success");
     },
     callbacks: {
       // Usar para definir la acción a ejecutar cuando el usuario de click en el botón Cancelar

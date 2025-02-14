@@ -282,7 +282,7 @@ export class InlineCheckout extends BaseInlineCheckout {
       const response = await this.payment();
       this.callBack(response);
     } catch (error) {
-      console.error("Payment error:", error);
+      this.callBack({ error: error });
     }
   };
 
