@@ -14,10 +14,12 @@ export class BaseInlineCheckout {
   baseUrl = "";
   cartTotal = "0";
   secureToken = "";
-  constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {} }) {
+  signatures = {};
+  constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {}, signatures }) {
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
     this.callBack = callBack;
+    this.#handleSignatures(signatures);
     this.mode = mode;
     this.baseUrl = TONDER_URL_BY_MODE[this.mode] || TONDER_URL_BY_MODE["stage"];
     this.abortController = new AbortController();
@@ -114,7 +116,6 @@ export class BaseInlineCheckout {
       }
 
       const { id, auth_token } = customer;
-
       const orderItems = {
         business: this.apiKeyTonder,
         client: auth_token,
@@ -125,8 +126,15 @@ export class BaseInlineCheckout {
         reference: reference,
         is_oneclick: true,
         items: this.cartItems,
+        currency: this.currency,
+        metadata: this.metadata,
       };
-      const jsonResponseOrder = await createOrder(this.baseUrl, this.apiKeyTonder, orderItems);
+      const jsonResponseOrder = await createOrder(
+        this.signatures,
+        this.baseUrl,
+        this.apiKeyTonder,
+        orderItems,
+      );
 
       // Create payment
       const now = new Date();
@@ -139,8 +147,12 @@ export class BaseInlineCheckout {
         date: dateString,
         order_id: jsonResponseOrder.id,
         customer_order_reference: this.order_reference ? this.order_reference : reference,
+        items: this.cartItems,
+        currency: this.currency,
+        metadata: this.metadata,
       };
       const jsonResponsePayment = await createPayment(
+        this.signatures,
         this.baseUrl,
         this.apiKeyTonder,
         paymentItems,
@@ -166,6 +178,7 @@ export class BaseInlineCheckout {
         business_id: business.pk,
         payment_id: jsonResponsePayment.pk,
         source: "sdk",
+        items: this.cartItems,
         metadata: this.metadata,
         browser_info: getBrowserInfo(),
         currency: this.currency,
@@ -176,6 +189,7 @@ export class BaseInlineCheckout {
       };
 
       const jsonResponseRouter = await startCheckoutRouter(
+        this.signatures,
         this.baseUrl,
         this.apiKeyTonder,
         routerItems,
@@ -227,7 +241,12 @@ export class BaseInlineCheckout {
         checkout_id: response?.checkout?.id,
       };
       try {
-        return await startCheckoutRouter(this.baseUrl, this.apiKeyTonder, routerItems);
+        return await startCheckoutRouter(
+          this.signatures,
+          this.baseUrl,
+          this.apiKeyTonder,
+          routerItems,
+        );
       } catch (error) {
         // throw error
       } finally {
@@ -254,6 +273,10 @@ export class BaseInlineCheckout {
 
   #handleSecureToken(secureToken) {
     this.secureToken = secureToken;
+  }
+
+  #handleSignatures(signatures) {
+    this.signatures = signatures;
   }
 
   #handleMetadata(data) {

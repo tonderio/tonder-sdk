@@ -89,8 +89,9 @@ export class InlineCheckout extends BaseInlineCheckout {
     styles,
     customization,
     callbacks,
+    signatures,
   }) {
-    super({ mode, apiKey, returnUrl, callBack });
+    super({ mode, apiKey, returnUrl, callBack, signatures });
     this.customStyles = styles;
     this.callbacks = { ...this.callbacks, ...(callbacks ? { ...callbacks } : {}) };
     this.abortRefreshCardsController = new AbortController();
@@ -402,6 +403,7 @@ export class InlineCheckout extends BaseInlineCheckout {
     ) {
       try {
         await saveCustomerCard(
+          this.signatures,
           this.baseUrl,
           this.#customerData.auth_token,
           this.secureToken,
@@ -482,9 +484,10 @@ export class InlineCheckout extends BaseInlineCheckout {
       const pmResponsePromise = this.customization.paymentMethods?.show
         ? fetchCustomerAPMs(this.baseUrl, this.apiKeyTonder)
         : Promise.resolve(null);
-      const customerDataPromise = canGetCards
-        ? this._getCustomer({ email: this.email })
-        : Promise.resolve(null);
+      const customerDataPromise =
+        canGetCards && !!this.customer
+          ? this._getCustomer({ ...this.customer })
+          : Promise.resolve(null);
 
       const [pmResponse, customerData] = await Promise.all([
         pmResponsePromise,
@@ -497,6 +500,7 @@ export class InlineCheckout extends BaseInlineCheckout {
       if (canGetCards && customerData && "auth_token" in customerData) {
         const { auth_token } = customerData;
         const cardsResponse = await fetchCustomerCards(
+          this.signatures,
           this.baseUrl,
           auth_token,
           this.secureToken,
@@ -577,6 +581,7 @@ export class InlineCheckout extends BaseInlineCheckout {
         }
         const businessId = this.merchantData.business.pk;
         await removeCustomerCard(
+          this.signatures,
           this.baseUrl,
           this.#customerData.auth_token,
           this.secureToken,

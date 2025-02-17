@@ -303,7 +303,7 @@ export async function getSkyflowTokens({ baseUrl, apiKey, vault_id, vault_url, d
     },
   });
 
-  const collectContainer = skyflow.container(Skyflow.ContainerType.COMPOSABLE);
+  const collectContainer = skyflow.container(Skyflow.ContainerType.COLLECT);
 
   const fieldPromises = await getFieldsPromise(data, collectContainer);
 

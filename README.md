@@ -14,9 +14,10 @@ Tonder SDK helps to integrate the services Tonder offers in your own website
 4. [Styling InlineCheckout](#styling-inlinecheckout)
 5. [Payment Data Structure](#payment-data-structure)
 6. [Field Validation Functions](#field-validation-functions)
-7. [API Reference](#api-reference)
-8. [Examples](#examples)
-9. [License](#license)
+7. [HMAC Signature Validation](#hmac-signature-validation)
+8. [API Reference](#api-reference)
+9. [Examples](#examples)
+10. [License](#license)
 
 ## Installation
 
@@ -74,6 +75,10 @@ const inlineCheckout = new InlineCheckout({
   apiKey: "your-api-key",
   returnUrl: "https://your-website.com/checkout",
   styles: customStyles, // Optional, see Styling section
+  signatures: {
+    transaction: "nA6nQXxQ....=", // Optional HMAC signature for transaction
+    customer: "2EVYDI0H5l5v4....="     // Optional HMAC signature for card-related ops
+  }
 });
 
 // The configureCheckout function allows you to set initial information,
@@ -110,6 +115,10 @@ import { LiteCheckout } from "tonder-web-sdk";
 const liteCheckout = new LiteCheckout({
   apiKey: "your-api-key", // Your api key getted from Tonder Dashboard
   returnUrl: "http://your-website.com/checkout",
+  signatures: {
+    transaction: "nA6nQXxQ....=", // Optional HMAC signature for transaction
+    customer: "2EVYDI0H5l5v4....="     // Optional HMAC signature for card-related ops
+  }
 });
 
 // The configureCheckout function allows you to set initial information,
@@ -153,14 +162,15 @@ const verificationResult = await liteCheckout.verify3dsTransaction();
 ## Configuration
 ### Inline Options
 
-|   Property    |         Type         | Required | Description                        | Default                                                                                                                                                                                                                                                                                |                                  Description                                  |
-|:-------------:|:--------------------:|----------|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------:|
-|     mode      |        string        | Yes      | Environment mode for the SDK       | stage                                                                                                                                                                                                                                                                                  | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
-|    apiKey     |        string        | Yes      | Your Tonder Public API key         |                                                                                                                                                                                                                                                                                        |                    Your API key from the Tonder Dashboard                     |
-|   returnUrl   |        string        | Yes      | URL for 3DS redirect completion    |                                                                                                                                                                                                                                                                                        |             URL where the checkout form is mounted (used for 3DS)             |
-|    styles     |        object        | No       |                                    |                                                                                                                                                                                                                                                                                        |        (InlineCheckout only) Custom styles for the checkout interface         |
-| customization | CustomizationOptions | No       | UI customization options           | `{displayMode: 'light',saveCards: {showSaveCardOption: false,showSaved: false,autoSave: false,},paymentButton: {show: false,text: "Pagar",showAmount: true,},cancelButton: {show: false,text: "Cancelar",},paymentMethods: {show: true,},cardForm: {show: true,},showMessages: true,}` |               Object to customize the checkout behavior and UI.               |
-|   callbacks   |   IInlineCallbacks   | No       | Payment process callback functions |
+|   Property    |         Type         | Required | Description                                         | Default                                                                                                                                                                                                                                                                                |                                  Description                                  |
+|:-------------:|:--------------------:|----------|-----------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------:|
+|     mode      |        string        | Yes      | Environment mode for the SDK                        | stage                                                                                                                                                                                                                                                                                  | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
+|    apiKey     |        string        | Yes      | Your Tonder Public API key                          |                                                                                                                                                                                                                                                                                        |                    Your API key from the Tonder Dashboard                     |
+|   returnUrl   |        string        | Yes      | URL for 3DS redirect completion                     |                                                                                                                                                                                                                                                                                        |             URL where the checkout form is mounted (used for 3DS)             |
+|    styles     |        object        | No       |                                                     |                                                                                                                                                                                                                                                                                        |        (InlineCheckout only) Custom styles for the checkout interface         |
+| customization | CustomizationOptions | No       | UI customization options                            | `{displayMode: 'light',saveCards: {showSaveCardOption: false,showSaved: false,autoSave: false,},paymentButton: {show: false,text: "Pagar",showAmount: true,},cancelButton: {show: false,text: "Cancelar",},paymentMethods: {show: true,},cardForm: {show: true,},showMessages: true,}` |               Object to customize the checkout behavior and UI.               |
+|   callbacks   |   IInlineCallbacks   | No       | Payment process callback functions                  |
+|  signatures   |        object        | No       | HMAC signatures for transaction and customer fields |
 <details>
 <summary>View Interface Definition</summary>
 
@@ -170,6 +180,10 @@ interface IInlineCheckoutBaseOptions {
   apiKey: string;
   returnUrl: string;
   callBack?: (response: any) => void;
+  signatures?:{
+    transaction?: string;
+    customer?: string;
+  }
 }
 interface IInlineCheckoutOptions extends IInlineCheckoutBaseOptions {
   styles?: Record<string, string>;
@@ -250,11 +264,12 @@ export type CustomizationOptions = {
 
 ## Lite Options
 
-| Property  |  Type  | Required | Description                     | Default |                                  Description                                  |
-|:---------:|:------:|----------|---------------------------------|---------|:-----------------------------------------------------------------------------:|
-|   mode    | string | Yes      | Environment mode for the SDK    | stage   | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
-|  apiKey   | string | Yes      | Your Tonder Public API key      |         |                    Your API key from the Tonder Dashboard                     |
-| returnUrl | string | Yes      | URL for 3DS redirect completion |         |             URL where the checkout form is mounted (used for 3DS)             |
+|  Property  |  Type  | Required | Description                     | Default |                                  Description                                  |
+|:----------:|:------:|----------|---------------------------------|---------|:-----------------------------------------------------------------------------:|
+|    mode    | string | Yes      | Environment mode for the SDK    | stage   | Environment mode. Options: 'stage', 'production', 'sandbox'. Default: 'stage' |
+|   apiKey   | string | Yes      | Your Tonder Public API key      |         |                    Your API key from the Tonder Dashboard                     |
+| returnUrl  | string | Yes      | URL for 3DS redirect completion |         |             URL where the checkout form is mounted (used for 3DS)             |
+| signatures | object | No       | HMAC signatures                 |         | Provide transaction/customer HMAC if your merchant configuration requires it. |
 
 
 ## Styling InlineCheckout
@@ -441,6 +456,91 @@ if (
   // Show error message
 }
 ```
+
+## HMAC Signature Validation
+
+Tonder supports **HMAC** validation to ensure the data sent from your application to Tonder is not tampered with.
+
+### Overview
+
+- **HMAC**: A cryptographic method used to validate the integrity of transmitted data.
+- You receive an **API Secret Key** from Tonder.
+- You generate the HMAC signature locally (SHA-256, Base64) based on certain fields.
+- Tonder compares your signature with its own calculation.
+- If invalid, Tonder returns a **403**.
+
+### Generating the HMAC Signature (JavaScript Example)
+> **Important**: This HMAC generation should be done on your **backend** server, not in client-side code, to keep your secret key secure.
+```javascript
+const crypto = require('crypto');
+
+function generateHMAC(secretKey, requestBody) {
+  // Convert the payload to a JSON string.
+  // Ensure the fields are in alphabetical order if required by your config.
+  const dataString = JSON.stringify(requestBody);
+
+  // Create HMAC using SHA-256, then Base64-encode it.
+  return crypto
+    .createHmac('sha256', secretKey)
+    .update(dataString)
+    .digest('base64');
+}
+
+// Example usage.
+const secretKey = "<MERCHANT_SECRET_KEY>";
+const requestBody = {
+  customer: {
+    email: "user@example.com",
+    firstName: "John",
+    lastName: "Doe",
+  },
+  currency: "mxn",
+  cart: {
+    total: 100,
+    items: [
+      {
+        amount_total: 100,
+        description: "Sample Item",
+      },
+    ],
+  },
+};
+
+const signature = generateHMAC(secretKey, requestBody);
+console.log("Generated HMAC:", signature);
+```
+
+### Providing the Signature in the SDK
+
+If using the Tonder SDK, include your generated signature in the `signatures` field:
+
+```javascript
+const inlineCheckout = new InlineCheckout({
+  mode: "development",
+  apiKey: "<YOUR_API_KEY>",
+  returnUrl: "https://your-website.com/checkout",
+  signatures: {
+    transaction: "<Base64 HMAC>", // For payment
+    customer: "<Base64 HMAC>"      // For card ops
+  }
+});
+```
+
+The SDK will handle attaching the signature to outgoing requests. If the signature does not match Tonder’s validation, the request will be rejected.
+
+### Providing the Signature in Direct Calls (Without the SDK)
+
+If you call Tonder’s REST endpoints directly, add headers:
+
+- `X-Signature-Transaction: <Base64 HMAC>`
+- `X-Client-Source: <merchant>-sdk` (the agreed-upon source)
+
+### Important Notes
+
+- Always ensure your JSON structure matches what Tonder expects.
+- If you are required to sign specific fields, confirm you’re only signing those fields **in alphabetical order**.
+- A mismatch results in a **403**.
+
 
 ## API Reference
 
