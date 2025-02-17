@@ -134,7 +134,7 @@ function setupInlineCheckout() {
         showSaved: true, // Usar para mostrar/ocultar el listado de tarjetas guardadas
       },
       paymentButton: {
-        show: false, // Usar para mostrar/ocultar el boton de pago
+        show: true, // Usar para mostrar/ocultar el boton de pago
         showAmount: true, // Usar para concatener el monto junto al texto del botón de pago
         text: "Pagar", // Usar para cambiar el texto del botón de pago
       },
@@ -148,6 +148,14 @@ function setupInlineCheckout() {
       cardForm: {
         show: true, // Usar para mostrar/ocultar el formulario de tarjeta
       },
+    },
+    callBack: async response => {
+      console.log("Payment response", JSON.stringify(response, null, 2));
+      if (response.error) {
+        console.log("Payment error", response.error?.details);
+        return;
+      }
+      alert("Payment success");
     },
     callbacks: {
       // Usar para definir la acción a ejecutar cuando el usuario de click en el botón Cancelar
