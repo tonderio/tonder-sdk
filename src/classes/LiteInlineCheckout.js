@@ -13,8 +13,8 @@ import { MESSAGES } from "../shared/constants/messages";
 
 export class LiteInlineCheckout extends BaseInlineCheckout {
   #customerData;
-  constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {} }) {
-    super({ mode, apiKey, returnUrl, callBack });
+  constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {}, signatures }) {
+    super({ mode, apiKey, returnUrl, callBack, signatures });
   }
 
   /**
@@ -40,6 +40,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
     try {
       const { auth_token } = await this.#getCustomer();
       const response = await fetchCustomerCards(
+        this.signatures,
         this.baseUrl,
         auth_token,
         this.secureToken,
@@ -86,6 +87,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
       });
 
       return await saveCustomerCard(
+        this.signatures,
         this.baseUrl,
         auth_token,
         this.secureToken,
@@ -117,6 +119,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
       const { business } = this.merchantData;
 
       return await removeCustomerCard(
+        this.signatures,
         this.baseUrl,
         auth_token,
         this.secureToken,

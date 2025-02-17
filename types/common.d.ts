@@ -6,6 +6,10 @@ export interface IInlineCheckoutBaseOptions {
   apiKey: string;
   returnUrl: string;
   callBack?: (response: any) => void;
+  signatures?: {
+    transaction?: string;
+    customer?: string;
+  };
 }
 
 export interface IConfigureCheckout extends Partial<IProcessPaymentRequest> {

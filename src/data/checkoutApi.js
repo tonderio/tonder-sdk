@@ -1,24 +1,29 @@
+import { fetchWithSignatureHeaders } from "../shared/utils/apiFetch";
+
 /**
  * Creates a new order in the  system.
+ * @param signatures
  * @param {string} baseUrl - The base URL of the  API.
  * @param {string} apiKey - The API key for authentication.
  * @param {Object} orderItems - The items to be included in the order.
  * @returns {Promise<Object>} The created order data.
  */
-export async function createOrder(baseUrl, apiKey, orderItems) {
+export async function createOrder(signatures, baseUrl, apiKey, orderItems) {
   const url = `${baseUrl}/api/v1/orders/`;
-  const data = orderItems;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Token ${apiKey}`,
+  const response = await fetchWithSignatureHeaders(
+    url,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${apiKey}`,
+      },
+      body: JSON.stringify(orderItems),
     },
-    body: JSON.stringify(data),
-  });
+    signatures,
+  );
   if (response.status === 201) {
-    const jsonResponse = await response.json();
-    return jsonResponse;
+    return await response.json();
   } else {
     throw new Error(`Error: ${response.statusText}`);
   }
@@ -26,25 +31,28 @@ export async function createOrder(baseUrl, apiKey, orderItems) {
 
 /**
  * Creates a new payment in the  system.
+ * @param signatures
  * @param {string} baseUrl - The base URL of the  API.
  * @param {string} apiKey - The API key for authentication.
  * @param {Object} paymentItems - The payment details.
  * @returns {Promise<Object>} The created payment data.
  */
-export async function createPayment(baseUrl, apiKey, paymentItems) {
+export async function createPayment(signatures, baseUrl, apiKey, paymentItems) {
   const url = `${baseUrl}/api/v1/business/${paymentItems.business_pk}/payments/`;
-  const data = paymentItems;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Token ${apiKey}`,
+  const response = await fetchWithSignatureHeaders(
+    url,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Token ${apiKey}`,
+      },
+      body: JSON.stringify(paymentItems),
     },
-    body: JSON.stringify(data),
-  });
+    signatures,
+  );
   if (response.status >= 200 && response.status <= 299) {
-    const jsonResponse = await response.json();
-    return jsonResponse;
+    return await response.json();
   } else {
     throw new Error(`Error: ${response.statusText}`);
   }
@@ -57,6 +65,7 @@ export async function createPayment(baseUrl, apiKey, paymentItems) {
  * checkout details. If the request is successful, it returns the response data.
  * If the request fails, it throws an error that includes the status and details of the failure.
  *
+ * @param signatures
  * @param {string} baseUrl - The base URL of the API.
  * @param {string} apiKey - The API key for authentication.
  * @param {import("../../types").IStartCheckoutRequest | import("../../types").IStartCheckoutIdRequest} routerItems - The checkout details to be sent in the request body.
@@ -66,18 +75,21 @@ export async function createPayment(baseUrl, apiKey, paymentItems) {
  * additional `details` property with the response from the server if available.
  * @property {import("../../types").IStartCheckoutErrorResponse} error.details - The response body from the server when an error occurs.
  */
-export async function startCheckoutRouter(baseUrl, apiKey, routerItems) {
+export async function startCheckoutRouter(signatures, baseUrl, apiKey, routerItems) {
   try {
     const url = `${baseUrl}/api/v1/checkout-router/`;
-    const data = routerItems;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${apiKey}`,
+    const response = await fetchWithSignatureHeaders(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${apiKey}`,
+        },
+        body: JSON.stringify(routerItems),
       },
-      body: JSON.stringify(data),
-    });
+      signatures,
+    );
     if (response.status >= 200 && response.status <= 299) {
       return await response.json();
     } else {

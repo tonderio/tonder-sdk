@@ -1,8 +1,7 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.16.5",
+  "version": "1.16.6",
   "description": "tonder sdk for integrations",
-  "main": "src/index.js",
   "scripts": {
     "start": "webpack-dev-server",
     "build": "webpack --config webpack.config.js --mode production",
@@ -12,7 +11,14 @@
     "lint:fix": "eslint 'src/**/*.js' --fix"
   },
   "author": "",
+  "main": "v1/bundle.min.js",
   "types": "types/index.d.ts",
+  "files": [
+    "v1",
+    "types",
+    "LICENSE",
+    "README.md"
+  ],
   "license": "ISC",
   "dependencies": {
     "accordion-js": "^3.4.0",
@@ -38,7 +44,8 @@
     "terser-webpack-plugin": "^5.3.10",
     "webpack": "^5.75.0",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.11.1"
+    "webpack-dev-server": "^4.11.1",
+    "webpack-obfuscator": "^3.5.1"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [

@@ -113,6 +113,10 @@ const commonConfig = {
   apiKey,
   returnUrl: returnUrl + "?mode=" + getCheckoutMode(),
   styles: customStyles,
+  signatures: {
+    transaction: "5nghOpIuuU4wsGvkooQKVgj+HGC5zx83LUw31nHKD4s=",
+    customer: "2EVYDCLSWA6GRrC8mvJIgAltoBjkO1BCyqAI0H5l5v4=",
+  },
 };
 
 let inlineCheckout;

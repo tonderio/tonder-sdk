@@ -2,6 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require('webpack');
+const JavaScriptObfuscator = require('webpack-obfuscator');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -13,6 +14,32 @@ module.exports = (env, argv) => {
     new webpack.IgnorePlugin({
       resourceRegExp: /samples\//
     }),
+    new JavaScriptObfuscator({
+      compact: true,
+      controlFlowFlattening: true,
+      controlFlowFlatteningThreshold: 0.3,
+      deadCodeInjection: false,
+      debugProtection: true,
+      debugProtectionInterval: 2000,
+      identifierNamesGenerator: "mangled-shuffled",
+      simplify: true,
+      splitStrings: true,
+      splitStringsChunkLength: 5,
+      stringArray: true,
+      stringArrayCallsTransform: true,
+      stringArrayCallsTransformThreshold: 0.5,
+      stringArrayEncoding: ['base64'],
+      stringArrayIndexShift: true,
+      stringArrayRotate: true,
+      stringArrayShuffle: true,
+      stringArrayWrappersCount: 1,
+      stringArrayWrappersChainedCalls: true,
+      stringArrayWrappersParametersMaxCount: 2,
+      stringArrayWrappersType: 'variable',
+      stringArrayThreshold: 0.5,
+      transformObjectKeys: true,
+      unicodeEscapeSequence: false,
+    })
   ];
 
   if (isProduction) {
@@ -69,7 +96,22 @@ module.exports = (env, argv) => {
     optimization: {
       minimizer: [
         new TerserPlugin({
+          parallel: true,
           extractComments: false,
+          terserOptions: {
+            ecma: 2015,
+            compress: {
+              drop_debugger: true,
+              passes: 2,
+              unsafe: false
+            },
+            mangle: {
+              toplevel: false
+            },
+            format: {
+              comments: false
+            }
+          }
         }),
       ],
     },
