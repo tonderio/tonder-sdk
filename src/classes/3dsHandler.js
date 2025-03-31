@@ -1,8 +1,11 @@
+import { getBaseUrlByEnv } from "../shared/utils/apiFetch";
+
 export class ThreeDSHandler {
-  constructor({ payload = null, apiKey, baseUrl }) {
+  constructor({ payload = null, apiKey, baseUrl, mode }) {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
     this.payload = payload;
+    this.mode = mode;
   }
 
   saveVerifyTransactionUrl() {
@@ -167,7 +170,7 @@ export class ThreeDSHandler {
   async verifyTransactionStatus() {
     const verifyUrl = this.getUrlWithExpiration();
     if (verifyUrl) {
-      const url = `${this.baseUrl}${verifyUrl}`;
+      const url = verifyUrl.startsWith("https://") ? verifyUrl : `${this.baseUrl}${verifyUrl}`;
       try {
         const response = await fetch(url, {
           method: "GET",

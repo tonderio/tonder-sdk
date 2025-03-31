@@ -76,6 +76,8 @@ const checkoutData = {
     state: "Durango",
     postCode: "34105",
     email: "adrian@email.com",
+    // use @testuser.com for mercado testing environment
+    // email: "test@testuser.com",
     phone: "8161234567",
   },
   currency: "mxn",
@@ -100,6 +102,10 @@ const checkoutData = {
   // }
   // Reference from the merchant
   order_reference: "ORD-123456",
+  // configs for apm (mercadopago)
+  // apm_config: {
+  //   binary_mode: true,
+  // },
 };
 
 // localhost

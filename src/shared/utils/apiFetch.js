@@ -18,3 +18,13 @@ export function fetchWithSignatureHeaders(
 
   return fetch(url, options);
 }
+
+export const getBaseUrlByEnv = (mode = "stage") => {
+  const prefixByEnv = {
+    production: "",
+    stage: "-stage",
+    development: "-dev",
+    "": "-dev",
+  };
+  return `https://api${prefixByEnv[mode]}.tonder.io`;
+};

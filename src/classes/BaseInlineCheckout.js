@@ -26,6 +26,7 @@ export class BaseInlineCheckout {
     this.process3ds = new ThreeDSHandler({
       apiKey: apiKey,
       baseUrl: this.baseUrl,
+      mode: this.mode,
     });
   }
 
@@ -186,6 +187,7 @@ export class BaseInlineCheckout {
         ...(typeof MP_DEVICE_SESSION_ID !== "undefined"
           ? { mp_device_session_id: MP_DEVICE_SESSION_ID }
           : {}),
+        apm_config: this.apm_config,
       };
 
       const jsonResponseRouter = await startCheckoutRouter(
@@ -214,6 +216,7 @@ export class BaseInlineCheckout {
     this.#handleMetadata(data);
     this.#handleCurrency(data);
     this.#handleCard(data);
+    this.#handleApmConfig(data);
   }
 
   async #fetchMerchantData() {
@@ -227,7 +230,11 @@ export class BaseInlineCheckout {
 
   async #resumeCheckout(response) {
     // Stop the routing process if the transaction is either hard declined or successful
-    if (response?.decline?.error_type === "Hard" || !!response?.checkout?.is_route_finished) {
+    if (
+      response?.decline?.error_type === "Hard" ||
+      !!response?.checkout?.is_route_finished ||
+      !!response?.is_route_finished
+    ) {
       return response;
     }
 
@@ -238,7 +245,7 @@ export class BaseInlineCheckout {
     if (response) {
       globalLoader.show();
       const routerItems = {
-        checkout_id: response?.checkout?.id,
+        checkout_id: response?.checkout?.id || response?.checkout_id,
       };
       try {
         return await startCheckoutRouter(
@@ -290,6 +297,10 @@ export class BaseInlineCheckout {
 
   #handleCard(data) {
     this.card = data?.card;
+  }
+
+  #handleApmConfig(data) {
+    this.apm_config = data?.apm_config;
   }
 
   #setCartItems(items) {
