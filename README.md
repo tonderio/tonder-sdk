@@ -369,7 +369,62 @@ When calling the `payment` method, use the following data structure:
 
 - **payment_method**: (for LiteCheckout) String indicating the alternative payment method to be used (e.g., "Spei"). This is only used when not paying with a card.
 
+- **apm_config**: (Optional) Configuration object for APM-specific options. Only applicable when using alternative payment methods like Mercado Pago.
+<details>
+<summary>APM Config Fields</summary>
+
+| **Field**                           | **Type**                                   | **Description**                                                           |
+|-------------------------------------|--------------------------------------------|---------------------------------------------------------------------------|
+| `binary_mode`                       | `boolean`                                  | If `true`, payment must be approved or rejected immediately (no pending). |
+| `additional_info`                   | `string`                                   | Extra info shown during checkout and in payment details.                  |
+| `back_urls`                         | `object`                                   | URLs to redirect the user after payment.                                  |
+| └─ `success`                        | `string`                                   | Redirect URL after successful payment.                                    |
+| └─ `pending`                        | `string`                                   | Redirect URL after pending payment.                                       |
+| └─ `failure`                        | `string`                                   | Redirect URL after failed/canceled payment.                               |
+| `auto_return`                       | `"approved"` \| `"all"`                    | Enables auto redirection after payment completion.                        |
+| `payment_methods`                   | `object`                                   | Payment method restrictions and preferences.                              |
+| └─ `excluded_payment_methods[]`     | `array`                                    | List of payment methods to exclude.                                       |
+| └─ `excluded_payment_methods[].id`  | `string`                                   | ID of payment method to exclude (e.g., "visa").                           |
+| └─ `excluded_payment_types[]`       | `array`                                    | List of payment types to exclude.                                         |
+| └─ `excluded_payment_types[].id`    | `string`                                   | ID of payment type to exclude (e.g., "ticket").                           |
+| └─ `default_payment_method_id`      | `string`                                   | Default payment method (e.g., "master").                                  |
+| └─ `installments`                   | `number`                                   | Max number of installments allowed.                                       |
+| └─ `default_installments`           | `number`                                   | Default number of installments suggested.                                 |
+| `expires`                           | `boolean`                                  | Whether the preference has expiration.                                    |
+| `expiration_date_from`              | `string` (ISO 8601)                        | Start of validity period (e.g. `"2025-01-01T12:00:00-05:00"`).            |
+| `expiration_date_to`                | `string` (ISO 8601)                        | End of validity period.                                                   |
+| `differential_pricing`              | `object`                                   | Configuration for differential pricing.                                   |
+| └─ `id`                             | `number`                                   | ID of the differential pricing strategy.                                  |
+| `marketplace`                       | `string`                                   | Marketplace identifier (default: "NONE").                                 |
+| `marketplace_fee`                   | `number`                                   | Fee to collect as marketplace commission.                                 |
+| `tracks[]`                          | `array`                                    | Ad tracking configurations.                                               |
+| └─ `type`                           | `"google_ad"` \| `"facebook_ad"`           | Type of tracker.                                                          |
+| └─ `values.conversion_id`           | `string`                                   | Google Ads conversion ID.                                                 |
+| └─ `values.conversion_label`        | `string`                                   | Google Ads label.                                                         |
+| └─ `values.pixel_id`                | `string`                                   | Facebook Pixel ID.                                                        |
+| `statement_descriptor`              | `string`                                   | Text on payer’s card statement (max 16 characters).                       |
+| `shipments`                         | `object`                                   | Shipping configuration.                                                   |
+| └─ `mode`                           | `"custom"` \| `"me2"` \| `"not_specified"` | Type of shipping mode.                                                    |
+| └─ `local_pickup`                   | `boolean`                                  | Enable pickup at local branch (for `me2`).                                |
+| └─ `dimensions`                     | `string`                                   | Package dimensions (e.g. `10x10x10,500`).                                 |
+| └─ `default_shipping_method`        | `number`                                   | Default shipping method (for `me2`).                                      |
+| └─ `free_methods[]`                 | `array`                                    | Shipping methods offered for free (for `me2`).                            |
+| └─ `free_methods[].id`              | `number`                                   | ID of free shipping method.                                               |
+| └─ `cost`                           | `number`                                   | Shipping cost (only for `custom` mode).                                   |
+| └─ `free_shipping`                  | `boolean`                                  | If `true`, shipping is free (`custom` only).                              |
+| └─ `receiver_address`               | `object`                                   | Shipping address.                                                         |
+| └─ `receiver_address.zip_code`      | `string`                                   | ZIP or postal code.                                                       |
+| └─ `receiver_address.street_name`   | `string`                                   | Street name.                                                              |
+| └─ `receiver_address.street_number` | `number`                                   | Street number.                                                            |
+| └─ `receiver_address.city_name`     | `string`                                   | City name.                                                                |
+| └─ `receiver_address.state_name`    | `string`                                   | State name.                                                               |
+| └─ `receiver_address.country_name`  | `string`                                   | Country name.                                                             |
+| └─ `receiver_address.floor`         | `string`                                   | Floor (optional).                                                         |
+| └─ `receiver_address.apartment`     | `string`                                   | Apartment or unit (optional).                                             |
+</details>
+
 Note: The exact fields required may vary depending on whether you're using InlineCheckout or LiteCheckout, and the specific payment method being used.
+
 
 ```javascript
 const paymentData = {

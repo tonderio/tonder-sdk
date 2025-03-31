@@ -18,6 +18,10 @@ const PAYMENT_METHODS_CATALOG = {
     label: "SPEI",
     icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/spei.png",
   },
+  [PAYMENT_METHOD_APM.MERCADOPAGO]: {
+    label: "Mercado Pago",
+    icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/mercadopago.png",
+  },
   [PAYMENT_METHOD_APM.PAYPAL]: {
     label: "Paypal",
     icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/paypal.png",

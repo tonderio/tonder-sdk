@@ -1,4 +1,5 @@
 import { ICustomer } from "./customer";
+import { IMPConfigRequest } from "./mercado_pago";
 
 export interface IStartCheckoutRequestBase {
   name: any;
@@ -105,6 +106,7 @@ export interface IProcessPaymentRequest {
   currency?: string;
   payment_method?: string;
   card?: ICardFields | string;
+  apm_config?: IMPConfigRequest | Record<string, any>;
 }
 
 export interface ICardFields {
