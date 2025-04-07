@@ -438,6 +438,10 @@ const paymentData = {
     postCode: "12345",
     email: "john.doe@example.com",
     phone: "1234567890",
+    identification:{
+      type: "CPF",
+      number: "19119119100"
+    }
   },
   cart: {
     total: "100.00",
@@ -571,7 +575,7 @@ If using the Tonder SDK, include your generated signature in the `signatures` fi
 
 ```javascript
 const inlineCheckout = new InlineCheckout({
-  mode: "development",
+  mode: "stage",
   apiKey: "<YOUR_API_KEY>",
   returnUrl: "https://your-website.com/checkout",
   signatures: {

@@ -183,6 +183,7 @@ export class BaseInlineCheckout {
         metadata: this.metadata,
         browser_info: getBrowserInfo(),
         currency: this.currency,
+        ...(this.customer?.identification ? { identification: this.customer.identification } : {}),
         ...(!!payment_method ? { payment_method } : { card }),
         ...(typeof MP_DEVICE_SESSION_ID !== "undefined"
           ? { mp_device_session_id: MP_DEVICE_SESSION_ID }
