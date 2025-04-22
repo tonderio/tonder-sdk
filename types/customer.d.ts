@@ -9,4 +9,8 @@ export type ICustomer = {
   email: string;
   phone?: string;
   address?: string;
+  identification?: {
+    type: string;
+    number: string;
+  };
 };
