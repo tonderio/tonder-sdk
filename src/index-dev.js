@@ -76,9 +76,14 @@ const checkoutData = {
     state: "Durango",
     postCode: "34105",
     email: "adrian@email.com",
+    phone: "8161234567",
     // use @testuser.com for mercado testing environment
     // email: "test@testuser.com",
-    phone: "8161234567",
+    // use for mercado APM (for now)
+    // identification:{
+    //   type: "CPF",
+    //   number: "19119119100"
+    // }
   },
   currency: "mxn",
   cart: {
@@ -119,10 +124,10 @@ const commonConfig = {
   apiKey,
   returnUrl: returnUrl + "?mode=" + getCheckoutMode(),
   styles: customStyles,
-  signatures: {
-    transaction: "5nghOpIuuU4wsGvkooQKVgj+HGC5zx83LUw31nHKD4s=",
-    customer: "2EVYDCLSWA6GRrC8mvJIgAltoBjkO1BCyqAI0H5l5v4=",
-  },
+  // signatures: {
+  //   transaction: "5nghOpIuuU4wsGvkooQKVgj+HGC5zx83LUw31nHKD4s=",
+  //   customer: "2EVYDCLSWA6GRrC8mvJIgAltoBjkO1BCyqAI0H5l5v4=",
+  // },
 };
 
 let inlineCheckout;
