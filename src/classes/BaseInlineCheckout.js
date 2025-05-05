@@ -108,7 +108,12 @@ export class BaseInlineCheckout {
     const total = Number(this.cartTotal);
     try {
       let deviceSessionIdTonder;
-      if (!deviceSessionIdTonder && openpay_keys.merchant_id && openpay_keys.public_key) {
+      if (
+        !deviceSessionIdTonder &&
+        openpay_keys.merchant_id &&
+        openpay_keys.public_key &&
+        !payment_method
+      ) {
         deviceSessionIdTonder = await getOpenpayDeviceSessionID(
           openpay_keys.merchant_id,
           openpay_keys.public_key,
