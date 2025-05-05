@@ -362,7 +362,7 @@ async function getFields(data, collectContainer) {
 
 const regexEmpty = RegExp("^(?!\s*$).+");
 const regexMatchRule = {
-  type: Skyflow.ValidationRuleType.REGEX_MATCH_RULE,
+  type: "REGEX_MATCH_RULE",
   params: {
     regex: regexEmpty,
     error: "El campo es requerido", // Optional, default error is 'VALIDATION FAILED'.
