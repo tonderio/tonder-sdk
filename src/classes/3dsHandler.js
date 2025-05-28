@@ -114,15 +114,9 @@ export class ThreeDSHandler {
     return parameters;
   }
 
-  // TODO: Remove this duplication
-  handleSuccessTransaction(response) {
+  handleCompletedTransaction(response) {
     this.removeVerifyTransactionUrl();
-    console.log("Transacción autorizada");
-    return response;
-  }
-
-  handleDeclinedTransaction(response) {
-    this.removeVerifyTransactionUrl();
+    console.log("Transacción completada");
     return response;
   }
 
@@ -159,10 +153,13 @@ export class ThreeDSHandler {
     // Azul property
     if (response_json.status === "Pending" && response_json.redirect_post_url) {
       return await this.handle3dsChallenge(response_json);
-    } else if (["Success", "Authorized"].includes(response_json.status)) {
-      return this.handleSuccessTransaction(response_json);
-    } else {
-      this.handleDeclinedTransaction();
+    } else if (["Success", "Authorized", "Declined"].includes(response_json.status)) {
+      return this.handleCompletedTransaction(response_json);
+    } else if (
+      response_json.transaction_status === "Pending" ||
+      response_json.status === "Pending"
+    ) {
+      // Don't remove URL for pending transactions to allow polling
       return response_json;
     }
   }
