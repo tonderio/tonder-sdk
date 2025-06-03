@@ -239,7 +239,8 @@ export class BaseInlineCheckout {
     if (
       response?.decline?.error_type === "Hard" ||
       !!response?.checkout?.is_route_finished ||
-      !!response?.is_route_finished
+      !!response?.is_route_finished ||
+      ["Pending"].includes(response?.transaction_status)
     ) {
       return response;
     }
