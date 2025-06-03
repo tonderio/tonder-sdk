@@ -7,6 +7,38 @@ const JavaScriptObfuscator = require('webpack-obfuscator');
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
 
+  let jSObfuscatorOptions = {
+    compact: true,
+    controlFlowFlattening: true,
+    controlFlowFlatteningThreshold: 0.3,
+    deadCodeInjection: false,
+    identifierNamesGenerator: "mangled-shuffled",
+    simplify: true,
+    splitStrings: true,
+    splitStringsChunkLength: 5,
+    stringArray: true,
+    stringArrayCallsTransform: true,
+    stringArrayCallsTransformThreshold: 0.5,
+    stringArrayEncoding: ['base64'],
+    stringArrayIndexShift: true,
+    stringArrayRotate: true,
+    stringArrayShuffle: true,
+    stringArrayWrappersCount: 1,
+    stringArrayWrappersChainedCalls: true,
+    stringArrayWrappersParametersMaxCount: 2,
+    stringArrayWrappersType: 'variable',
+    stringArrayThreshold: 0.5,
+    transformObjectKeys: true,
+    unicodeEscapeSequence: false,
+  }
+
+  if (isProduction) {
+    jSObfuscatorOptions = {
+      debugProtection: true,
+      debugProtectionInterval: 2000,
+    }
+  }
+
   const plugins = [
     new webpack.DefinePlugin({
       'process.env.BASE_URL': JSON.stringify(process.env.BASE_URL),
@@ -14,32 +46,7 @@ module.exports = (env, argv) => {
     new webpack.IgnorePlugin({
       resourceRegExp: /samples\//
     }),
-    new JavaScriptObfuscator({
-      compact: true,
-      controlFlowFlattening: true,
-      controlFlowFlatteningThreshold: 0.3,
-      deadCodeInjection: false,
-      debugProtection: true,
-      debugProtectionInterval: 2000,
-      identifierNamesGenerator: "mangled-shuffled",
-      simplify: true,
-      splitStrings: true,
-      splitStringsChunkLength: 5,
-      stringArray: true,
-      stringArrayCallsTransform: true,
-      stringArrayCallsTransformThreshold: 0.5,
-      stringArrayEncoding: ['base64'],
-      stringArrayIndexShift: true,
-      stringArrayRotate: true,
-      stringArrayShuffle: true,
-      stringArrayWrappersCount: 1,
-      stringArrayWrappersChainedCalls: true,
-      stringArrayWrappersParametersMaxCount: 2,
-      stringArrayWrappersType: 'variable',
-      stringArrayThreshold: 0.5,
-      transformObjectKeys: true,
-      unicodeEscapeSequence: false,
-    })
+    new JavaScriptObfuscator({...jSObfuscatorOptions})
   ];
 
   if (isProduction) {

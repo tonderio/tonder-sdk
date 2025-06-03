@@ -5,6 +5,7 @@
   "scripts": {
     "start": "webpack-dev-server",
     "build": "webpack --config webpack.config.js --mode production",
+    "build-stage": "webpack --config webpack.config.js",
     "prepare": "husky install",
     "format": "prettier --write .",
     "lint": "eslint 'src/**/*.js'",
