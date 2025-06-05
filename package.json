@@ -1,10 +1,11 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.16.10",
+  "version": "1.16.11",
   "description": "tonder sdk for integrations",
   "scripts": {
     "start": "webpack-dev-server",
     "build": "webpack --config webpack.config.js --mode production",
+    "build-stage": "webpack --config webpack.config.js",
     "prepare": "husky install",
     "format": "prettier --write .",
     "lint": "eslint 'src/**/*.js'",
