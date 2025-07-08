@@ -242,6 +242,14 @@ const PAYMENT_METHODS_CATALOG = {
     label: "Acyvalores",
     icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/store.png",
   },
+  [PAYMENT_METHOD_APM.SAFETYPAYCASH]: {
+    label: "Paga en Efectivo",
+    icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/cash_apm_sp.png",
+  },
+  [PAYMENT_METHOD_APM.SAFETYPAYTRANSFER]: {
+    label: "Paga por Transferencia",
+    icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/transfer_apm_sp.png",
+  },
 };
 
 export const getPaymentMethodDetails = scheme_data => {

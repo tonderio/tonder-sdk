@@ -973,6 +973,15 @@ export const apmItemsTemplate = data => {
       <div class="ac-panel">
         <div class="ac-option-panel-container tndr-pm-item-container" id="acContainer${apm.pk}">
         <div class="tndr-hide-text">accordion</div>
+              ${
+                apm.payment_method.toUpperCase().includes("SAFETYPAY")
+                  ? `<div class="safetypay-banks-container-placeholder" id="safetypay-banks-${apm.pk}">
+                  <div class="safetypay-banks-loading">
+                    Cargando bancos disponibles...
+                  </div>
+                </div>`
+                  : ""
+              }
               ${buttonAndMessagesTemplate({
                 ...data,
                 showPaymentButton,
@@ -1101,4 +1110,176 @@ const buttonAndMessagesTemplate = data => {
 const getFontFamily = data => {
   const base = data?.customStyles?.labelStyles?.base;
   return base?.fontFamily || '"Inter", sans-serif';
+};
+
+/**
+ * Template for SafetyPay bank selection
+ * @param {Object} data - Data object containing banks and configuration
+ * @returns {string} HTML template for SafetyPay bank selection
+ */
+export const safetyPayBankTemplate = data => {
+  const { banks, paymentType, title } = data;
+
+  if (!banks || banks.length === 0) {
+    return `
+      <div class="safetypay-banks-container">
+        <h4>${title}</h4>
+        <p class="no-banks-message">No hay bancos disponibles para este método de pago.</p>
+      </div>
+    `;
+  }
+
+  const banksHTML = banks
+    .map(bankData => {
+      const bank = bankData.bank;
+      return `
+      <div class="safetypay-bank-item">
+        <input 
+          type="radio" 
+          id="safetypay-bank-${bank.id}" 
+          name="safetypay-bank-${paymentType}" 
+          value="${bank.id}" 
+          data-bank-code="${bank.bank_code}"
+          data-bank-name="${bank.name}"
+          class="safetypay-bank-radio"
+        />
+        <label for="safetypay-bank-${bank.id}" class="safetypay-bank-label">
+          <div class="safetypay-bank-logo">
+            ${
+              bank.logo
+                ? `<img src="${bank.logo}" alt="${bank.name}" class="bank-logo-img" />`
+                : `<div class="bank-logo-placeholder">${bank.name.charAt(0)}</div>`
+            }
+          </div>
+          <div class="safetypay-bank-name">${bank.name}</div>
+        </label>
+      </div>
+    `;
+    })
+    .join("");
+
+  return `
+    <div class="safetypay-banks-container">
+      <h4 class="safetypay-banks-title">${title}</h4>
+      <div class="safetypay-banks-grid">
+        ${banksHTML}
+      </div>
+    </div>
+    <style>
+      .safetypay-banks-container {
+        padding: 20px 0;
+      }
+      
+      .safetypay-banks-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: var(--tndr-text-color);
+        font-family: ${getFontFamily()};
+      }
+      
+      .safetypay-banks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .safetypay-bank-item {
+        position: relative;
+      }
+      
+      .safetypay-bank-radio {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+      
+      .safetypay-bank-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1px solid var(--tndr-border-light);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: var(--tndr-background);
+        font-family: ${getFontFamily()};
+      }
+      
+      .safetypay-bank-label:hover {
+        border-color: var(--tndr-border-hover);
+        background: var(--tndr-background-hover);
+      }
+      
+      .safetypay-bank-radio:checked + .safetypay-bank-label {
+        border-color: var(--tndr-primary-color);
+        background: var(--tndr-primary-light);
+      }
+      
+      .safetypay-bank-logo {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--tndr-background-light);
+      }
+      
+      .bank-logo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      
+      .bank-logo-placeholder {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--tndr-text-secondary);
+      }
+      
+      .safetypay-bank-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--tndr-text-color);
+        flex: 1;
+      }
+      
+      .no-banks-message {
+        color: var(--tndr-text-secondary);
+        font-style: italic;
+        text-align: center;
+        padding: 20px;
+      }
+      
+      /* Loading state */
+      .safetypay-banks-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: var(--tndr-text-secondary);
+      }
+      
+      .safetypay-banks-loading::after {
+        content: '';
+        width: 20px;
+        height: 20px;
+        margin-left: 10px;
+        border: 2px solid var(--tndr-border-light);
+        border-top: 2px solid var(--tndr-primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  `;
 };
