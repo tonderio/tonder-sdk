@@ -2,7 +2,7 @@ import { fetchBusiness } from "./businessApi";
 import { registerOrFetchCustomer } from "./customerApi";
 import { createOrder } from "./checkoutApi";
 import { saveCustomerCard, removeCustomerCard, fetchCustomerCards } from "./cardApi";
-import { fetchCustomerAPMs } from "./apmApi";
+import { fetchCustomerAPMs, fetchSafetyPayBanks, fetchSafetyPayBanksByType } from "./apmApi";
 import { getOpenpayDeviceSessionID } from "./openPayApi";
 
 export {
@@ -13,5 +13,7 @@ export {
   fetchCustomerCards,
   fetchBusiness,
   fetchCustomerAPMs,
+  fetchSafetyPayBanks,
+  fetchSafetyPayBanksByType,
   getOpenpayDeviceSessionID,
 };

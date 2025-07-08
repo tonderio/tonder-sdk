@@ -193,7 +193,7 @@ export class BaseInlineCheckout {
         ...(typeof MP_DEVICE_SESSION_ID !== "undefined"
           ? { mp_device_session_id: MP_DEVICE_SESSION_ID }
           : {}),
-        apm_config: this.apm_config,
+        apm_config: this.#buildApmConfig(payment_method),
       };
 
       const jsonResponseRouter = await startCheckoutRouter(
@@ -310,6 +310,50 @@ export class BaseInlineCheckout {
     this.apm_config = data?.apm_config;
   }
 
+  #buildApmConfig(payment_method) {
+    if (payment_method && this.#isSafetyPayMethod(payment_method)) {
+      return this.#buildSafetyPayApmConfig(payment_method);
+    }
+
+    return this.apm_config || {};
+  }
+
+  #isSafetyPayMethod(paymentMethod) {
+    return (
+      paymentMethod &&
+      (paymentMethod.toLowerCase().includes("safetypay") ||
+        paymentMethod.toLowerCase() === "safetypaycash" ||
+        paymentMethod.toLowerCase() === "safetypaytransfer")
+    );
+  }
+
+  #buildSafetyPayApmConfig(paymentMethod) {
+    const selectedBank = this.getSelectedSafetyPayBank?.() || null;
+
+    if (!selectedBank) {
+      console.warn("SafetyPay payment attempted but no bank selected");
+      return {};
+    }
+    const channel = paymentMethod.toLowerCase().includes("cash") ? "WP" : "OL";
+
+    const bankInfo = this.getSafetyPayBankInfo(selectedBank);
+
+    const country = bankInfo?.country_name || "México";
+
+    return {
+      country: country,
+      channel: channel,
+      bank_ids: [
+        {
+          id: selectedBank.bankCode,
+        },
+      ],
+    };
+  }
+  getSafetyPayBankInfo(selectedBank) {
+    return null;
+  }
+
   #setCartItems(items) {
     this.cartItems = items;
   }
@@ -339,5 +383,9 @@ export class BaseInlineCheckout {
         return response;
       }
     }
+  }
+
+  getSelectedSafetyPayBank() {
+    return null;
   }
 }
