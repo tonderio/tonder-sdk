@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.16.11",
+  "version": "1.16.12",
   "description": "tonder sdk for integrations",
   "scripts": {
     "start": "webpack-dev-server",
