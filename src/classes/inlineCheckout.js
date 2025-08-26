@@ -3,6 +3,7 @@ import {
   cardItemsTemplate,
   cardTemplate,
   containerCheckoutTemplate,
+  safetyPayBankTemplate,
 } from "../helpers/template.js";
 import { clearSpace, executeCallback, mapCards, showError, showMessage } from "../helpers/utils";
 import { initSkyflow, initUpdateSkyflow } from "../helpers/skyflow";
@@ -13,6 +14,7 @@ import {
   fetchCustomerCards,
   removeCustomerCard,
   saveCustomerCard,
+  fetchSafetyPayBanksByType,
 } from "../data";
 import { MESSAGES } from "../shared/constants/messages";
 import Accordion from "accordion-js";
@@ -27,6 +29,8 @@ export class InlineCheckout extends BaseInlineCheckout {
   #cardsData = [];
   #paymentMethodsData = [];
   #customerData = {};
+  #safetyPayBanksData = {};
+  #selectedSafetyPayBank = null;
   accordionCards = null;
   accordionPaymentMethods = null;
 
@@ -373,7 +377,9 @@ export class InlineCheckout extends BaseInlineCheckout {
 
       const jsonResponseRouter = await this._handleCheckout({
         ...(selected_apm && Object.keys(selected_apm).length > 0
-          ? { payment_method: selected_apm.payment_method }
+          ? {
+              payment_method: selected_apm.payment_method, // Always use the method name string
+            }
           : { card: cardTokens }),
         customer: this.#customerData,
       });
@@ -558,6 +564,8 @@ export class InlineCheckout extends BaseInlineCheckout {
         this.#handleOpenCloseAccordion(type, position, true);
       }
       this.#unmountForm();
+
+      await this.#handleSafetyPaySelection(radio, position, type);
     }
     this.radioChecked = radio.id;
   }
@@ -713,6 +721,130 @@ export class InlineCheckout extends BaseInlineCheckout {
         this.collectContainer.elements.expiryMonthElement.unmount();
       if ("unmount" in this.collectContainer.elements.cvvElement)
         this.collectContainer.elements.cvvElement.unmount();
+    }
+  }
+
+  async #handleSafetyPaySelection(radio, position, type) {
+    try {
+      const paymentMethod = this.#getPaymentMethodByRadioId(radio.id);
+      if (!paymentMethod || !this.#isSafetyPayMethod(paymentMethod.payment_method)) {
+        return;
+      }
+
+      const banksContainer = document.querySelector(`#safetypay-banks-${radio.id}`);
+      if (!banksContainer) return;
+
+      banksContainer.innerHTML = `
+        <div class="safetypay-banks-loading">
+          Cargando bancos disponibles...
+        </div>
+      `;
+
+      const paymentType = paymentMethod.payment_method.toUpperCase().includes("CASH")
+        ? "cash"
+        : "transfer";
+      const banks = await this.#fetchSafetyPayBanks(paymentType);
+
+      this.#safetyPayBanksData[radio.id] = { banks, paymentType };
+
+      this.#renderSafetyPayBanks(banksContainer, banks, paymentType, radio.id);
+    } catch (error) {
+      console.error("Error loading SafetyPay banks:", error);
+      const banksContainer = document.querySelector(`#safetypay-banks-${radio.id}`);
+      if (banksContainer) {
+        banksContainer.innerHTML = `
+          <div class="safetypay-banks-error">
+            <p>Error al cargar los bancos. Por favor, intenta de nuevo.</p>
+          </div>
+        `;
+      }
+    }
+  }
+
+  #isSafetyPayMethod(paymentMethod) {
+    return paymentMethod && paymentMethod.toUpperCase().includes("SAFETYPAY");
+  }
+
+  #getPaymentMethodByRadioId(radioId) {
+    return this.#paymentMethodsData.find(pm => pm.pk == radioId);
+  }
+
+  async #fetchSafetyPayBanks(paymentType) {
+    try {
+      const response = await fetchSafetyPayBanksByType(
+        this.baseUrl,
+        this.apiKeyTonder,
+        paymentType,
+        this.abortController.signal,
+      );
+      return response || [];
+    } catch (error) {
+      console.error("Error fetching SafetyPay banks:", error);
+      return [];
+    }
+  }
+
+  #renderSafetyPayBanks(container, banks, paymentType, radioId) {
+    const title =
+      paymentType === "cash" ? "Selecciona donde pagar en efectivo:" : "Selecciona tu banco:";
+
+    container.innerHTML = safetyPayBankTemplate({
+      banks,
+      paymentType,
+      title,
+    });
+
+    // Add event listeners to bank selection
+    this.#addSafetyPayBankListeners(container, radioId);
+  }
+
+  #addSafetyPayBankListeners(container, radioId) {
+    const bankRadios = container.querySelectorAll(".safetypay-bank-radio");
+
+    bankRadios.forEach(bankRadio => {
+      bankRadio.addEventListener("change", event => {
+        if (event.target.checked) {
+          this.#selectedSafetyPayBank = {
+            paymentMethodId: radioId,
+            bankId: event.target.value,
+            bankCode: event.target.dataset.bankCode,
+            bankName: event.target.dataset.bankName,
+          };
+
+          this.#updateSafetyPayPaymentButton(radioId, true);
+        }
+      });
+    });
+  }
+
+  #updateSafetyPayPaymentButton(radioId, enabled) {
+    const payButton = document.querySelector(`#${this.collectorIds.tonderPayButton}${radioId}`);
+    if (payButton) {
+      payButton.disabled = !enabled;
+      if (enabled) {
+        payButton.classList.remove("disabled");
+      } else {
+        payButton.classList.add("disabled");
+      }
+    }
+  }
+
+  getSelectedSafetyPayBank() {
+    return this.#selectedSafetyPayBank;
+  }
+
+  getSafetyPayBankInfo(selectedBank) {
+    if (!selectedBank) return null;
+
+    try {
+      const bankData = this.#safetyPayBanksData?.[selectedBank.paymentMethodId] || {};
+      const bankInfo = bankData?.banks?.find(
+        bank => bank.bank?.bank_code === selectedBank.bankCode,
+      );
+      return bankInfo?.bank || null;
+    } catch (error) {
+      console.error("Error getting SafetyPay bank info:", error);
+      return null;
     }
   }
 }
