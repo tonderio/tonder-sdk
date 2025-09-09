@@ -1247,6 +1247,7 @@ export const safetyPayBankTemplate = data => {
         font-weight: 500;
         color: var(--tndr-text-color);
         flex: 1;
+        text-align: left;
       }
       
       .no-banks-message {
