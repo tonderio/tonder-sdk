@@ -1246,6 +1246,7 @@ export const safetyPayBankTemplate = data => {
         font-size: 14px;
         font-weight: 500;
         color: var(--tndr-text-color);
+        text-align: left; 
         flex: 1;
       }
       
