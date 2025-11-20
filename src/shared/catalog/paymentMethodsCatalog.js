@@ -250,6 +250,10 @@ const PAYMENT_METHODS_CATALOG = {
     label: "Paga por Transferencia",
     icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/transfer_apm_sp.png",
   },
+  [PAYMENT_METHOD_APM.NEOSURF]: {
+    label: "Neosurf",
+    icon: "https://d35a75syrgujp0.cloudfront.net/payment_methods/neosurf.png",
+  },
 };
 
 export const getPaymentMethodDetails = scheme_data => {
