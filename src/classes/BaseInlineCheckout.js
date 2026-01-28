@@ -324,6 +324,10 @@ export class BaseInlineCheckout {
   }
 
   #buildApmConfig(payment_method) {
+    if (this.apm_config) {
+      return this.apm_config;
+    }
+
     if (payment_method && this.#isSafetyPayMethod(payment_method)) {
       return this.#buildSafetyPayApmConfig(payment_method);
     }
@@ -344,8 +348,9 @@ export class BaseInlineCheckout {
     const selectedBank = this.getSelectedSafetyPayBank?.() || null;
 
     if (!selectedBank) {
-      console.warn("SafetyPay payment attempted but no bank selected");
-      return {};
+      console.warn("SafetyPay payment attempted but no bank selected, using provided apm_config");
+      // Return user's apm_config if available, otherwise empty object
+      return this.apm_config || {};
     }
     const channel = paymentMethod.toLowerCase().includes("cash") ? "WP" : "OL";
 
