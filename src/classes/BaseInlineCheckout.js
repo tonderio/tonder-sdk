@@ -15,6 +15,7 @@ export class BaseInlineCheckout {
   cartTotal = "0";
   secureToken = "";
   signatures = {};
+  #isProcessingPayment = false;
   constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {}, signatures }) {
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
@@ -69,6 +70,15 @@ export class BaseInlineCheckout {
    */
   payment(data) {
     return new Promise(async (resolve, reject) => {
+      // Prevent multiple concurrent payment requests
+      // Silently ignore duplicate clicks without throwing an error
+      if (this.#isProcessingPayment) {
+        console.warn("[Tonder SDK] Payment already in progress, ignoring duplicate request");
+        return;
+      }
+
+      this.#isProcessingPayment = true;
+
       try {
         this.#setCheckoutData(data);
         const response = await this._checkout(data);
@@ -79,6 +89,9 @@ export class BaseInlineCheckout {
         }
       } catch (error) {
         reject(error);
+      } finally {
+        // Reset the flag after payment completes (success or error)
+        this.#isProcessingPayment = false;
       }
     });
   }
@@ -311,6 +324,10 @@ export class BaseInlineCheckout {
   }
 
   #buildApmConfig(payment_method) {
+    if (this.apm_config) {
+      return this.apm_config;
+    }
+
     if (payment_method && this.#isSafetyPayMethod(payment_method)) {
       return this.#buildSafetyPayApmConfig(payment_method);
     }
@@ -331,8 +348,9 @@ export class BaseInlineCheckout {
     const selectedBank = this.getSelectedSafetyPayBank?.() || null;
 
     if (!selectedBank) {
-      console.warn("SafetyPay payment attempted but no bank selected");
-      return {};
+      console.warn("SafetyPay payment attempted but no bank selected, using provided apm_config");
+      // Return user's apm_config if available, otherwise empty object
+      return this.apm_config || {};
     }
     const channel = paymentMethod.toLowerCase().includes("cash") ? "WP" : "OL";
 
