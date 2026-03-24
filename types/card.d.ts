@@ -24,11 +24,3 @@ export interface ISaveCardResponse {
 export interface ISaveCardSkyflowRequest {
   skyflow_id: string;
 }
-
-export interface ISaveCardRequest {
-  card_number: string;
-  cvv: string;
-  expiration_month: string;
-  expiration_year: string;
-  cardholder_name: string;
-}

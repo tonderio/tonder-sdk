@@ -1,3 +1,20 @@
+// Generic field-keyed label/placeholder defaults — shared by InlineCheckout and LiteInlineCheckout
+export const DEFAULT_LABELS = {
+  cardholder_name: "Nombre del titular de la tarjeta",
+  card_number: "Número de tarjeta",
+  cvv: "CVC/CVV",
+  expiration_month: "Mes",
+  expiration_year: "Año",
+};
+
+export const DEFAULT_PLACEHOLDERS = {
+  cardholder_name: "Nombre del titular de la tarjeta",
+  card_number: "1234 1234 1234 1234",
+  cvv: "CVV",
+  expiration_month: "MM",
+  expiration_year: "AA",
+};
+
 export const defaultStyles = {
   inputStyles: {
     base: {
@@ -49,17 +66,17 @@ export const defaultStyles = {
     },
   },
   labels: {
-    nameLabel: "Nombre del titular de la tarjeta",
-    cardLabel: "Número de tarjeta",
-    cvvLabel: "CVC/CVV",
+    nameLabel: DEFAULT_LABELS.cardholder_name,
+    cardLabel: DEFAULT_LABELS.card_number,
+    cvvLabel: DEFAULT_LABELS.cvv,
     expiryDateLabel: "Fecha de expiración",
   },
   placeholders: {
-    namePlaceholder: "Nombre del titular de la tarjeta",
-    cardPlaceholder: "1234 1234 1234 1234",
-    cvvPlaceholder: "CVV",
-    expiryMonthPlaceholder: "MM",
-    expiryYearPlaceholder: "AA",
+    namePlaceholder: DEFAULT_PLACEHOLDERS.cardholder_name,
+    cardPlaceholder: DEFAULT_PLACEHOLDERS.card_number,
+    cvvPlaceholder: DEFAULT_PLACEHOLDERS.cvv,
+    expiryMonthPlaceholder: DEFAULT_PLACEHOLDERS.expiration_month,
+    expiryYearPlaceholder: DEFAULT_PLACEHOLDERS.expiration_year,
   },
 };
 

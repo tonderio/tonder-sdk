@@ -5,6 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        background: #f7f8fa;
+      }
       #checkout-container {
         display: flex;
         justify-content: center;
@@ -56,61 +64,55 @@
         display: none;
         width: 100%;
       }
+
+      /* ── Lite card form ── */
       .card-form {
-        max-width: 400px;
+        max-width: 420px;
         margin: 0 auto;
+        background: #fff;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
       }
       .form-group {
-        margin-bottom: 1.5rem;
-      }
-      .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-      }
-      .form-group input {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
-      }
-      .form-group input:focus {
-        outline: none;
-        border-color: #4a90e2;
+        margin-bottom: 1.25rem;
       }
       .form-row {
         display: flex;
-        gap: 3rem;
+        gap: 1rem;
       }
       .form-row .form-group {
         flex: 1;
       }
+      /* Container divs for Skyflow iframe inputs */
+      .skyflow-field {
+        min-height: 48px;
+      }
       .btn {
-        display: inline-block;
-        padding: 0.75rem 1.5rem;
+        display: block;
+        width: 100%;
+        padding: 0.85rem;
         background-color: #4a90e2;
         color: #fff;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         font-size: 1rem;
+        font-weight: 600;
         cursor: pointer;
         transition: background-color 0.3s ease;
+        margin-top: 1.5rem;
       }
       .btn:hover {
         background-color: #357abd;
       }
+      .btn:disabled {
+        background-color: #a0b8d8;
+        cursor: not-allowed;
+      }
       .cart-details {
         text-align: center;
         font-size: 1.5rem;
-        margin-bottom: 2rem;
-      }
-      .input-md {
-        max-width: 100%;
-      }
-      .invalid {
-        border: 2px solid red !important;
+        margin-bottom: 1.5rem;
       }
     </style>
   <script defer src="bundle.js"></script></head>
@@ -130,36 +132,38 @@
         >
       </div>
 
+      <!-- ── Lite Checkout ── -->
       <div id="lite-content" class="tab-content">
         <div class="cart-details">
           <span>Total&nbsp;</span>
           <div id="cart-total-lite">$399</div>
         </div>
-        <form id="lite-payment-form" class="card-form">
+
+        <div class="card-form">
+          <!-- Skyflow iframe containers — IDs match the default #collect_<field> pattern -->
           <div class="form-group">
-            <label for="card-number">Número de Tarjeta</label>
-            <input type="text" id="card-number" placeholder="1234 5678 9012 3456" required />
+            <div id="collect_cardholder_name" class="skyflow-field"></div>
           </div>
           <div class="form-group">
-            <label for="card-name">Nombre en la Tarjeta</label>
-            <input type="text" id="card-name" placeholder="John Doe" required />
+            <div id="collect_card_number" class="skyflow-field"></div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="month">Fecha de Expiración</label>
-              <div class="form-row">
-                <input class="input-md" type="text" id="month" placeholder="MM" required />
-                <input class="input-md" type="text" id="year" placeholder="AA" required />
-              </div>
+              <div id="collect_expiration_month" class="skyflow-field"></div>
             </div>
             <div class="form-group">
-              <label for="cvv">CVV</label>
-              <input class="input-md" type="text" id="cvv" placeholder="123" required />
+              <div id="collect_expiration_year" class="skyflow-field"></div>
             </div>
           </div>
-          <button type="submit" class="btn" id="pay-button-lite">Pagar Ahora</button>
-        </form>
+          <div class="form-group">
+            <div id="collect_cvv" class="skyflow-field"></div>
+          </div>
+
+          <button class="btn" id="pay-button-lite">Pagar Ahora</button>
+        </div>
       </div>
+
+      <!-- ── Inline Checkout ── -->
       <div id="inline-content" class="tab-content">
         <div class="cart-details">
           <span>Total&nbsp</span>

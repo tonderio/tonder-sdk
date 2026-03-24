@@ -66,7 +66,7 @@ module.exports = (env, argv) => {
     mode: isProduction ? 'production' : 'development',
     entry: isProduction ? './src/index.js': './src/index-dev.js',
     output: {
-      path: path.resolve(__dirname, 'v1'),
+      path: path.resolve(__dirname, 'v2'),
       filename: isProduction ? 'bundle.min.js' : 'bundle.js',
       library: 'TonderSdk',
       libraryTarget: 'umd',

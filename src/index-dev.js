@@ -1,9 +1,71 @@
 import { InlineCheckout } from "./classes/inlineCheckout";
 import { LiteInlineCheckout } from "./classes/LiteInlineCheckout";
-import { Maskito } from "@maskito/core";
-import { validateCardNumber } from "./helpers/validations";
+// ── Shared checkout data ──────────────────────────────────────────────────────
 
-const customStyles = {
+const checkoutData = {
+  customer: {
+    firstName: "Adrian",
+    lastName: "Martinez",
+    country: "Mexico",
+    address: "Pinos 507, Col El Tecuan",
+    city: "Durango",
+    state: "Durango",
+    postCode: "34105",
+    email: "adrian@email.com",
+    phone: "8161234567",
+  },
+  currency: "mxn",
+  cart: {
+    total: 399,
+    items: [
+      {
+        description: "Black T-Shirt",
+        quantity: 1,
+        price_unit: 1,
+        discount: 0,
+        taxes: 0,
+        product_reference: 1,
+        name: "T-Shirt",
+        amount_total: 399,
+      },
+    ],
+  },
+  order_reference: "ORD-123456",
+};
+
+// localhost
+const apiKey = "11e3d3c3e95e0eaabbcae61ebad34ee5f93c3d27";
+const apiSecretKey = "197967d431010dc1a129e3f726cb5fd27987da92";
+const returnUrl = "http://localhost:8080/";
+// stage
+// const apiKey = "8365683bdc33dd6d50fe2397188d79f1a6765852";
+
+const BASE_URL_BY_MODE = {
+  production: "https://app.tonder.io",
+  sandbox: "https://stage.tonder.io",
+  stage: "https://stage.tonder.io",
+  development: "http://localhost:8000",
+};
+
+/**
+ * Fetches a short-lived secure token required for card operations (save, list, delete).
+ * In production this call should be made server-side to avoid exposing the API key.
+ */
+async function fetchSecureToken(mode) {
+  const baseUrl = BASE_URL_BY_MODE[mode] ?? BASE_URL_BY_MODE.stage;
+  const { access } = await fetch(`${baseUrl}/api/secure-token/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Token ${apiSecretKey}`,
+      "Content-Type": "application/json",
+    },
+  }).then(r => r.json());
+  return access;
+}
+
+// ── InlineCheckout styles (legacy format, used by InlineCheckout only) ────────
+
+const inlineCustomStyles = {
   inputStyles: {
     base: {
       border: "2px dashed #4a90e2",
@@ -22,14 +84,10 @@ const customStyles = {
       left: "6px",
       bottom: "calc(50% - 12px)",
     },
-    complete: {
-      color: "#4caf50",
-    },
+    complete: { color: "#4caf50" },
     empty: {},
     focus: {},
-    invalid: {
-      border: "1px solid #f44336",
-    },
+    invalid: { border: "1px solid #f44336" },
     global: {
       "@import":
         'url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap")',
@@ -66,69 +124,85 @@ const customStyles = {
   },
 };
 
-const checkoutData = {
-  customer: {
-    firstName: "Adrian",
-    lastName: "Martinez",
-    country: "Mexico",
-    address: "Pinos 507, Col El Tecuan",
-    city: "Durango",
-    state: "Durango",
-    postCode: "34105",
-    email: "adrian@email.com",
-    phone: "8161234567",
-    // use @testuser.com for mercado testing environment
-    // email: "test@testuser.com",
-    // use for mercado APM (for now)
-    // identification:{
-    //   type: "CPF",
-    //   number: "19119119100"
-    // }
-  },
-  currency: "mxn",
-  cart: {
-    total: 399,
-    items: [
-      {
-        description: "Black T-Shirt",
-        quantity: 1,
-        price_unit: 1,
-        discount: 0,
-        taxes: 0,
-        product_reference: 1,
-        name: "T-Shirt",
-        amount_total: 399,
+// ── LiteInlineCheckout customization (new secure-input format) ────────────────
+
+const liteCustomization = {
+  styles: {
+    // Global card form styles — applied to all fields unless overridden per-field
+    cardForm: {
+      inputStyles: {
+        base: {
+          border: "1.5px solid #d0d5dd",
+          padding: "10px 14px",
+          borderRadius: "8px",
+          color: "#1d1d1d",
+          backgroundColor: "#fff",
+          fontFamily: '"Inter", sans-serif',
+          fontSize: "14px",
+        },
+        focus: {
+          borderColor: "#4a90e2",
+          boxShadow: "0 0 0 3px rgba(74,144,226,0.15)",
+          outline: "none",
+        },
+        complete: { borderColor: "#27ae60" },
+        invalid: { borderColor: "#e74c3c", color: "#c0392b" },
       },
-    ],
+      labelStyles: {
+        base: {
+          fontSize: "12px",
+          fontWeight: "600",
+          color: "#344054",
+          fontFamily: '"Inter", sans-serif',
+          textTransform: "uppercase",
+          letterSpacing: "0.4px",
+        },
+      },
+      errorStyles: {
+        base: { color: "#e74c3c", fontSize: "11px", marginTop: "3px" },
+      },
+    },
+    // Per-field override example: card_number gets letter-spacing for readability
+    cardNumber: {
+      inputStyles: {
+        base: {
+          border: "1.5px solid #d0d5dd",
+          padding: "10px 14px",
+          borderRadius: "8px",
+          color: "#1d1d1d",
+          backgroundColor: "#fff",
+          fontFamily: '"Inter", sans-serif',
+          fontSize: "14px",
+        },
+        focus: {
+          borderColor: "#4a90e2",
+          boxShadow: "0 0 0 3px rgba(74,144,226,0.15)",
+          outline: "none",
+        },
+        complete: { borderColor: "#27ae60" },
+        invalid: { borderColor: "#e74c3c", color: "#c0392b" },
+      },
+    },
+    // Show the card network icon inside the card number field
+    enableCardIcon: true,
   },
-  // card: { "skyflow_id": "53ca875c-16fd-4395-8ac9-c756613dbaf9" },
-  // metadata: {
-  //   order_id: 123456
-  // }
-  // Reference from the merchant
-  order_reference: "ORD-123456",
-  // configs for apm (mercadopago)
-  // apm_config: {
-  //   binary_mode: true,
-  // },
+  labels: {
+    cardholder_name: "Titular de la tarjeta",
+    card_number: "Número de tarjeta",
+    cvv: "CVV",
+    expiration_month: "Mes",
+    expiration_year: "Año",
+  },
+  placeholders: {
+    cardholder_name: "Nombre como aparece en la tarjeta",
+    card_number: "1234 1234 1234 1234",
+    cvv: "3 dígitos",
+    expiration_month: "MM",
+    expiration_year: "AA",
+  },
 };
 
-// localhost
-const apiKey = "11e3d3c3e95e0eaabbcae61ebad34ee5f93c3d27";
-const returnUrl = "http://localhost:8080/";
-// stage
-// const apiKey = "8365683bdc33dd6d50fe2397188d79f1a6765852";
-
-const commonConfig = {
-  mode: "stage",
-  apiKey,
-  returnUrl: returnUrl + "?mode=" + getCheckoutMode(),
-  styles: customStyles,
-  // signatures: {
-  //   transaction: "5nghOpIuuU4wsGvkooQKVgj+HGC5zx83LUw31nHKD4s=",
-  //   customer: "2EVYDCLSWA6GRrC8mvJIgAltoBjkO1BCyqAI0H5l5v4=",
-  // },
-};
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 let inlineCheckout;
 let liteInlineCheckout;
@@ -138,31 +212,32 @@ function getCheckoutMode() {
   return urlParams.get("mode") || "inline";
 }
 
-function setupInlineCheckout() {
+// ── InlineCheckout setup ──────────────────────────────────────────────────────
+
+async function setupInlineCheckout() {
   inlineCheckout = new InlineCheckout({
-    ...commonConfig,
+    mode: "stage",
+    apiKey,
+    returnUrl: returnUrl + "?mode=" + getCheckoutMode(),
     customization: {
-      displayMode: "light", // usar para cambiar el aspecto ligth/dark
+      styles: inlineCustomStyles,
+      displayMode: "light",
       saveCards: {
-        showSaveCardOption: true, // Usar para mostrar/ocultar el checkbox de guardar tarjeta para futuros pagos
-        autoSave: false, // Usar para guardar automáticamente la tarjeta (sin necesidad de mostrar el checkbox)
-        showSaved: true, // Usar para mostrar/ocultar el listado de tarjetas guardadas
+        showSaveCardOption: true,
+        autoSave: false,
+        showSaved: true,
       },
       paymentButton: {
-        show: true, // Usar para mostrar/ocultar el boton de pago
-        showAmount: true, // Usar para concatener el monto junto al texto del botón de pago
-        text: "Pagar", // Usar para cambiar el texto del botón de pago
+        show: true,
+        showAmount: true,
+        text: "Pagar",
       },
       cancelButton: {
-        show: false, // Usar para mostrar/ocultar el boton de cancelar
-        text: "Cancelar", // Usar para concatener el monto junto al texto del botón de cancelar
+        show: false,
+        text: "Cancelar",
       },
-      paymentMethods: {
-        show: true, // Usar para mostrar/ocultar el listado de métodos de pago
-      },
-      cardForm: {
-        show: true, // Usar para mostrar/ocultar el formulario de tarjeta
-      },
+      paymentMethods: { show: true },
+      cardForm: { show: true },
     },
     callBack: async response => {
       console.log("Payment response", JSON.stringify(response, null, 2));
@@ -173,18 +248,17 @@ function setupInlineCheckout() {
       alert("Payment success");
     },
     callbacks: {
-      // Usar para definir la acción a ejecutar cuando el usuario de click en el botón Cancelar
-      onCancel: () => {
-        console.log("onCancel");
-      },
+      onCancel: () => console.log("onCancel"),
     },
   });
+
+  const secureToken = await fetchSecureToken("stage");
+
   inlineCheckout.configureCheckout({
-    secureToken: "eyJhbGc...",
+    secureToken,
     ...checkoutData,
   });
   inlineCheckout.injectCheckout();
-  // ['Declined', 'Cancelled', 'Failed', 'Success', 'Pending', 'Authorized']
   inlineCheckout.verify3dsTransaction().then(response => {
     console.log("Verify 3ds response", response);
   });
@@ -205,53 +279,263 @@ function setupInlineCheckout() {
   });
 }
 
-function setupLiteInlineCheckout() {
-  loadMaskitoMask();
-  liteInlineCheckout = new LiteInlineCheckout(commonConfig);
-  liteInlineCheckout.configureCheckout({
-    customer: checkoutData.customer,
-    secureToken: "eyJhbGc...",
+// ── LiteInlineCheckout setup ──────────────────────────────────────────────────
+
+// Styles for Skyflow reveal elements rendered inside the credit card visual.
+// Text must be white and background transparent to blend with the card gradient.
+const REVEAL_STYLES = {
+  number: {
+    inputStyles: {
+      base: {
+        color: "#fff",
+        fontSize: "15px",
+        fontFamily: '"Courier New", "Courier", monospace',
+        letterSpacing: "2px",
+        fontWeight: "700",
+        background: "transparent",
+        border: "none",
+        padding: "0",
+        lineHeight: "26px",
+      },
+    },
+  },
+  name: {
+    inputStyles: {
+      base: {
+        color: "rgba(255,255,255,0.9)",
+        fontSize: "11px",
+        fontFamily: '"Inter", sans-serif',
+        letterSpacing: "1px",
+        textTransform: "uppercase",
+        fontWeight: "500",
+        background: "transparent",
+        border: "none",
+        padding: "0",
+        lineHeight: "20px",
+      },
+    },
+  },
+  expiry: {
+    inputStyles: {
+      base: {
+        color: "rgba(255,255,255,0.85)",
+        fontSize: "11px",
+        fontFamily: '"Inter", sans-serif',
+        letterSpacing: "0.5px",
+        fontWeight: "500",
+        background: "transparent",
+        border: "none",
+        padding: "0",
+        lineHeight: "20px",
+      },
+    },
+  },
+};
+
+async function setupLiteInlineCheckout() {
+  const payButton = document.getElementById("pay-button-lite");
+
+  liteInlineCheckout = new LiteInlineCheckout({
+    mode: "stage",
+    apiKey,
+    returnUrl: returnUrl + "?mode=" + getCheckoutMode(),
+    customization: liteCustomization,
+    events: {
+      cardNumberEvents: {
+        onChange: ({ isValid, isEmpty }) => {
+          console.log("[card_number] onChange — isValid:", isValid, "isEmpty:", isEmpty);
+        },
+      },
+      cvvEvents: {
+        onBlur: ({ isValid }) => {
+          console.log("[cvv] onBlur — isValid:", isValid);
+        },
+      },
+    },
   });
-  liteInlineCheckout.injectCheckout().then(() => {
-    liteInlineCheckout.getCustomerCards().then(r => {
-      console.log("customer cards", r);
-    });
+
+  const secureToken = await fetchSecureToken("stage");
+
+  liteInlineCheckout.configureCheckout({
+    secureToken,
+    customer: checkoutData.customer,
+  });
+
+  // Initialize merchant data (vault credentials, etc.)
+  await liteInlineCheckout.injectCheckout();
+
+  // Log saved cards for reference
+  liteInlineCheckout.getCustomerCards().then(r => {
+    console.log("Customer cards:", r);
+  });
+
+  // Mount all five secure Skyflow iframe fields into their containers.
+  // The default container IDs are #collect_<field> — matching the divs in index.html.
+  await liteInlineCheckout.mountCardFields({
+    fields: ["cardholder_name", "card_number", "expiration_month", "expiration_year", "cvv"],
   });
 
   liteInlineCheckout.verify3dsTransaction().then(response => {
     console.log("Verify 3ds response", response);
   });
 
-  const liteForm = document.getElementById("lite-payment-form");
-  const payButton = document.getElementById("pay-button-lite");
-  liteForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
+  // Reveals tokenized card data inside the credit card visual after save.
+  async function showSavedCard() {
+    document.getElementById("card-form-wrapper").style.display = "none";
+    document.getElementById("card-result").style.display = "block";
 
-    const cardData = {
-      card_number: document.getElementById("card-number").value,
-      cardholder_name: document.getElementById("card-name").value,
-      expiration_month: document.getElementById("month").value,
-      expiration_year: document.getElementById("year").value,
-      cvv: document.getElementById("cvv").value,
-    };
+    await liteInlineCheckout.revealCardFields({
+      fields: [
+        {
+          field: "card_number",
+          container_id: "#reveal_card_number",
+          altText: "•••• •••• •••• ••••",
+          styles: REVEAL_STYLES.number,
+        },
+        {
+          field: "cardholder_name",
+          container_id: "#reveal_cardholder_name",
+          altText: "Nombre del titular",
+          styles: REVEAL_STYLES.name,
+        },
+        {
+          field: "expiration_month",
+          container_id: "#reveal_expiry_month",
+          altText: "MM",
+          styles: REVEAL_STYLES.expiry,
+        },
+        {
+          field: "expiration_year",
+          container_id: "#reveal_expiry_year",
+          altText: "AA",
+          styles: REVEAL_STYLES.expiry,
+        },
+      ],
+    });
+  }
 
+  // Pay → save card → reveal card UI
+  payButton.addEventListener("click", async function () {
     try {
-      payButton.textContent = "Procesando...";
-      const paymentData = {
-        ...checkoutData,
-        card: cardData,
-      };
-      const response = await liteInlineCheckout.payment(paymentData);
-      console.log("Respuesta del pago:", response);
-      alert("Pago realizado con éxito");
+      payButton.disabled = true;
+      payButton.textContent = "Procesando pago...";
+
+      await liteInlineCheckout.payment({ ...checkoutData });
+      console.log("Payment successful");
+
+      payButton.textContent = "Guardando tarjeta...";
+      await liteInlineCheckout.saveCustomerCard();
+      console.log("Card saved");
+
+      await showSavedCard();
     } catch (error) {
-      console.error("Error en el pago:", error);
-      alert("Error al realizar el pago");
+      console.error("Error:", error);
+      alert("Error: " + (error?.message || "Error al procesar el pago"));
     } finally {
+      payButton.disabled = false;
       payButton.textContent = "Pagar Ahora";
     }
   });
+
+  // "New payment" — return to the form
+  document.getElementById("new-payment-btn").addEventListener("click", function () {
+    document.getElementById("card-result").style.display = "none";
+    document.getElementById("card-form-wrapper").style.display = "block";
+  });
 }
+
+// ── Enrollment setup (save card + reveal, no payment redirect) ────────────────
+
+let enrollmentCheckout;
+
+async function setupEnrollmentCheckout() {
+  const saveBtn = document.getElementById("save-card-btn");
+
+  enrollmentCheckout = new LiteInlineCheckout({
+    mode: "stage",
+    apiKey,
+    returnUrl: returnUrl + "?mode=enrollment",
+    customization: liteCustomization,
+  });
+
+  const secureToken = await fetchSecureToken("stage");
+
+  enrollmentCheckout.configureCheckout({
+    secureToken,
+    customer: checkoutData.customer,
+  });
+
+  await enrollmentCheckout.injectCheckout();
+
+  await enrollmentCheckout.mountCardFields({
+    fields: [
+      { field: "cardholder_name", container_id: "#enroll_cardholder_name" },
+      { field: "card_number", container_id: "#enroll_card_number" },
+      { field: "expiration_month", container_id: "#enroll_expiration_month" },
+      { field: "expiration_year", container_id: "#enroll_expiration_year" },
+      { field: "cvv", container_id: "#enroll_cvv" },
+    ],
+  });
+
+  async function showEnrolledCard() {
+    document.getElementById("enroll-form-wrapper").style.display = "none";
+    document.getElementById("enroll-card-result").style.display = "block";
+
+    await enrollmentCheckout.revealCardFields({
+      fields: [
+        {
+          field: "card_number",
+          container_id: "#enroll_reveal_card_number",
+          altText: "•••• •••• •••• ••••",
+          styles: REVEAL_STYLES.number,
+        },
+        {
+          field: "cardholder_name",
+          container_id: "#enroll_reveal_cardholder_name",
+          altText: "Nombre del titular",
+          styles: REVEAL_STYLES.name,
+        },
+        {
+          field: "expiration_month",
+          container_id: "#enroll_reveal_expiry_month",
+          altText: "MM",
+          styles: REVEAL_STYLES.expiry,
+        },
+        {
+          field: "expiration_year",
+          container_id: "#enroll_reveal_expiry_year",
+          altText: "AA",
+          styles: REVEAL_STYLES.expiry,
+        },
+      ],
+    });
+  }
+
+  saveBtn.addEventListener("click", async function () {
+    try {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Guardando...";
+
+      await enrollmentCheckout.saveCustomerCard();
+      console.log("Card saved");
+
+      await showEnrolledCard();
+    } catch (error) {
+      console.error("Error al guardar tarjeta:", error);
+      alert("Error: " + (error?.message || "No se pudo guardar la tarjeta"));
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Guardar tarjeta";
+    }
+  });
+
+  document.getElementById("new-enrollment-btn").addEventListener("click", function () {
+    document.getElementById("enroll-card-result").style.display = "none";
+    document.getElementById("enroll-form-wrapper").style.display = "block";
+  });
+}
+
+// ── Tab routing ───────────────────────────────────────────────────────────────
 
 function setupCheckout() {
   const mode = getCheckoutMode();
@@ -262,81 +546,18 @@ function setupCheckout() {
   if (mode === "inline") {
     document.getElementById("inline-content").style.display = "block";
     setupInlineCheckout();
+  } else if (mode === "enrollment") {
+    document.getElementById("enrollment-content").style.display = "block";
+    setupEnrollmentCheckout();
   } else {
     document.getElementById("lite-content").style.display = "block";
     setupLiteInlineCheckout();
   }
 }
 
-function loadMaskitoMask() {
-  const cardNumberInput = document.getElementById("card-number");
-  const monthInput = document.getElementById("month");
-  const yearInput = document.getElementById("year");
-  const cvvInput = document.getElementById("cvv");
-  const nameInput = document.getElementById("card-name");
-
-  // Definir las opciones para las máscaras
-  const cardNumberOptions = {
-    mask: [
-      ...Array(4).fill(/\d/),
-      " ",
-      ...Array(4).fill(/\d/),
-      " ",
-      ...Array(4).fill(/\d/),
-      " ",
-      ...Array(4).fill(/\d/),
-      " ",
-      ...Array(3).fill(/\d/),
-    ],
-  };
-
-  const monthOptions = {
-    mask: [/[0-1]/, /\d/],
-  };
-
-  const yearOptions = {
-    mask: [/\d/, /\d/],
-  };
-
-  const nameOptions = {
-    mask: /^[a-zA-Z\s]*$/,
-  };
-
-  const cvvOptions = {
-    mask: [...Array(3).fill(/\d/)],
-  };
-
-  // Aplicar Maskito a cada campo
-  const cardNumberMask = new Maskito(cardNumberInput, cardNumberOptions);
-  const monthMask = new Maskito(monthInput, monthOptions);
-  const yearMask = new Maskito(yearInput, yearOptions);
-  const cvvMask = new Maskito(cvvInput, cvvOptions);
-  const nameMask = new Maskito(nameInput, nameOptions);
-
-  cardNumberInput.addEventListener("input", () => {
-    const cardNumber = cardNumberInput.value.replace(/\s+/g, "");
-    if (!validateCardNumber(cardNumber)) {
-      cardNumberInput.setCustomValidity("Número de tarjeta inválido");
-      cardNumberInput.classList.add("invalid");
-    } else {
-      cardNumberInput.setCustomValidity("");
-      cardNumberInput.classList.remove("invalid");
-    }
-  });
-
-  window.addEventListener("beforeunload", () => {
-    cardNumberMask.destroy();
-    monthMask.destroy();
-    yearMask.destroy();
-    cvvMask.destroy();
-    nameMask.destroy();
-  });
-}
 function updateActiveTab() {
   const mode = getCheckoutMode();
-  document.querySelectorAll(".tab").forEach(tab => {
-    tab.classList.remove("active");
-  });
+  document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
   document.querySelector(`[data-mode="${mode}"]`).classList.add("active");
 }
 
