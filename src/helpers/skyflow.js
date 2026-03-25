@@ -366,16 +366,15 @@ function handleSkyflowElementEvents({
 
   element.on(Skyflow.EventName.BLUR, state => {
     executeEvent("onBlur", state, events);
-    // updateErrorLabel FIRST — element.update() would overwrite setError message
-    updateErrorLabel(element, errorStyles);
     if (!state.isValid) {
       const msj_error = state.isEmpty
         ? requiredMessage
         : fieldMessage !== ""
           ? `El campo ${fieldMessage} no es válido`
           : invalidMessage;
-      element.setError(msj_error);
+      element.setError(msj_error); // setError FIRST — element.update() must run after or it overwrites the message
     }
+    updateErrorLabel(element, errorStyles);
   });
 
   element.on(Skyflow.EventName.FOCUS, state => {

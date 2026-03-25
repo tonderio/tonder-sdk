@@ -339,7 +339,7 @@ async function setupLiteInlineCheckout() {
     mode: "stage",
     apiKey,
     returnUrl: returnUrl + "?mode=" + getCheckoutMode(),
-    customization: liteCustomization,
+    // customization: liteCustomization,
     events: {
       cardNumberEvents: {
         onChange: ({ isValid, isEmpty }) => {
@@ -545,10 +545,10 @@ function setupCheckout() {
 
   if (mode === "inline") {
     document.getElementById("inline-content").style.display = "block";
-    setupInlineCheckout();
+    // setupInlineCheckout();
   } else if (mode === "enrollment") {
     document.getElementById("enrollment-content").style.display = "block";
-    setupEnrollmentCheckout();
+    // setupEnrollmentCheckout();
   } else {
     document.getElementById("lite-content").style.display = "block";
     setupLiteInlineCheckout();
