@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.16.15",
+  "version": "2.0.0",
   "description": "tonder sdk for integrations",
   "scripts": {
     "start": "webpack-dev-server",
@@ -12,10 +12,10 @@
     "lint:fix": "eslint 'src/**/*.js' --fix"
   },
   "author": "",
-  "main": "v1/bundle.min.js",
+  "main": "v2/bundle.min.js",
   "types": "types/index.d.ts",
   "files": [
-    "v1",
+    "v2",
     "types",
     "LICENSE",
     "README.md"
