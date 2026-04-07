@@ -1,4 +1,10 @@
-import { IBaseCallback, IConfigureCheckout, IInlineCheckoutBaseOptions } from "./common";
+import {
+  IBaseCallback,
+  ICardEvents,
+  ICardStyles,
+  IConfigureCheckout,
+  IInlineCheckoutBaseOptions,
+} from "./common";
 import { IProcessPaymentRequest, IStartCheckoutResponse } from "./checkout";
 import { ITransaction } from "./transaction";
 
@@ -60,6 +66,8 @@ export class InlineCheckout {
 }
 
 export type CustomizationOptions = {
+  /** Card field styles. Uses ICardStyles with optional per-field overrides. */
+  styles?: ICardStyles;
   displayMode?: "light" | "dark";
   saveCards?: {
     showSaveCardOption?: boolean;
@@ -88,7 +96,13 @@ export interface IInlineCallbacks extends IBaseCallback {
 }
 
 export interface IInlineCheckoutOptions extends IInlineCheckoutBaseOptions {
-  styles?: Record<string, string>;
+  /**
+   * @deprecated Use `customization.styles` instead.
+   * Still supported for backward compatibility — if both are provided, `customization.styles` takes precedence.
+   */
+  styles?: ICardStyles;
   customization?: CustomizationOptions;
   callbacks?: IInlineCallbacks;
+  /** Per-field event callbacks (onChange, onFocus, onBlur). */
+  events?: ICardEvents;
 }

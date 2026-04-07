@@ -94,9 +94,28 @@ export class InlineCheckout extends BaseInlineCheckout {
     customization,
     callbacks,
     signatures,
+    events,
   }) {
     super({ mode, apiKey, returnUrl, callBack, signatures });
-    this.customStyles = styles;
+    // customization.styles takes precedence over root-level styles (deprecated).
+    // Backward compat: flat format (inputStyles/labelStyles/errorTextStyles at root) is normalized
+    // to { cardForm: {...} } to match ICardStyles.
+    const rawStyles = customization?.styles ?? styles;
+    let normalizedStyles = rawStyles;
+    if (
+      rawStyles &&
+      (rawStyles.inputStyles || rawStyles.labelStyles || rawStyles.errorTextStyles)
+    ) {
+      const { errorTextStyles, ...rest } = rawStyles;
+      normalizedStyles = {
+        cardForm: {
+          ...rest,
+          ...(errorTextStyles && { errorStyles: errorTextStyles }),
+        },
+      };
+    }
+    this.customStyles = normalizedStyles || {};
+    this.events = events || {};
     this.callbacks = { ...this.callbacks, ...(callbacks ? { ...callbacks } : {}) };
     this.abortRefreshCardsController = new AbortController();
     // TODO: Wait until SaveCards is ready (server token).
@@ -222,6 +241,8 @@ export class InlineCheckout extends BaseInlineCheckout {
         this.customStyles,
         this.collectorIds,
         this.customization.displayMode,
+        this.mode,
+        this.events,
       );
 
       setTimeout(() => {
@@ -671,6 +692,8 @@ export class InlineCheckout extends BaseInlineCheckout {
           this.abortController.signal,
           this.customStyles,
           this.customization.displayMode,
+          this.mode,
+          this.events,
         );
         setTimeout(() => {
           document.querySelector(`#cvvContainer${container_radio_id}`).classList.add("show");
