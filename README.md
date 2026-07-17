@@ -519,6 +519,13 @@ try {
     currency: "MXN",
     order_reference: "ORD-001",           // Recommended — shown in Tonder dashboard & exports
     metadata: { order_id: "ORD-001" },    // Recommended — reporting fields
+    billingAddress: {                     // Optional — customer billing address
+      street: "123 Main St",
+      street2: "",
+      state: "CMX",
+      country: "MX",
+      zip_code: "06600",
+    },
   });
 
   console.log("Transaction status:", response.transaction_status);
@@ -532,6 +539,7 @@ try {
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `customer` | `ICustomer` | **Required** | Customer information |
+| `billingAddress` | `IBillingAddress` | Optional | Customer billing address. All sub-fields (`street`, `street2`, `state`, `country`, `zip_code`) are optional. Passed at the root, alongside `customer` |
 | `cart` | `{ total, items }` | **Required** | Order total and line items |
 | `currency` | `string` | Optional | ISO currency code (e.g. `'MXN'`) |
 | `order_reference` | `string` | Recommended | Your internal order ID — shown in Tonder dashboard filters and exports |
