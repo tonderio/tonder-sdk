@@ -1,4 +1,4 @@
-import { ICustomer } from "./customer";
+import { ICustomer, IBillingAddress } from "./customer";
 import { IMPConfigRequest } from "./mercado_pago";
 
 export interface IStartCheckoutRequestBase {
@@ -6,6 +6,7 @@ export interface IStartCheckoutRequestBase {
   last_name: string;
   email_client: any;
   phone_number: any;
+  billing_address?: IBillingAddress;
   return_url?: string;
   id_product: string;
   quantity_product: number;
@@ -98,6 +99,7 @@ export interface IItem {
 
 export interface IProcessPaymentRequest {
   customer: ICustomer;
+  billingAddress?: IBillingAddress;
   cart: {
     total: string | number;
     items: IItem[];

@@ -202,6 +202,7 @@ export class BaseInlineCheckout {
         browser_info: getBrowserInfo(),
         currency: this.currency,
         ...(this.customer?.identification ? { identification: this.customer.identification } : {}),
+        ...(this.billingAddress ? { billing_address: this.billingAddress } : {}),
         ...(!!payment_method ? { payment_method } : { card }),
         ...(typeof MP_DEVICE_SESSION_ID !== "undefined"
           ? { mp_device_session_id: MP_DEVICE_SESSION_ID }
@@ -230,6 +231,7 @@ export class BaseInlineCheckout {
   #setCheckoutData(data) {
     if (!data) return;
     this.#handleCustomer(data.customer);
+    this.billingAddress = data.billingAddress;
     this._setCartTotal(data.cart?.total);
     this.#setCartItems(data.cart?.items);
     this.#handleMetadata(data);
