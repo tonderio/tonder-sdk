@@ -50,7 +50,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
         ...response,
         cards: response.cards.map(ic => ({
           ...ic,
-          icon: getCardType(ic.fields.card_scheme),
+          icon: getCardType(ic.fields.card_scheme, false, this.mode),
         })),
       };
     } catch (error) {
@@ -161,7 +161,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
             payment_method: apmItem.payment_method,
             priority: apmItem.priority,
             category: apmItem.category,
-            ...getPaymentMethodDetails(apmItem.payment_method),
+            ...getPaymentMethodDetails(apmItem.payment_method, this.mode),
           };
           return apm;
         })
