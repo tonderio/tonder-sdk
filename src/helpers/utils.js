@@ -1,6 +1,7 @@
 import { defaultStyles } from "./styles";
 import get from "lodash.get";
 import { HTML_IDS } from "../shared/constants/htmlTonderIds";
+import { getStaticAssetsUrlByMode } from "../shared/constants/staticAssetsUrl";
 
 export async function addScripts() {
   try {
@@ -119,18 +120,19 @@ export const mapCards = card => {
   return newCard;
 };
 
-export const getCardType = (scheme, isDark = false) => {
+export const getCardType = (scheme, isDark = false, mode) => {
+  const baseUrl = getStaticAssetsUrlByMode(mode);
   if (scheme === "Visa") {
     // Check if visa
-    return "https://d35a75syrgujp0.cloudfront.net/cards/visa.png";
+    return `${baseUrl}/cards/visa.png`;
   } else if (scheme === "Mastercard") {
     // Check if master
-    return "https://d35a75syrgujp0.cloudfront.net/cards/mastercard.png";
+    return `${baseUrl}/cards/mastercard.png`;
   } else if (scheme === "American Express") {
     // Check if amex
-    return "https://d35a75syrgujp0.cloudfront.net/cards/american_express.png";
+    return `${baseUrl}/cards/american_express.png`;
   } else {
-    return `https://d35a75syrgujp0.cloudfront.net/cards/default_card_tonder${isDark ? "_purple" : ""}.png`;
+    return `${baseUrl}/cards/default_card_tonder${isDark ? "_purple" : ""}.png`;
   }
 };
 export const clearSpace = text => {
