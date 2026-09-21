@@ -2,7 +2,7 @@ import "accordion-js/dist/accordion.min.css";
 import { getCardFormLabels, getCardType } from "./utils";
 import { getPaymentMethodDetails } from "../shared/catalog/paymentMethodsCatalog";
 import { getDefaultStyles } from "./styles";
-import { COMMON_LOGOS } from "../shared/catalog/commonLogosCatalog";
+import { getCommonLogos } from "../shared/catalog/commonLogosCatalog";
 import get from "lodash.get";
 import { FIELD_PATH_NAMES } from "../shared/constants/fieldPathNames";
 import { HTML_IDS } from "../shared/constants/htmlTonderIds";
@@ -269,6 +269,7 @@ export const containerCheckoutTemplate = data => {
 };
 
 export const cardTemplate = data => {
+  const commonLogos = getCommonLogos(data.mode);
   const displayMode = data.customization?.displayMode || DISPLAY_MODE.light;
   const isDarkMode = displayMode === DISPLAY_MODE.dark;
   const defaultStylesData = getDefaultStyles(isDarkMode);
@@ -290,7 +291,7 @@ export const cardTemplate = data => {
       <div class="pay-new-card">
         <input checked id="new" class="card_selected" name="card_selected" type="radio"/>
         <label class="card-item-label-new" for="new">
-          <img class="card-image" src="${getCardType("XXXX", displayMode === DISPLAY_MODE.dark)}" alt="" />
+          <img class="card-image" src="${getCardType("XXXX", displayMode === DISPLAY_MODE.dark, data.mode)}" alt="" />
           <div class="card-number">Tarjeta</div>
         </label>
       </div>
@@ -401,15 +402,15 @@ export const cardTemplate = data => {
           <p>Pagos seguros con Tonder</p>
       </div>
       <div class="tndr-footer-logos">
-          <img class="tndr-pci-logo" src="${COMMON_LOGOS.pci}" alt="pci"/>
+          <img class="tndr-pci-logo" src="${commonLogos.pci}" alt="pci"/>
           <div class="tndr-footer-logos-divider"></div>
           ${
             isDarkMode
               ? `
-              <img class="tndr-tonder-logo" src="${COMMON_LOGOS.tonderWhite}" alt="tonder"/>
+              <img class="tndr-tonder-logo" src="${commonLogos.tonderWhite}" alt="tonder"/>
             `
               : `
-              <img class="tndr-tonder-logo" src="${COMMON_LOGOS.tonderBlue}" alt="tonder"/>
+              <img class="tndr-tonder-logo" src="${commonLogos.tonderBlue}" alt="tonder"/>
             `
           }
       </div>
@@ -769,7 +770,7 @@ export const cardItemsTemplate = data => {
           <input id="${card.skyflow_id}" class="cards card_selected" name="card_selected" type="radio"/>
           <label class="card-item-label" for="${card.skyflow_id}">
             <div class="card-item-data">
-              <img class="card-image" src="${getCardType(card.card_scheme, displayMode === DISPLAY_MODE.dark)}" alt="" />
+              <img class="card-image" src="${getCardType(card.card_scheme, displayMode === DISPLAY_MODE.dark, data.mode)}" alt="" />
               <div class="card-number">${card.card_number}</div>
               <div class="card-expiration">Exp. ${card.expiration_month}/${card.expiration_year}</div>
             </div>
@@ -956,7 +957,7 @@ export const apmItemsTemplate = data => {
   const showCancelButton = get(data, FIELD_PATH_NAMES.cancelButton, false);
 
   const apmItemsHTML = data.paymentMethods.reduce((total, apm) => {
-    const apm_data = getPaymentMethodDetails(apm.payment_method);
+    const apm_data = getPaymentMethodDetails(apm.payment_method, data.mode);
     return `${total}
     <div class="ac ac-paymentMethods" id="option_container-${apm.pk}">
       <div class="apm-item">

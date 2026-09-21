@@ -211,6 +211,7 @@ export class InlineCheckout extends BaseInlineCheckout {
     currentContent.innerHTML = `
       ${currentContent.innerHTML}
       ${cardTemplate({
+        mode: this.mode,
         customStyles: this.customStyles,
         customization: this.customization,
         cardsData: this.#cardsData,
@@ -460,6 +461,7 @@ export class InlineCheckout extends BaseInlineCheckout {
         const queryElement = document.querySelector(`#${this.collectorIds.cardsListContainer}`);
         if (queryElement && InlineCheckout.injected) {
           queryElement.innerHTML = cardItemsTemplate({
+            mode: this.mode,
             cards: cards,
             customization: this.customization,
             collectorIds: this.collectorIds,
@@ -490,6 +492,7 @@ export class InlineCheckout extends BaseInlineCheckout {
             )
             .sort((a, b) => a.priority - b.priority);
           queryElement.innerHTML = apmItemsTemplate({
+            mode: this.mode,
             paymentMethods: filteredAndSortedApms,
             customization: this.customization,
             collectorIds: this.collectorIds,
