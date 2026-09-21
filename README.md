@@ -361,6 +361,8 @@ When calling the `payment` method, use the following data structure:
 
 - **metadata**: Object for including any additional information about the transaction. This can be used for internal references or tracking.
 
+- **billingAddress**: (Optional) Customer billing address, passed at the root of the payment data (alongside `customer`). All fields are optional: `street`, `street2`, `state`, `country`, `zip_code`. Some payment methods may require it; when in doubt, send the full address.
+
 - **card**: (for LiteCheckout) Object containing card information. This is used differently depending on whether it's a new card or a saved card:
 
   - For a new card: Include `card_number`, `cvv`, `expiration_month`, `expiration_year`, and `cardholder_name`.
@@ -442,6 +444,13 @@ const paymentData = {
       type: "CPF",
       number: "19119119100"
     }
+  },
+  billingAddress: {              // Optional — customer billing address
+    street: "123 Main St",
+    street2: "",
+    state: "CA",
+    country: "USA",
+    zip_code: "12345",
   },
   cart: {
     total: "100.00",

@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.16.15",
+  "version": "1.16.16",
   "description": "tonder sdk for integrations",
   "scripts": {
     "start": "webpack-dev-server",
@@ -23,30 +23,29 @@
   "license": "ISC",
   "dependencies": {
     "accordion-js": "^3.4.0",
-    "crypto-js": "^4.1.1",
-    "dotenv": "^16.3.1",
+    "crypto-js": "^4.2.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.12",
-    "@babel/preset-env": "^7.20.2",
+    "@babel/core": "^7.29.1",
+    "@babel/preset-env": "^7.29.1",
     "@maskito/core": "^3.0.1",
-    "babel-loader": "^9.1.2",
-    "css-loader": "^6.7.3",
-    "cypress": "^13.6.2",
-    "eslint": "^9.18.0",
+    "babel-loader": "^9.2.1",
+    "css-loader": "^6.11.0",
+    "cypress": "^15.21.1",
+    "eslint": "^9.26.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
-    "html-webpack-plugin": "^5.5.3",
+    "html-webpack-plugin": "^5.6.8",
     "husky": "^8.0.3",
-    "lint-staged": "^15.4.1",
+    "lint-staged": "^15.5.2",
     "prettier": "3.4.2",
-    "style-loader": "^3.3.1",
-    "terser-webpack-plugin": "^5.3.10",
-    "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.11.1",
-    "webpack-obfuscator": "^3.5.1"
+    "style-loader": "^3.3.4",
+    "terser-webpack-plugin": "^5.3.14",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^6.0.0",
+    "webpack-obfuscator": "^3.6.1"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [

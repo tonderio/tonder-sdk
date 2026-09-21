@@ -1,7 +1,12 @@
-const COMMON_LOGOS = Object.freeze({
-  pci: "https://d35a75syrgujp0.cloudfront.net/tonder/logo-pci-500.png",
-  tonderBlue: "https://d35a75syrgujp0.cloudfront.net/tonder/logo-tonder-blue.png",
-  tonderWhite: "https://d35a75syrgujp0.cloudfront.net/tonder/logo-tonder-white.png",
-});
+import { getStaticAssetsUrlByMode } from "../constants/staticAssetsUrl";
 
-export { COMMON_LOGOS };
+const getCommonLogos = mode => {
+  const baseUrl = getStaticAssetsUrlByMode(mode);
+  return Object.freeze({
+    pci: `${baseUrl}/tonder/logo-pci-500.png`,
+    tonderBlue: `${baseUrl}/tonder/logo-tonder-blue.png`,
+    tonderWhite: `${baseUrl}/tonder/logo-tonder-white.png`,
+  });
+};
+
+export { getCommonLogos };
