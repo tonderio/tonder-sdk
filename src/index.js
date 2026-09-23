@@ -1,4 +1,3 @@
-import { Checkout } from "./classes/checkout";
 import { InlineCheckout } from "./classes/inlineCheckout";
 import { LiteInlineCheckout } from "./classes/LiteInlineCheckout";
 import {
@@ -10,7 +9,6 @@ import {
 } from "./helpers/validations";
 
 export {
-  Checkout,
   InlineCheckout,
   LiteInlineCheckout,
   validateCVV,

@@ -28,11 +28,10 @@ This is a browser payment SDK that bundles to UMD format (`window.TonderSdk`) vi
 BaseInlineCheckout       — shared initialization, API calls, 3DS flow
 ├── InlineCheckout       — pre-built UI, renders full checkout HTML
 └── LiteInlineCheckout   — headless; developer owns the UI
-Checkout                 — legacy implementation (AES + postMessage)
 ThreeDSHandler           — 3DS verification iframe/redirect flow
 ```
 
-Public exports from `src/index.js`: `Checkout`, `InlineCheckout`, `LiteInlineCheckout`, and card validation utilities.
+Public exports from `src/index.js`: `InlineCheckout`, `LiteInlineCheckout`, and card validation utilities.
 
 ### Layer Responsibilities
 
