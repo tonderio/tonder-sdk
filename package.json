@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "tonder sdk for integrations",
   "scripts": {
     "start": "webpack-dev-server",
@@ -23,7 +23,6 @@
   "license": "ISC",
   "dependencies": {
     "accordion-js": "^3.4.0",
-    "crypto-js": "^4.2.0",
     "lodash.get": "^4.4.2"
   },
   "devDependencies": {
