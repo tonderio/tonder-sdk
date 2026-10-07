@@ -3,7 +3,6 @@ import { registerOrFetchCustomer } from "./customerApi";
 import { createOrder } from "./checkoutApi";
 import { saveCustomerCard, removeCustomerCard, fetchCustomerCards } from "./cardApi";
 import { fetchCustomerAPMs, fetchSafetyPayBanks, fetchSafetyPayBanksByType } from "./apmApi";
-import { getOpenpayDeviceSessionID } from "./openPayApi";
 
 export {
   registerOrFetchCustomer,
@@ -15,5 +14,4 @@ export {
   fetchCustomerAPMs,
   fetchSafetyPayBanks,
   fetchSafetyPayBanksByType,
-  getOpenpayDeviceSessionID,
 };
