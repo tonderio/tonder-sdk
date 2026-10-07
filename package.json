@@ -1,6 +1,6 @@
 {
   "name": "tonder-web-sdk",
-  "version": "1.17.0",
+  "version": "1.18.0",
   "description": "tonder sdk for integrations",
   "scripts": {
     "start": "webpack-dev-server",
@@ -9,7 +9,8 @@
     "prepare": "husky install",
     "format": "prettier --write .",
     "lint": "eslint 'src/**/*.js'",
-    "lint:fix": "eslint 'src/**/*.js' --fix"
+    "lint:fix": "eslint 'src/**/*.js' --fix",
+    "check:no-eval": "node scripts/check-no-eval.js v1/bundle.min.js"
   },
   "author": "",
   "main": "v1/bundle.min.js",
