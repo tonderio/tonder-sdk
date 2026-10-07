@@ -35,7 +35,7 @@ Public exports from `src/index.js`: `InlineCheckout`, `LiteInlineCheckout`, and 
 
 ### Layer Responsibilities
 
-- **`src/classes/`** — checkout business logic; `BaseInlineCheckout` contains the shared payment orchestration flow (customer registration, Skyflow tokenization, OpenPay device session, payment creation, 3DS handling)
+- **`src/classes/`** — checkout business logic; `BaseInlineCheckout` contains the shared payment orchestration flow (customer registration, Skyflow tokenization, payment creation, 3DS handling)
 - **`src/data/`** — API client layer; each file maps to one Tonder backend resource (cards, customers, orders, APMs, etc.)
 - **`src/helpers/`** — `template.js` (114KB) generates all checkout HTML/CSS programmatically; `skyflow.js` wraps Skyflow card tokenization; `validations.js` has Luhn/CVV/expiry checks
 - **`src/shared/`** — constants (API URLs per environment, message strings, HTML element IDs) and catalogs (APM metadata, card brand logos)
