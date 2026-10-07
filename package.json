@@ -9,7 +9,8 @@
     "prepare": "husky install",
     "format": "prettier --write .",
     "lint": "eslint 'src/**/*.js'",
-    "lint:fix": "eslint 'src/**/*.js' --fix"
+    "lint:fix": "eslint 'src/**/*.js' --fix",
+    "check:no-eval": "node scripts/check-no-eval.js v2/bundle.min.js"
   },
   "author": "",
   "main": "v2/bundle.min.js",
