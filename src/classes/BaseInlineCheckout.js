@@ -1,10 +1,5 @@
 import { ThreeDSHandler } from "./3dsHandler.js";
-import {
-  createOrder,
-  fetchBusiness,
-  getOpenpayDeviceSessionID,
-  registerOrFetchCustomer,
-} from "../data";
+import { createOrder, fetchBusiness, registerOrFetchCustomer } from "../data";
 import { TONDER_URL_BY_MODE } from "../shared/constants/tonderUrl";
 import { globalLoader } from "./globalLoader";
 import { createPayment, startCheckoutRouter } from "../data/checkoutApi";
@@ -117,23 +112,9 @@ export class BaseInlineCheckout {
   }
 
   async _handleCheckout({ card, payment_method, customer }) {
-    const { openpay_keys, reference, business } = this.merchantData;
+    const { reference, business } = this.merchantData;
     const total = Number(this.cartTotal);
     try {
-      let deviceSessionIdTonder;
-      if (
-        !deviceSessionIdTonder &&
-        openpay_keys.merchant_id &&
-        openpay_keys.public_key &&
-        !payment_method
-      ) {
-        deviceSessionIdTonder = await getOpenpayDeviceSessionID(
-          openpay_keys.merchant_id,
-          openpay_keys.public_key,
-          this.abortController.signal,
-        );
-      }
-
       const { id, auth_token } = customer;
       const orderItems = {
         business: this.apiKeyTonder,
@@ -191,7 +172,8 @@ export class BaseInlineCheckout {
         amount: total,
         title_ship: "shipping",
         description: "transaction",
-        device_session_id: deviceSessionIdTonder ? deviceSessionIdTonder : null,
+        // The SDK no longer collects a device session; null keeps the request shape unchanged.
+        device_session_id: null,
         token_id: "",
         order_id: jsonResponseOrder.id,
         business_id: business.pk,
