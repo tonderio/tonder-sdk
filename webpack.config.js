@@ -32,11 +32,11 @@ module.exports = (env, argv) => {
     unicodeEscapeSequence: false,
   }
 
+  // Production uses the obfuscator defaults. Do not enable debugProtection or selfDefending:
+  // both call the Function constructor at runtime, which forces 'unsafe-eval' into the CSP of
+  // every page that loads this SDK.
   if (isProduction) {
-    jSObfuscatorOptions = {
-      debugProtection: true,
-      debugProtectionInterval: 2000,
-    }
+    jSObfuscatorOptions = {}
   }
 
   const plugins = [
@@ -72,6 +72,9 @@ module.exports = (env, argv) => {
       libraryTarget: 'umd',
       globalObject: 'this',
     },
+    // The default polyfills Node's `global` with a runtime helper that contains `new Function`.
+    // Only lodash.get references `global`, behind a typeof check, so it can stay undefined.
+    node: { global: false },
     devtool: isProduction ? false : 'inline-source-map',
     devServer: {
       static: {
