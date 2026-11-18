@@ -14,10 +14,11 @@ Tonder SDK helps to integrate the services Tonder offers in your own website
 4. [Styling InlineCheckout](#styling-inlinecheckout)
 5. [Payment Data Structure](#payment-data-structure)
 6. [Field Validation Functions](#field-validation-functions)
-7. [HMAC Signature Validation](#hmac-signature-validation)
-8. [API Reference](#api-reference)
-9. [Examples](#examples)
-10. [License](#license)
+7. [Payment Engine](#payment-engine)
+8. [HMAC Signature Validation](#hmac-signature-validation)
+9. [API Reference](#api-reference)
+10. [Examples](#examples)
+11. [License](#license)
 
 ## Installation
 
@@ -524,6 +525,15 @@ if (
   // Show error message
 }
 ```
+
+## Payment Engine
+
+`injectCheckout()` reads the business configuration from the Tonder payments API. When the merchant's `core_payments_enabled` flag is on (Tonder enables it per merchant), **card** payments are charged through the Tonder payments API; otherwise (and for every alternative payment method) the legacy route is used. Your code does not change: `payment()` resolves or rejects with the same object, `callBack` receives the same shapes and `verify3dsTransaction()` returns the same result in both cases.
+
+- The engine is chosen once per payment. A payment started on the Tonder payments API finishes there, and one started on the legacy route finishes there, even if the flag changes meanwhile; the SDK stores the engine with its 3DS state (`verify_transaction_status` in `localStorage`).
+- For a payment charged through the Tonder payments API, `verify3dsTransaction()` reads the payment (`GET /transactions/v1/{id}`) and returns the same body `payment()` returns (a declined payment resolves with its decline body instead of rejecting, and a payment that is still pending resolves as pending without redirecting the payer again); it does not resume any route. Like `payment()` on the legacy route, a pending payment keeps `status: "200"`, so read `transaction_status` to tell it from a paid one. The `verify_transaction_status` action points at that same route, and the 3DS state is kept while the payment is not final or the API cannot be reached, so the call can be repeated. When the API cannot answer (a 5xx, a timeout or a network error) the call resolves with its error body, or `undefined` on a network error, and the state stays; only a 401 or 404 clears it.
+- If the Tonder payments API is switched off after the SDK started (`503 operations_disabled`), the payment is retried once on the legacy route.
+- The `refund_transaction` action of such a payment points at the refund route of the Tonder payments API (`POST /transactions/v1/process`), carries the body to send (`operation_type: "refund"` and `original_transaction_id`) and accepts the same API key.
 
 ## HMAC Signature Validation
 

@@ -84,6 +84,13 @@ export interface IStartCheckoutActionResponse {
   name: string;
   url: string;
   method: string;
+  /** Body to send with the action; the refund of a payment charged by the core carries one. */
+  body?: IRefundActionBody;
+}
+
+export interface IRefundActionBody {
+  operation_type: "refund";
+  original_transaction_id: string;
 }
 
 export interface IItem {
