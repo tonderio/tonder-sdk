@@ -31,10 +31,15 @@ async function throwCoreError(response, message) {
 export async function fetchCoreBusinessConfig(coreUrl, apiKey, signal) {
   const response = await fetch(`${coreUrl}/transactions/v1/business/config`, {
     headers: coreHeaders(apiKey),
+    redirect: "error",
     signal,
   });
   if (!response.ok) await throwCoreError(response, "Failed to fetch the business configuration");
-  return await response.json();
+  const config = await response.json();
+  if (!config || typeof config !== "object" || Array.isArray(config)) {
+    throw new Error("The business configuration is not an object");
+  }
+  return config;
 }
 
 /**
@@ -53,6 +58,7 @@ export async function processCorePayment(signatures, coreUrl, apiKey, body, requ
         ...coreHeaders(apiKey),
       },
       body: JSON.stringify(body),
+      redirect: "error",
     },
     signatures,
   );
@@ -88,6 +94,7 @@ export async function fetchCoreTransaction(url, apiKey) {
   const response = await fetch(url, {
     method: "GET",
     headers: { "Content-Type": "application/json", ...coreHeaders(apiKey) },
+    redirect: "error",
   });
   return { status: response.status, body: await parseJson(response) };
 }

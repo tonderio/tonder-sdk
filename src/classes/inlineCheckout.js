@@ -157,8 +157,14 @@ export class InlineCheckout extends BaseInlineCheckout {
     const observer = new MutationObserver(async (mutations, obs) => {
       const containerTonderCheckout = document.querySelector(`#${HTML_IDS.tonderCheckout}`);
       if (containerTonderCheckout) {
-        await this.#mount(containerTonderCheckout);
-        obs.disconnect();
+        try {
+          await this.#mount(containerTonderCheckout);
+        } catch (error) {
+          if (error?.name !== "AbortError")
+            console.error("The checkout could not be mounted:", error);
+        } finally {
+          obs.disconnect();
+        }
       }
     });
     observer.observe(document.body, {
@@ -205,7 +211,16 @@ export class InlineCheckout extends BaseInlineCheckout {
       customization: this.customization,
     });
     globalLoader.show();
-    await this._initializeCheckout();
+    try {
+      await this._initializeCheckout();
+    } catch (error) {
+      globalLoader.remove();
+      // A cancelled request is the merchant's own action: no message, as #mountTonder does.
+      if (error?.name !== "AbortError") {
+        this.#showConfigError(containerTonderCheckout);
+      }
+      throw error;
+    }
     await this.#loadInitialData();
     const currentContent = document.querySelector(`#${HTML_IDS.tonderContainer}`);
     currentContent.innerHTML = `
@@ -221,6 +236,15 @@ export class InlineCheckout extends BaseInlineCheckout {
     `;
     await this.#mountTonder();
     InlineCheckout.injected = true;
+  }
+
+  // The card template, which holds the usual message area, is not rendered yet at this point.
+  #showConfigError(container) {
+    const message = document.createElement("div");
+    message.id = HTML_IDS.configError;
+    message.setAttribute("role", "alert");
+    message.textContent = "No se pudieron cargar los datos del comercio.";
+    container.replaceChildren(message);
   }
 
   async #mountTonder() {

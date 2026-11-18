@@ -1,7 +1,7 @@
 import { ThreeDSHandler } from "./3dsHandler.js";
 import { createOrder, registerOrFetchCustomer } from "../data";
 import { TONDER_CORE_URL_BY_MODE, TONDER_URL_BY_MODE } from "../shared/constants/tonderUrl";
-import { PAYMENT_ENGINE } from "../shared/constants/paymentEngine";
+import { APPROVED_PAYMENT_STATUSES, PAYMENT_ENGINE } from "../shared/constants/paymentEngine";
 import { fetchCoreBusinessConfig, processCorePayment } from "../data/coreApi";
 import {
   buildCoreProcessBody,
@@ -10,7 +10,7 @@ import {
   toLegacyCheckoutResult,
 } from "../helpers/coreCheckout";
 import { globalLoader } from "./globalLoader";
-import { createPayment, startCheckoutRouter } from "../data/checkoutApi";
+import { checkoutRouterError, createPayment, startCheckoutRouter } from "../data/checkoutApi";
 import { getBrowserInfo, injectMercadoPagoSecurity } from "../helpers/utils";
 
 export class BaseInlineCheckout {
@@ -179,19 +179,13 @@ export class BaseInlineCheckout {
       );
     } catch (error) {
       if (error.status === undefined || this.#isOperationsDisabled(error)) throw error;
-      const rejection = new Error("Failed to start checkout router");
-      rejection.details = toLegacyCheckoutError(error.status, error.body);
-      throw rejection;
+      throw checkoutRouterError(toLegacyCheckoutError(error.status, error.body));
     }
 
     const { ok, body: legacyBody } = toLegacyCheckoutResult(answer, {
       coreUrl: this.coreUrl,
     });
-    if (!ok) {
-      const rejection = new Error("Failed to start checkout router");
-      rejection.details = legacyBody;
-      throw rejection;
-    }
+    if (!ok) throw checkoutRouterError(legacyBody);
     this.process3ds.setEngine(PAYMENT_ENGINE.CORE);
     return legacyBody;
   }
@@ -308,11 +302,20 @@ export class BaseInlineCheckout {
   }
 
   async #fetchMerchantData() {
-    this.merchantData = await fetchCoreBusinessConfig(
-      this.coreUrl,
-      this.apiKeyTonder,
-      this.abortController.signal,
-    );
+    try {
+      this.merchantData = await fetchCoreBusinessConfig(
+        this.coreUrl,
+        this.apiKeyTonder,
+        this.abortController.signal,
+      );
+    } catch (error) {
+      // A cancelled request is the merchant's own action, not an outage.
+      if (error?.name === "AbortError") throw error;
+      const failure = new Error("The Tonder checkout configuration could not be loaded.");
+      failure.cause = error;
+      failure.status = error.status;
+      throw failure;
+    }
     this.#engine =
       this.merchantData.core_payments_enabled === true
         ? PAYMENT_ENGINE.CORE
@@ -331,7 +334,7 @@ export class BaseInlineCheckout {
       return response;
     }
 
-    if (["Success", "Authorized"].includes(response?.transaction_status)) {
+    if (APPROVED_PAYMENT_STATUSES.includes(response?.transaction_status)) {
       return response;
     }
 

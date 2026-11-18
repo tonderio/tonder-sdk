@@ -5,7 +5,9 @@ const TONDER_URL_BY_MODE = Object.freeze({
   development: "http://localhost:8000",
 });
 
-// Host of the payments core, which serves the business configuration and card payments.
+// Host of the Tonder payments API, which serves the business configuration and card payments.
+// "sandbox" is served by the stage payments API. "development" keeps legacy calls on the local
+// backend while the payments API is always remote.
 const TONDER_CORE_URL_BY_MODE = Object.freeze({
   production: "https://api.tonder.io",
   sandbox: "https://api-stage.tonder.io",

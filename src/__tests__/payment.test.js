@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InlineCheckout } from "../classes/inlineCheckout";
+import { globalLoader } from "../classes/globalLoader";
+import { HTML_IDS } from "../shared/constants/htmlTonderIds";
 import { LiteInlineCheckout } from "../classes/LiteInlineCheckout";
 import {
   API_KEY,
@@ -66,6 +68,9 @@ const entryPoints = [
 ];
 
 beforeEach(() => {
+  document.body.innerHTML = `<div id="${HTML_IDS.tonderCheckout}"></div>`;
+  InlineCheckout.injected = false;
+  globalLoader.requestCount = 0;
   const store = new Map();
   vi.stubGlobal("localStorage", {
     getItem: key => (store.has(key) ? store.get(key) : null),
@@ -81,6 +86,140 @@ afterEach(() => {
 });
 
 describe.each(entryPoints)("%s", (_name, create, data) => {
+  describe("start-up failure", () => {
+    it.each([
+      ["a 403", () => jsonResponse({ error: { code: "origin_not_allowed" } }, 403)],
+      ["a 500", () => jsonResponse({ error: { code: "internal_error" } }, 500)],
+      [
+        "a network error",
+        () => {
+          throw new TypeError("Failed to fetch");
+        },
+      ],
+      ["a null JSON body", () => jsonResponse(null)],
+      ["a JSON body that is not an object", () => jsonResponse(["unexpected"])],
+      [
+        "a body that is not JSON",
+        () => ({
+          ok: true,
+          status: 200,
+          json: async () => {
+            throw new SyntaxError("Unexpected token <");
+          },
+        }),
+      ],
+    ])("rejects with a clear error and hides the loader after %s", async (_label, response) => {
+      routes = [["/transactions/v1/business/config", response]];
+      stubFetch();
+      const checkout = create();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await expect(checkout.injectCheckout()).rejects.toThrow(
+        "The Tonder checkout configuration could not be loaded",
+      );
+      expect(globalLoader.requestCount).toBe(0);
+      expect(calledUrls().filter(url => url.startsWith(MONOLITH))).toEqual([]);
+    });
+  });
+
+  describe("aborted start-up", () => {
+    it("keeps the abort error as it is", async () => {
+      routes = [
+        [
+          "/transactions/v1/business/config",
+          () => {
+            throw new DOMException("The operation was aborted.", "AbortError");
+          },
+        ],
+      ];
+      stubFetch();
+      const checkout = create();
+
+      await expect(checkout._initializeCheckout()).rejects.toMatchObject({ name: "AbortError" });
+    });
+  });
+
+  describe("verify errors", () => {
+    it.each([
+      [503, { error: { code: "unavailable", message: "Try later" } }, "Try later"],
+      [429, undefined, "Error"],
+    ])("resolve with the checkout-router error shape after a %s", async (code, body, message) => {
+      localStorage.setItem(
+        "verify_transaction_status",
+        JSON.stringify({
+          url: "/transactions/v1/0190aaaa",
+          engine: "core",
+          expires: Date.now() + 60000,
+        }),
+      );
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        ["/transactions/v1/0190aaaa", jsonResponse(body, code)],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      expect(await checkout.verify3dsTransaction()).toEqual({
+        status: String(code),
+        message,
+        psp_response: [],
+        is_route_finished: false,
+      });
+      expect(localStorage.getItem("verify_transaction_status")).not.toBeNull();
+    });
+  });
+
+  describe("requests that carry the API key", () => {
+    it("never follow redirects", async () => {
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        ["/transactions/v1/process", jsonResponse(coreRedirect(), 201)],
+        ["/transactions/v1/0190aaaa", jsonResponse(coreSuccess())],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+      vi.spyOn(checkout.process3ds, "redirectToChallenge").mockImplementation(function () {
+        this.saveVerifyTransactionUrl();
+      });
+      checkout.payment(data);
+      await vi.waitFor(() =>
+        expect(localStorage.getItem("verify_transaction_status")).toBeTruthy(),
+      );
+      await checkout.verify3dsTransaction();
+
+      const coreCalls = calls.filter(call => call.url.startsWith(CORE_HOST));
+      expect(coreCalls).toHaveLength(3);
+      coreCalls.forEach(call => expect(call.options.redirect).toBe("error"));
+    });
+  });
+
+  describe("core errors", () => {
+    it("rejects with the checkout-router error shape, not the raw core body", async () => {
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        [
+          "/transactions/v1/process",
+          jsonResponse({ error: { code: "invalid_request", message: "Bad amount" } }, 400),
+        ],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+
+      const error = await checkout.payment(data).catch(e => e);
+      expect(error.message).toBe("Failed to start checkout router");
+      expect(error.details).toEqual({
+        status: "400",
+        message: "Bad amount",
+        psp_response: [],
+        is_route_finished: false,
+      });
+    });
+  });
+
   describe("flag ON", () => {
     it("reads the business configuration from the core at start-up", async () => {
       routes = [["/transactions/v1/business/config", jsonResponse(businessConfig())]];
@@ -636,5 +775,40 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       );
       expect(result).toEqual({ status: "Success", id: 555 });
     });
+  });
+});
+
+describe("InlineCheckout start-up failure", () => {
+  it("shows the payer a message in the container", async () => {
+    routes = [
+      [
+        "/transactions/v1/business/config",
+        jsonResponse({ error: { code: "origin_not_allowed" } }, 403),
+      ],
+    ];
+    stubFetch();
+    const checkout = new InlineCheckout({ apiKey: API_KEY, mode: "stage", returnUrl: "r" });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(checkout.injectCheckout()).rejects.toThrow("could not be loaded");
+    const message = document.querySelector("#tonder-config-error");
+    expect(message).not.toBeNull();
+    expect(message.textContent).toContain("No se pudieron cargar los datos del comercio.");
+  });
+
+  it("shows no message when the request was aborted", async () => {
+    routes = [
+      [
+        "/transactions/v1/business/config",
+        () => {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        },
+      ],
+    ];
+    stubFetch();
+    const checkout = new InlineCheckout({ apiKey: API_KEY, mode: "stage", returnUrl: "r" });
+
+    await expect(checkout.injectCheckout()).rejects.toMatchObject({ name: "AbortError" });
+    expect(document.querySelector("#tonder-config-error")).toBeNull();
   });
 });
