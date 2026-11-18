@@ -711,7 +711,7 @@ When a payment requires 3DS authentication, the SDK performs a **full-page redir
 2. User completes authentication
 3. Bank redirects back to `returnUrl`
 4. Your page calls `verify3dsTransaction()` — it detects the 3DS return, verifies the transaction, and returns the result
-5. If routing is configured and the transaction was declined, it automatically retries with the next payment route
+5. If routing is configured and the transaction was declined, it automatically retries with the next payment route (a payment charged by the payments core continues its route inside the core instead)
 
 **Implementation pattern (call on every page load):**
 
@@ -732,6 +732,16 @@ if (tdsResult) {
 
 // Normal page load — mount card fields (LiteInlineCheckout) or let InlineCheckout render
 ```
+
+### 8.1 Payment engine
+
+`injectCheckout()` reads the business configuration from the payments core. When the merchant's `core_payments_enabled` flag is on, **card** payments are charged by the core; otherwise (and for every alternative payment method) the legacy flow is used. Your code does not change: `payment()` resolves or rejects with the same object, `callBack` receives the same shapes and `verify3dsTransaction()` returns the same result in both cases.
+
+- The engine is chosen once per payment. A payment started on the core finishes on the core, and one started on the legacy flow finishes there, even if the flag changes meanwhile; the SDK stores the engine with its 3DS state (`verify_transaction_status` in `localStorage`).
+- For a core payment, `verify3dsTransaction()` reads the payment from the core (`GET /transactions/v1/{id}`) and returns the same body `payment()` returns (a declined payment resolves with its decline body instead of rejecting, and a payment that is still pending resolves as pending without redirecting the payer again); it does not resume any route; like `payment()` on the legacy flow, a pending payment keeps `status: "200"`, so read `transaction_status` to tell it from a paid one, because the core already continued it. The `verify_transaction_status` action points at that same core route, and the 3DS state is kept while the payment is not final or the core cannot be reached, so the call can be repeated. When the core cannot answer (a 5xx, a timeout or a network error) the call resolves with the core's error body, or `undefined` on a network error, and the state stays; only a 401 or 404 clears it.
+- If the core is switched off after the SDK started (`503 operations_disabled`), the payment is retried once on the legacy flow.
+- The `refund_transaction` action of a core payment points at the core's refund route (`POST /transactions/v1/process`), carries the body to send (`operation_type: "refund"` and `original_transaction_id`) and accepts the same API key.
+- Browser calls to the core are checked against the merchant's allowed origins; ask Tonder to register the origins that load the SDK before turning the flag on.
 
 ---
 

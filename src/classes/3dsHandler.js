@@ -1,8 +1,14 @@
 import { getBaseUrlByEnv } from "../shared/utils/apiFetch";
+import { fetchCoreTransaction, resolveCoreUrl } from "../data/coreApi";
+import { OPEN_PAYMENT_STATUSES, PAYMENT_ENGINE } from "../shared/constants/paymentEngine";
+import { toLegacyCheckoutResult } from "../helpers/coreCheckout";
 
 export class ThreeDSHandler {
-  constructor({ payload = null, apiKey, baseUrl, mode }) {
+  engine = PAYMENT_ENGINE.LEGACY;
+
+  constructor({ payload = null, apiKey, baseUrl, coreUrl, mode }) {
     this.baseUrl = baseUrl;
+    this.coreUrl = coreUrl;
     this.apiKey = apiKey;
     this.payload = payload;
     this.mode = mode;
@@ -27,6 +33,7 @@ export class ThreeDSHandler {
       const now = new Date();
       const item = {
         url: url,
+        engine: this.engine,
         // Expires after 20 minutes
         expires: now.getTime() + 20 * 60 * 1000,
       };
@@ -47,6 +54,22 @@ export class ThreeDSHandler {
     } else {
       return item.url;
     }
+  }
+
+  // Engine of the payment that stored the verify URL; states stored before engines existed are legacy.
+  getStoredEngine() {
+    try {
+      return (
+        JSON.parse(localStorage.getItem("verify_transaction_status"))?.engine ||
+        PAYMENT_ENGINE.LEGACY
+      );
+    } catch {
+      return PAYMENT_ENGINE.LEGACY;
+    }
+  }
+
+  setEngine(engine) {
+    this.engine = engine;
   }
 
   removeVerifyTransactionUrl() {
@@ -167,7 +190,36 @@ export class ThreeDSHandler {
     }
   }
 
+  async verifyCoreTransaction() {
+    const verifyUrl = this.getUrlWithExpiration();
+    if (!verifyUrl) {
+      console.log("No verify_transaction_status_url found");
+      return;
+    }
+    const url = resolveCoreUrl(this.coreUrl, verifyUrl);
+    if (!url) {
+      console.error("The stored verify URL does not belong to the core.");
+      this.removeVerifyTransactionUrl();
+      return;
+    }
+    try {
+      const { status, body } = await fetchCoreTransaction(url, this.apiKey);
+      if (status !== 200) {
+        console.error("La verificación de la transacción falló.");
+        // Only an unauthorized or unknown payment is definitive; anything else may be retried.
+        if ([401, 404].includes(status)) this.removeVerifyTransactionUrl();
+        return body;
+      }
+      // The core already continued the route: the answer is the payment's current state.
+      if (!OPEN_PAYMENT_STATUSES.includes(body.status)) this.removeVerifyTransactionUrl();
+      return toLegacyCheckoutResult(body, { coreUrl: this.coreUrl }).body;
+    } catch (error) {
+      console.error("Error al verificar la transacción:", error);
+    }
+  }
+
   async verifyTransactionStatus() {
+    if (this.getStoredEngine() === PAYMENT_ENGINE.CORE) return this.verifyCoreTransaction();
     const verifyUrl = this.getUrlWithExpiration();
     if (verifyUrl) {
       const url = verifyUrl.startsWith("https://") ? verifyUrl : `${this.baseUrl}${verifyUrl}`;

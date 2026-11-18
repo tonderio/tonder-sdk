@@ -143,7 +143,7 @@ export class LiteInlineCheckout {
   /**
    * Verifies the 3DS transaction status.
    */
-  verify3dsTransaction(): Promise<ITransaction | void>;
+  verify3dsTransaction(): Promise<ITransaction | IStartCheckoutResponse | void>;
 
   /**
    * Retrieves the list of cards associated with the customer.
