@@ -59,6 +59,18 @@ export async function createPayment(signatures, baseUrl, apiKey, paymentItems) {
 }
 
 /**
+ * The error `payment()` rejects with when the checkout cannot start: the same shape on every
+ * payment engine, with the answer body in `details`.
+ * @param {Object} details - The checkout-router error body.
+ * @returns {Error}
+ */
+export function checkoutRouterError(details) {
+  const error = new Error("Failed to start checkout router");
+  error.details = details;
+  return error;
+}
+
+/**
  * Initiates the checkout process.
  *
  * This function sends a POST request to the checkout router API with the provided
@@ -93,10 +105,7 @@ export async function startCheckoutRouter(signatures, baseUrl, apiKey, routerIte
     if (response.status >= 200 && response.status <= 299) {
       return await response.json();
     } else {
-      const errorResponse = await response.json();
-      const error = new Error("Failed to start checkout router");
-      error.details = errorResponse;
-      throw error;
+      throw checkoutRouterError(await response.json());
     }
   } catch (error) {
     throw error;

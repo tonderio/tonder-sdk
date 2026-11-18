@@ -39,10 +39,10 @@ export class LiteInlineCheckout {
 
   /**
    * Verifies the 3DS transaction status.
-   * @returns {Promise<import("../types").ITransaction | void>} The result of the 3DS verification and checkout resumption.
+   * @returns {Promise<import("../types").ITransaction | import("../types").IStartCheckoutResponse | void>} The result of the 3DS verification and checkout resumption; a payment charged through the Tonder payments API returns the same body as payment().
    * @public
    */
-  verify3dsTransaction(): Promise<ITransaction | void>;
+  verify3dsTransaction(): Promise<ITransaction | IStartCheckoutResponse | void>;
 
   /**
    * Retrieves the list of cards associated with a customer.

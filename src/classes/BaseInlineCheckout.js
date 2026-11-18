@@ -1,8 +1,16 @@
 import { ThreeDSHandler } from "./3dsHandler.js";
-import { createOrder, fetchBusiness, registerOrFetchCustomer } from "../data";
-import { TONDER_URL_BY_MODE } from "../shared/constants/tonderUrl";
+import { createOrder, registerOrFetchCustomer } from "../data";
+import { TONDER_CORE_URL_BY_MODE, TONDER_URL_BY_MODE } from "../shared/constants/tonderUrl";
+import { APPROVED_PAYMENT_STATUSES, PAYMENT_ENGINE } from "../shared/constants/paymentEngine";
+import { fetchCoreBusinessConfig, processCorePayment } from "../data/coreApi";
+import {
+  buildCoreProcessBody,
+  newRequestId,
+  toLegacyCheckoutError,
+  toLegacyCheckoutResult,
+} from "../helpers/coreCheckout";
 import { globalLoader } from "./globalLoader";
-import { createPayment, startCheckoutRouter } from "../data/checkoutApi";
+import { checkoutRouterError, createPayment, startCheckoutRouter } from "../data/checkoutApi";
 import { getBrowserInfo, injectMercadoPagoSecurity } from "../helpers/utils";
 
 export class BaseInlineCheckout {
@@ -11,6 +19,8 @@ export class BaseInlineCheckout {
   secureToken = "";
   signatures = {};
   #isProcessingPayment = false;
+  // Read once from the business configuration at start-up.
+  #engine = PAYMENT_ENGINE.LEGACY;
   constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {}, signatures }) {
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
@@ -18,10 +28,12 @@ export class BaseInlineCheckout {
     this.#handleSignatures(signatures);
     this.mode = mode;
     this.baseUrl = TONDER_URL_BY_MODE[this.mode] || TONDER_URL_BY_MODE["stage"];
+    this.coreUrl = TONDER_CORE_URL_BY_MODE[this.mode] || TONDER_CORE_URL_BY_MODE["stage"];
     this.abortController = new AbortController();
     this.process3ds = new ThreeDSHandler({
       apiKey: apiKey,
       baseUrl: this.baseUrl,
+      coreUrl: this.coreUrl,
       mode: this.mode,
     });
   }
@@ -39,12 +51,19 @@ export class BaseInlineCheckout {
 
   /**
    * Verifies the 3DS transaction status.
-   * @returns {Promise<import("../../types").ITransaction | void>} The result of the 3DS verification and checkout resumption.
+   * @returns {Promise<import("../../types").ITransaction | import("../../types").IStartCheckoutResponse | void>} The result of the 3DS verification and checkout resumption; a payment charged by the core returns the same body as payment().
    * @public
    */
   async verify3dsTransaction() {
     globalLoader.show();
+    const engine = this.process3ds.getStoredEngine();
     const result3ds = await this.process3ds.verifyTransactionStatus();
+    // The core continues its own route and never sends the payer to another challenge from here.
+    if (engine === PAYMENT_ENGINE.CORE) {
+      this.process3ds.setPayload(result3ds);
+      globalLoader.remove();
+      return result3ds;
+    }
     const resultCheckout = await this.#resumeCheckout(result3ds);
     this.process3ds.setPayload(resultCheckout);
     const response = await this.#handle3dsRedirect(resultCheckout);
@@ -111,7 +130,67 @@ export class BaseInlineCheckout {
     throw new Error("The #setCartTotal method should be implement in child classes.");
   }
 
-  async _handleCheckout({ card, payment_method, customer }) {
+  async _handleCheckout(params) {
+    // Card payments follow the engine chosen at start-up; APMs always use the legacy flow.
+    if (this.#engine === PAYMENT_ENGINE.CORE && !params.payment_method) {
+      try {
+        return await this.#handleCoreCheckout(params);
+      } catch (error) {
+        // Nothing was created: the kill switch sends this payment back to the legacy flow.
+        if (!this.#isOperationsDisabled(error)) throw error;
+      }
+    }
+    this.process3ds.setEngine(PAYMENT_ENGINE.LEGACY);
+    return this.#handleLegacyCheckout(params);
+  }
+
+  #isOperationsDisabled(error) {
+    return error?.status === 503 && error?.body?.error?.code === "operations_disabled";
+  }
+
+  async #handleCoreCheckout({ card }) {
+    const { reference } = this.merchantData;
+    const body = buildCoreProcessBody({
+      total: this.cartTotal,
+      currency: this.currency,
+      reference,
+      orderReference: this.order_reference,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      email: this.email,
+      phone: this.phone,
+      identification: this.customer?.identification,
+      browserInfo: getBrowserInfo(),
+      card,
+      returnUrl: this.returnUrl,
+      metadata: this.metadata,
+      billingAddress: this.billingAddress,
+      items: this.cartItems,
+    });
+
+    let answer;
+    try {
+      answer = await processCorePayment(
+        this.signatures,
+        this.coreUrl,
+        this.apiKeyTonder,
+        body,
+        newRequestId(),
+      );
+    } catch (error) {
+      if (error.status === undefined || this.#isOperationsDisabled(error)) throw error;
+      throw checkoutRouterError(toLegacyCheckoutError(error.status, error.body));
+    }
+
+    const { ok, body: legacyBody } = toLegacyCheckoutResult(answer, {
+      coreUrl: this.coreUrl,
+    });
+    if (!ok) throw checkoutRouterError(legacyBody);
+    this.process3ds.setEngine(PAYMENT_ENGINE.CORE);
+    return legacyBody;
+  }
+
+  async #handleLegacyCheckout({ card, payment_method, customer }) {
     const { reference, business } = this.merchantData;
     const total = Number(this.cartTotal);
     try {
@@ -223,11 +302,24 @@ export class BaseInlineCheckout {
   }
 
   async #fetchMerchantData() {
-    this.merchantData = await fetchBusiness(
-      this.baseUrl,
-      this.apiKeyTonder,
-      this.abortController.signal,
-    );
+    try {
+      this.merchantData = await fetchCoreBusinessConfig(
+        this.coreUrl,
+        this.apiKeyTonder,
+        this.abortController.signal,
+      );
+    } catch (error) {
+      // A cancelled request is the merchant's own action, not an outage.
+      if (error?.name === "AbortError") throw error;
+      const failure = new Error("The Tonder checkout configuration could not be loaded.");
+      failure.cause = error;
+      failure.status = error.status;
+      throw failure;
+    }
+    this.#engine =
+      this.merchantData.core_payments_enabled === true
+        ? PAYMENT_ENGINE.CORE
+        : PAYMENT_ENGINE.LEGACY;
     return this.merchantData;
   }
 
@@ -242,7 +334,7 @@ export class BaseInlineCheckout {
       return response;
     }
 
-    if (["Success", "Authorized"].includes(response?.transaction_status)) {
+    if (APPROVED_PAYMENT_STATUSES.includes(response?.transaction_status)) {
       return response;
     }
 
