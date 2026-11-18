@@ -42,10 +42,10 @@ export class InlineCheckout {
 
   /**
    * Verifies the 3DS transaction status.
-   * @returns {Promise<import("../types").ITransaction | void>} The result of the 3DS verification and checkout resumption.
+   * @returns {Promise<import("../types").ITransaction | import("../types").IStartCheckoutResponse | void>} The result of the 3DS verification and checkout resumption; a payment charged by the core returns the same body as payment().
    * @public
    */
-  verify3dsTransaction(): Promise<ITransaction | void>;
+  verify3dsTransaction(): Promise<ITransaction | IStartCheckoutResponse | void>;
 
   /**
    * Removes the checkout from the DOM and cleans up associated resources.
