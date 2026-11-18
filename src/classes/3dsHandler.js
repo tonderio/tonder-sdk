@@ -205,7 +205,7 @@ export class ThreeDSHandler {
     try {
       const { status, body } = await fetchCoreTransaction(url, this.apiKey);
       if (status !== 200) {
-        console.error("La verificación de la transacción falló.");
+        console.error("The verification of the transaction failed.");
         // Only an unauthorized or unknown payment is definitive; anything else may be retried.
         if ([401, 404].includes(status)) this.removeVerifyTransactionUrl();
         return body;
@@ -214,7 +214,7 @@ export class ThreeDSHandler {
       if (!OPEN_PAYMENT_STATUSES.includes(body.status)) this.removeVerifyTransactionUrl();
       return toLegacyCheckoutResult(body, { coreUrl: this.coreUrl }).body;
     } catch (error) {
-      console.error("Error al verificar la transacción:", error);
+      console.error("Error verifying the transaction:", error);
     }
   }
 

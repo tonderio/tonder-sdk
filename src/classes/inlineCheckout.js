@@ -138,8 +138,13 @@ export class InlineCheckout extends BaseInlineCheckout {
     const observer = new MutationObserver(async (mutations, obs) => {
       const containerTonderCheckout = document.querySelector(`#${HTML_IDS.tonderCheckout}`);
       if (containerTonderCheckout) {
-        await this.#mount(containerTonderCheckout);
-        obs.disconnect();
+        try {
+          await this.#mount(containerTonderCheckout);
+        } catch (error) {
+          console.error("The checkout could not be mounted:", error);
+        } finally {
+          obs.disconnect();
+        }
       }
     });
     observer.observe(document.body, {
@@ -186,7 +191,13 @@ export class InlineCheckout extends BaseInlineCheckout {
       customization: this.customization,
     });
     globalLoader.show();
-    await this._initializeCheckout();
+    try {
+      await this._initializeCheckout();
+    } catch (error) {
+      globalLoader.remove();
+      showError("No se pudieron cargar los datos del comercio.", this.radioChecked);
+      throw error;
+    }
     await this.#loadInitialData();
     const currentContent = document.querySelector(`#${HTML_IDS.tonderContainer}`);
     currentContent.innerHTML = `

@@ -144,6 +144,12 @@ export class BaseInlineCheckout {
     return this.#handleLegacyCheckout(params);
   }
 
+  #checkoutRouterError(details) {
+    const error = new Error("Failed to start checkout router");
+    error.details = details;
+    return error;
+  }
+
   #isOperationsDisabled(error) {
     return error?.status === 503 && error?.body?.error?.code === "operations_disabled";
   }
@@ -179,19 +185,13 @@ export class BaseInlineCheckout {
       );
     } catch (error) {
       if (error.status === undefined || this.#isOperationsDisabled(error)) throw error;
-      const rejection = new Error("Failed to start checkout router");
-      rejection.details = toLegacyCheckoutError(error.status, error.body);
-      throw rejection;
+      throw this.#checkoutRouterError(toLegacyCheckoutError(error.status, error.body));
     }
 
     const { ok, body: legacyBody } = toLegacyCheckoutResult(answer, {
       coreUrl: this.coreUrl,
     });
-    if (!ok) {
-      const rejection = new Error("Failed to start checkout router");
-      rejection.details = legacyBody;
-      throw rejection;
-    }
+    if (!ok) throw this.#checkoutRouterError(legacyBody);
     this.process3ds.setEngine(PAYMENT_ENGINE.CORE);
     return legacyBody;
   }
@@ -308,11 +308,18 @@ export class BaseInlineCheckout {
   }
 
   async #fetchMerchantData() {
-    this.merchantData = await fetchCoreBusinessConfig(
-      this.coreUrl,
-      this.apiKeyTonder,
-      this.abortController.signal,
-    );
+    try {
+      this.merchantData = await fetchCoreBusinessConfig(
+        this.coreUrl,
+        this.apiKeyTonder,
+        this.abortController.signal,
+      );
+    } catch (error) {
+      const failure = new Error("The Tonder checkout configuration could not be loaded.");
+      failure.cause = error;
+      failure.status = error.status;
+      throw failure;
+    }
     this.#engine =
       this.merchantData.core_payments_enabled === true
         ? PAYMENT_ENGINE.CORE
