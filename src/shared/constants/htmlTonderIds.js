@@ -2,6 +2,7 @@ export const HTML_IDS = Object.freeze({
   globalLoader: "global-loader",
   tonderContainer: "tndr-container",
   tonderCheckout: "tonder-checkout",
+  configError: "tonder-config-error",
   tonderPayButton: "tonderPayButton",
   tonderCancelButton: "tonderCancelButton",
   msgError: "msgError",

@@ -35,7 +35,11 @@ export async function fetchCoreBusinessConfig(coreUrl, apiKey, signal) {
     signal,
   });
   if (!response.ok) await throwCoreError(response, "Failed to fetch the business configuration");
-  return await response.json();
+  const config = await response.json();
+  if (!config || typeof config !== "object" || Array.isArray(config)) {
+    throw new Error("The business configuration is not an object");
+  }
+  return config;
 }
 
 /**
