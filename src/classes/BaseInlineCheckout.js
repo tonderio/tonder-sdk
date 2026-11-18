@@ -148,7 +148,7 @@ export class BaseInlineCheckout {
     return error?.status === 503 && error?.body?.error?.code === "operations_disabled";
   }
 
-  async #handleCoreCheckout({ card }) {
+  async #handleCoreCheckout({ card, savedCardId }) {
     const { reference } = this.merchantData;
     const body = buildCoreProcessBody({
       total: this.cartTotal,
@@ -162,6 +162,7 @@ export class BaseInlineCheckout {
       identification: this.customer?.identification,
       browserInfo: getBrowserInfo(),
       card,
+      savedCardId,
       returnUrl: this.returnUrl,
       metadata: this.metadata,
       billingAddress: this.billingAddress,

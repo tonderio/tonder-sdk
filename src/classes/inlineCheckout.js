@@ -380,12 +380,14 @@ export class InlineCheckout extends BaseInlineCheckout {
     try {
       const { business } = this.merchantData;
       let cardTokens;
+      let savedCardId;
       const selected_apm = this.#paymentMethodsData
         ? this.#paymentMethodsData.find(iapm => iapm.pk === this.radioChecked)
         : {};
 
       if (this.radioChecked === "new" || this.radioChecked === undefined) {
         cardTokens = await this.#getCardTokens(this.radioChecked);
+        savedCardId = this.card?.skyflow_id;
       } else {
         if (!selected_apm) {
           await this.#getCardTokens(this.radioChecked);
@@ -393,6 +395,7 @@ export class InlineCheckout extends BaseInlineCheckout {
         cardTokens = {
           skyflow_id: this.radioChecked,
         };
+        savedCardId = this.radioChecked;
       }
 
       this.#customerData = await this._getCustomer(this.customer, this.abortController.signal);
@@ -405,7 +408,7 @@ export class InlineCheckout extends BaseInlineCheckout {
           ? {
               payment_method: selected_apm.payment_method, // Always use the method name string
             }
-          : { card: cardTokens }),
+          : { card: cardTokens, savedCardId }),
         customer: this.#customerData,
       });
 
