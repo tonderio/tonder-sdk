@@ -1,3 +1,8 @@
+import {
+  APPROVED_PAYMENT_STATUSES,
+  OPEN_PAYMENT_STATUSES,
+} from "../shared/constants/paymentEngine";
+
 const GUARDIAN_DECLINE_CODE = "FH01";
 const DEFAULT_PROVIDER = "tonder";
 
@@ -135,16 +140,22 @@ function approvedBody(core, provider, ctx) {
  */
 export function toLegacyCheckoutResult(core, ctx) {
   const provider = core.provider || DEFAULT_PROVIDER;
-  if (["Declined", "Failed"].includes(core.status)) {
-    if (isGuardianBlock(core)) return { ok: true, body: guardianBody(core, provider) };
-    return { ok: false, body: declinedBody(core, provider, ctx) };
-  }
-  return { ok: true, body: approvedBody(core, provider, ctx) };
+  const charged =
+    APPROVED_PAYMENT_STATUSES.includes(core.status) || OPEN_PAYMENT_STATUSES.includes(core.status);
+  if (charged) return { ok: true, body: approvedBody(core, provider, ctx) };
+  if (isGuardianBlock(core)) return { ok: true, body: guardianBody(core, provider) };
+  return { ok: false, body: declinedBody(core, provider, ctx) };
 }
 
 export function toLegacyCheckoutError(status, body) {
   if (status === 402) {
     return { status: "404", message: "Error", psp_response: [], is_route_finished: true };
   }
-  return body;
+  const message = typeof body?.error?.message === "string" && body.error.message;
+  return {
+    status: String(status),
+    message: message || "Error",
+    psp_response: [],
+    is_route_finished: false,
+  };
 }

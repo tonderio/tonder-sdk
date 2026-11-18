@@ -174,6 +174,27 @@ describe("toLegacyCheckoutResult", () => {
   });
 });
 
+describe("toLegacyCheckoutResult statuses", () => {
+  it.each(["Success", "Authorized", "Pending", "Processing"])("approves %s", status => {
+    const { ok, body } = toLegacyCheckoutResult(
+      coreSuccess({ status, transaction_status: status }),
+      ctx,
+    );
+    expect(ok).toBe(true);
+    expect(body.status).toBe("200");
+  });
+
+  it.each(["Cancelled", "Expired", "Voided", "Error", "SomethingNew", undefined])(
+    "never approves %s",
+    status => {
+      const { ok, body } = toLegacyCheckoutResult(coreSuccess({ status }), ctx);
+      expect(ok).toBe(false);
+      expect(body.status).toBe("404");
+      expect(body.message).not.toBe("Success");
+    },
+  );
+});
+
 describe("toLegacyCheckoutError", () => {
   it("maps a route that ended with no registered transaction to the legacy error body", () => {
     expect(
@@ -181,8 +202,18 @@ describe("toLegacyCheckoutError", () => {
     ).toEqual({ status: "404", message: "Error", psp_response: [], is_route_finished: true });
   });
 
-  it("keeps any other core error body", () => {
-    const body = { error: { code: "service_unavailable" }, status_code: 502 };
-    expect(toLegacyCheckoutError(502, body)).toEqual(body);
+  it("builds the checkout-router error shape from any other core error", () => {
+    expect(
+      toLegacyCheckoutError(400, { error: { code: "invalid_request", message: "Bad amount" } }),
+    ).toEqual({ status: "400", message: "Bad amount", psp_response: [], is_route_finished: false });
+  });
+
+  it("falls back to the generic message when the core sends no readable body", () => {
+    expect(toLegacyCheckoutError(503, undefined)).toEqual({
+      status: "503",
+      message: "Error",
+      psp_response: [],
+      is_route_finished: false,
+    });
   });
 });

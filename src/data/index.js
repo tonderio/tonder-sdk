@@ -1,4 +1,3 @@
-import { fetchBusiness } from "./businessApi";
 import { registerOrFetchCustomer } from "./customerApi";
 import { createOrder } from "./checkoutApi";
 import { saveCustomerCard, removeCustomerCard, fetchCustomerCards } from "./cardApi";
@@ -10,7 +9,6 @@ export {
   saveCustomerCard,
   removeCustomerCard,
   fetchCustomerCards,
-  fetchBusiness,
   fetchCustomerAPMs,
   fetchSafetyPayBanks,
   fetchSafetyPayBanksByType,
