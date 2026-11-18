@@ -1,7 +1,7 @@
 import { getBaseUrlByEnv } from "../shared/utils/apiFetch";
 import { fetchCoreTransaction, resolveCoreUrl } from "../data/coreApi";
 import { OPEN_PAYMENT_STATUSES, PAYMENT_ENGINE } from "../shared/constants/paymentEngine";
-import { toLegacyCheckoutResult } from "../helpers/coreCheckout";
+import { toLegacyCheckoutError, toLegacyCheckoutResult } from "../helpers/coreCheckout";
 
 export class ThreeDSHandler {
   engine = PAYMENT_ENGINE.LEGACY;
@@ -208,7 +208,7 @@ export class ThreeDSHandler {
         console.error("The verification of the transaction failed.");
         // Only an unauthorized or unknown payment is definitive; anything else may be retried.
         if ([401, 404].includes(status)) this.removeVerifyTransactionUrl();
-        return body;
+        return toLegacyCheckoutError(status, body);
       }
       // The core already continued the route: the answer is the payment's current state.
       if (!OPEN_PAYMENT_STATUSES.includes(body.status)) this.removeVerifyTransactionUrl();
