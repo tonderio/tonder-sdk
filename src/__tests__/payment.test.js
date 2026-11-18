@@ -57,7 +57,11 @@ const newV2 = () => {
 const newV1 = () => {
   const checkout = new InlineCheckout({ apiKey: API_KEY, mode: "stage", returnUrl: "r" });
   vi.spyOn(checkout, "_checkout").mockImplementation(() =>
-    checkout._handleCheckout({ card: { skyflow_id: "sky-1" }, customer: CUSTOMER }),
+    checkout._handleCheckout({
+      card: { skyflow_id: "sky-1" },
+      savedCardId: "sky-1",
+      customer: CUSTOMER,
+    }),
   );
   return checkout;
 };

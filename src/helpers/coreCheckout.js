@@ -1,3 +1,4 @@
+import { checkoutRouterError } from "../data/checkoutApi";
 import {
   APPROVED_PAYMENT_STATUSES,
   OPEN_PAYMENT_STATUSES,
@@ -5,6 +6,13 @@ import {
 
 const GUARDIAN_DECLINE_CODE = "FH01";
 const DEFAULT_PROVIDER = "tonder";
+const CARD_FIELDS = [
+  "card_number",
+  "cvv",
+  "expiration_month",
+  "expiration_year",
+  "cardholder_name",
+];
 
 export function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -29,15 +37,27 @@ export function buildCoreProcessBody({
   identification,
   browserInfo,
   card,
+  savedCardId,
   returnUrl,
   metadata,
   billingAddress,
   items,
 }) {
-  const paymentMethod =
-    card?.skyflow_id !== undefined
-      ? { type: "CARD", token: card.skyflow_id }
-      : { type: "CARD", ...card };
+  // The caller decides by flow: a fresh collect also returns the new record's skyflow_id,
+  // and the core reads `token` as a saved card.
+  if (!savedCardId && !CARD_FIELDS.some(field => card?.[field] !== undefined)) {
+    throw checkoutRouterError(
+      toLegacyCheckoutError(400, {
+        error: { message: "A saved card id or the collected card fields are required to pay." },
+      }),
+    );
+  }
+  const paymentMethod = savedCardId
+    ? { type: "CARD", token: savedCardId }
+    : {
+        type: "CARD",
+        ...Object.fromEntries(CARD_FIELDS.map(field => [field, card[field] ?? ""])),
+      };
   return {
     operation_type: "payment",
     amount: Number(total),
