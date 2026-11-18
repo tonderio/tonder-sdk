@@ -42,10 +42,87 @@ describe("buildCoreProcessBody", () => {
         identification: { type: "CURP", number: "ABC123" },
       },
       browser_info: { javascript_enabled: true, language: "es-MX" },
-      payment_method: { type: "CARD", card_number: "t1", cvv: "t2", cardholder_name: "t3" },
+      payment_method: {
+        type: "CARD",
+        card_number: "t1",
+        cvv: "t2",
+        expiration_month: "",
+        expiration_year: "",
+        cardholder_name: "t3",
+      },
       metadata: { order_id: 9, transaction_id: 3 },
       return_url: "https://shop.example/return",
       items: [{ name: "Shirt", quantity: 1 }],
+    });
+  });
+
+  it("sends the field tokens of a fresh collect and never the new record id", () => {
+    const body = buildCoreProcessBody({
+      ...base,
+      card: {
+        card_number: "t1",
+        cvv: "t2",
+        expiration_month: "t3",
+        expiration_year: "t4",
+        cardholder_name: "t5",
+        skyflow_id: "new-record-id",
+      },
+    });
+    expect(body.payment_method).toEqual({
+      type: "CARD",
+      card_number: "t1",
+      cvv: "t2",
+      expiration_month: "t3",
+      expiration_year: "t4",
+      cardholder_name: "t5",
+    });
+    expect(body.payment_method).not.toHaveProperty("token");
+  });
+
+  it("sends field tokens, never a token, for a fresh collect without card_number", () => {
+    const body = buildCoreProcessBody({
+      ...base,
+      card: { cvv: "t2", skyflow_id: "new-record-id" },
+    });
+    expect(body.payment_method).toEqual({
+      type: "CARD",
+      card_number: "",
+      cvv: "t2",
+      expiration_month: "",
+      expiration_year: "",
+      cardholder_name: "",
+    });
+  });
+
+  it.each([
+    ["no card at all", undefined],
+    ["a collect that returned no card field", {}],
+    ["only the new record id", { skyflow_id: "new-record-id" }],
+  ])("rejects with the checkout-router error shape for %s", (_, card) => {
+    let error;
+    try {
+      buildCoreProcessBody({ ...base, card });
+    } catch (e) {
+      error = e;
+    }
+    expect(error.message).toBe("Failed to start checkout router");
+    expect(error.details).toEqual({
+      status: "400",
+      message: "A saved card id or the collected card fields are required to pay.",
+      psp_response: [],
+      is_route_finished: false,
+    });
+  });
+
+  it("sends an empty string for a field token the collect did not return", () => {
+    const body = buildCoreProcessBody({ ...base, card: { card_number: "t1", cvv: "t2" } });
+    expect(body.payment_method).toEqual({
+      type: "CARD",
+      card_number: "t1",
+      cvv: "t2",
+      expiration_month: "",
+      expiration_year: "",
+      cardholder_name: "",
     });
   });
 
@@ -53,7 +130,7 @@ describe("buildCoreProcessBody", () => {
     const body = buildCoreProcessBody({
       ...base,
       orderReference: undefined,
-      card: { skyflow_id: "sky-1" },
+      savedCardId: "sky-1",
       billingAddress: { city: "CDMX" },
     });
     expect(body.payment_method).toEqual({ type: "CARD", token: "sky-1" });
@@ -67,7 +144,7 @@ describe("buildCoreProcessBody", () => {
       phone: undefined,
       identification: undefined,
       browserInfo: undefined,
-      card: { skyflow_id: "sky-1" },
+      savedCardId: "sky-1",
     });
     expect(body.customer).toEqual({ name: "Ana Lopez", email: "ana@example.com" });
     expect(body).not.toHaveProperty("browser_info");

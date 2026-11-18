@@ -296,6 +296,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
 
     return await this._handleCheckout({
       card: skyflowTokens,
+      savedCardId: typeof card === "string" ? card : undefined,
       payment_method,
       customer,
     });
