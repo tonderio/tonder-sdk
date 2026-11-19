@@ -3,6 +3,7 @@ import {
   buildCoreProcessBody,
   toLegacyCheckoutError,
   toLegacyCheckoutResult,
+  toLegacyTransaction,
 } from "../helpers/coreCheckout";
 import { CORE_HOST, coreDeclined, coreRedirect, coreSuccess } from "./fixtures";
 
@@ -56,7 +57,7 @@ describe("buildCoreProcessBody", () => {
     });
   });
 
-  it("sends the field tokens of a fresh collect and never the new record id", () => {
+  it("sends the field tokens and the new record id of a fresh collect, never a token", () => {
     const body = buildCoreProcessBody({
       ...base,
       card: {
@@ -75,6 +76,7 @@ describe("buildCoreProcessBody", () => {
       expiration_month: "t3",
       expiration_year: "t4",
       cardholder_name: "t5",
+      skyflow_id: "new-record-id",
     });
     expect(body.payment_method).not.toHaveProperty("token");
   });
@@ -91,6 +93,7 @@ describe("buildCoreProcessBody", () => {
       expiration_month: "",
       expiration_year: "",
       cardholder_name: "",
+      skyflow_id: "new-record-id",
     });
   });
 
@@ -112,6 +115,15 @@ describe("buildCoreProcessBody", () => {
       psp_response: [],
       is_route_finished: false,
     });
+  });
+
+  it("never sends the record id of a saved card next to its token", () => {
+    const body = buildCoreProcessBody({
+      ...base,
+      card: { skyflow_id: "sky-1" },
+      savedCardId: "sky-1",
+    });
+    expect(body.payment_method).toEqual({ type: "CARD", token: "sky-1" });
   });
 
   it("sends an empty string for a field token the collect did not return", () => {
@@ -291,6 +303,103 @@ describe("toLegacyCheckoutError", () => {
       message: "Error",
       psp_response: [],
       is_route_finished: false,
+    });
+  });
+});
+
+describe("toLegacyTransaction", () => {
+  const core = overrides =>
+    coreSuccess({
+      amount: "100.0000",
+      currency: "MXN",
+      created_at: "2026-11-17T10:00:00Z",
+      updated_at: "2026-11-17T10:00:05Z",
+      ...overrides,
+    });
+
+  it("rebuilds the legacy transaction object of a Success", () => {
+    expect(toLegacyTransaction(core())).toEqual({
+      id: 555,
+      status: "Success",
+      transaction_status: "Success",
+      provider: "tonder",
+      checkout_id: "route-1",
+      checkout: { id: "route-1", is_route_finished: false },
+      amount: "100.0000",
+      currency: { code: "MXN" },
+      currency_code: "MXN",
+      transaction_type: "Payment",
+      metadata: { order_id: 9 },
+      created: "2026-11-17T10:00:00Z",
+      modified: "2026-11-17T10:00:05Z",
+      payment: { id: 77 },
+      response: { approved: true },
+      is_apm: false,
+    });
+  });
+
+  it("maps the first-party fields of the core answer 1:1, keeping nulls", () => {
+    const fields = {
+      card_brand: "VISA",
+      transaction_reference: "TNDR-1",
+      number_of_payment_attempts: 2,
+      number_of_installments: 1,
+      three_d_secure: { eci: "05" },
+      reason: null,
+      operation_date: "2026-11-17T10:00:01.123456Z",
+      decline: { error_type: "Soft" },
+    };
+    expect(toLegacyTransaction(core(fields))).toMatchObject(fields);
+    expect(toLegacyTransaction(core({ decline: null }))).toHaveProperty("decline", null);
+  });
+
+  it("keeps a null answer as null and omits what the core did not answer", () => {
+    const transaction = toLegacyTransaction(
+      core({ metadata: null, currency: null, payment_id: null, psp_response: null }),
+    );
+    expect(transaction).toMatchObject({
+      metadata: null,
+      currency: null,
+      currency_code: null,
+      payment: null,
+      response: null,
+    });
+    const absent = toLegacyTransaction({ id: "x", status: "Success", transaction_id: "7" });
+    ["metadata", "currency", "currency_code", "payment", "response"].forEach(key =>
+      expect(absent).not.toHaveProperty(key),
+    );
+  });
+
+  it("keeps a Declined status and never builds a checkout-router body", () => {
+    const transaction = toLegacyTransaction(
+      core({ status: "Declined", transaction_status: "Declined", psp_response: { code: "51" } }),
+    );
+    expect(transaction).toMatchObject({
+      status: "Declined",
+      transaction_status: "Declined",
+      response: { code: "51" },
+    });
+    ["message", "actions", "next_action", "is_route_finished", "psp_response"].forEach(key =>
+      expect(transaction).not.toHaveProperty(key),
+    );
+  });
+
+  it("keeps a Pending status", () => {
+    expect(toLegacyTransaction(core({ status: "Pending" }))).toMatchObject({
+      status: "Pending",
+      transaction_status: "Pending",
+    });
+  });
+
+  it("falls back to tonder as the provider and omits what the core does not answer", () => {
+    const transaction = toLegacyTransaction({ id: "x", status: "Success", transaction_id: "7" });
+    expect(transaction).toEqual({
+      id: 7,
+      status: "Success",
+      transaction_status: "Success",
+      provider: "tonder",
+      transaction_type: "Payment",
+      is_apm: false,
     });
   });
 });

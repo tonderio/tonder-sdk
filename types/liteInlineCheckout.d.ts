@@ -7,8 +7,12 @@ import {
 } from "./common";
 import { ICustomerCardsResponse, ISaveCardResponse } from "./card";
 import { IPaymentMethod } from "./paymentMethod";
-import { IProcessPaymentRequest, IStartCheckoutResponse } from "./checkout";
-import { ITransaction } from "./transaction";
+import {
+  IProcessPaymentRequest,
+  IStartCheckoutErrorResponse,
+  IStartCheckoutResponse,
+} from "./checkout";
+import { CoreVerifyTransaction, ITransaction } from "./transaction";
 
 // ── CardField type ────────────────────────────────────────────────────────────
 
@@ -143,7 +147,13 @@ export class LiteInlineCheckout {
   /**
    * Verifies the 3DS transaction status.
    */
-  verify3dsTransaction(): Promise<ITransaction | IStartCheckoutResponse | void>;
+  verify3dsTransaction(): Promise<
+    | ITransaction
+    | CoreVerifyTransaction
+    | IStartCheckoutResponse
+    | IStartCheckoutErrorResponse
+    | void
+  >;
 
   /**
    * Retrieves the list of cards associated with the customer.

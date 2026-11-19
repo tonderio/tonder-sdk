@@ -57,6 +57,8 @@ export function buildCoreProcessBody({
     : {
         type: "CARD",
         ...Object.fromEntries(CARD_FIELDS.map(field => [field, card[field] ?? ""])),
+        // Only the core's BIN lookup reads it; the card is still charged from the field tokens.
+        ...(card.skyflow_id ? { skyflow_id: card.skyflow_id } : {}),
       };
   return {
     operation_type: "payment",
@@ -165,6 +167,62 @@ export function toLegacyCheckoutResult(core, ctx) {
   if (charged) return { ok: true, body: approvedBody(core, provider, ctx) };
   if (isGuardianBlock(core)) return { ok: true, body: guardianBody(core, provider) };
   return { ok: false, body: declinedBody(core, provider, ctx) };
+}
+
+const withoutUndefined = object =>
+  Object.fromEntries(Object.entries(object).filter(([, value]) => value !== undefined));
+
+// Answered by the core under the monolith's own names and values; a null stays null.
+const FIRST_PARTY_TRANSACTION_FIELDS = [
+  "card_brand",
+  "transaction_reference",
+  "number_of_payment_attempts",
+  "number_of_installments",
+  "three_d_secure",
+  "reason",
+  "operation_date",
+  "decline",
+];
+
+// A null answer stays null and a missing one stays missing, as the legacy route answers them.
+const nestedOrNull = (value, build) =>
+  value === undefined || value === null ? value : build(value);
+
+const LEGACY_TRANSACTION_TYPES = { payment: "Payment", refund: "Refund" };
+
+/**
+ * Rebuilds, from the core's `GET /transactions/v1/{id}` answer, the transaction object the legacy
+ * verify route returns (same names, types and values). Fields only the legacy back office holds
+ * (fees, rates, taxes, Guardian data, the payment method object) are left out rather than invented.
+ */
+export function toLegacyTransaction(core) {
+  const transaction = {
+    id: toTransactionId(core.transaction_id),
+    status: core.status,
+    transaction_status: core.status,
+    provider: core.provider || DEFAULT_PROVIDER,
+    checkout_id: core.routing?.checkout_id,
+    checkout: core.routing
+      ? withoutUndefined({
+          id: core.routing.checkout_id,
+          is_route_finished: core.routing.is_route_finished,
+        })
+      : core.routing,
+    amount: core.amount,
+    currency: nestedOrNull(core.currency, code => ({ code })),
+    currency_code: core.currency,
+    transaction_type: LEGACY_TRANSACTION_TYPES[core.operation_type] || "Payment",
+    metadata: core.metadata,
+    created: core.created_at,
+    modified: core.updated_at,
+    payment: nestedOrNull(core.payment_id, id => ({ id })),
+    response: core.psp_response,
+    is_apm: false,
+  };
+  FIRST_PARTY_TRANSACTION_FIELDS.forEach(field => {
+    if (field in core) transaction[field] = core[field];
+  });
+  return withoutUndefined(transaction);
 }
 
 export function toLegacyCheckoutError(status, body) {
