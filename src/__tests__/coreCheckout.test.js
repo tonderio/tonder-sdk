@@ -178,6 +178,7 @@ describe("toLegacyCheckoutResult", () => {
       provider: "tonder",
       next_action: {},
       psp_response: { approved: true },
+      // Both actions use the transaction id (core.id), not the payment_id.
       actions: [
         {
           name: "verify_transaction_status",
