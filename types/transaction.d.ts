@@ -120,7 +120,7 @@ export interface CoreVerifyTransaction {
   amount?: null | string;
   currency?: null | { code: string };
   currency_code?: null | string;
-  transaction_type: "Payment" | "Refund";
+  transaction_type: "PAYMENT" | "REFUND";
   metadata?: null | Record<string, unknown>;
   created?: null | string;
   modified?: null | string;
