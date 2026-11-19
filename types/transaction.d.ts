@@ -99,3 +99,40 @@ export interface ITransaction {
   };
   issuing_country?: null | string;
 }
+
+/**
+ * What `verify3dsTransaction()` resolves for a payment charged through the Tonder payments API:
+ * the legacy transaction object reduced to the fields that API answers. Fields only the legacy
+ * back office holds (fees, rates, taxes, Guardian data, `country`, `payment_method`, the nested
+ * `currency.symbol` and `checkout.checkout_data`...) are absent. The optional fields appear
+ * only when the API answers them; a `null` answer stays `null`.
+ */
+export interface CoreVerifyTransaction {
+  id?: null | number | string;
+  status: string;
+  transaction_status: string;
+  provider: string;
+  checkout_id?: string | null;
+  checkout?: null | {
+    id?: string | null;
+    is_route_finished?: boolean;
+  };
+  amount?: null | string;
+  currency?: null | { code: string };
+  currency_code?: null | string;
+  transaction_type: "Payment" | "Refund";
+  metadata?: null | Record<string, unknown>;
+  created?: null | string;
+  modified?: null | string;
+  payment?: null | { id: number };
+  response?: unknown;
+  is_apm: boolean;
+  card_brand?: null | string;
+  transaction_reference?: null | string;
+  number_of_payment_attempts?: null | number;
+  number_of_installments?: null | number;
+  three_d_secure?: unknown;
+  reason?: null | string;
+  operation_date?: null | string;
+  decline?: null | Record<string, unknown>;
+}

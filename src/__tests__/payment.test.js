@@ -431,13 +431,14 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       const result = await reloaded.verify3dsTransaction();
 
       expect(result).toMatchObject({
-        status: "200",
-        message: "Success",
-        checkout_id: "route-1",
+        id: 555,
+        status: "Success",
         transaction_status: "Success",
-        transaction_id: 555,
-        payment_id: 77,
+        provider: "tonder",
+        checkout_id: "route-1",
+        payment: { id: 77 },
       });
+      expect(result).not.toHaveProperty("actions");
       expect(calls.map(call => call.url)).toEqual([
         `${CORE_HOST}/transactions/v1/business/config`,
         `${CORE_HOST}/transactions/v1/0190aaaa`,
@@ -456,7 +457,7 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
         }),
       );
 
-    it("resolves a declined core payment with the rebuilt body and never resumes the route", async () => {
+    it("resolves a declined core payment with the legacy transaction object and never resumes the route", async () => {
       storeCoreState();
       const declined = coreDeclined();
       declined.routing.is_route_finished = false;
@@ -469,12 +470,8 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       await checkout._initializeCheckout();
       const result = await checkout.verify3dsTransaction();
 
-      expect(result).toMatchObject({
-        status: "404",
-        message: "Do not honor",
-        transaction_status: "Declined",
-        decline_code: "GS01",
-      });
+      expect(result).toMatchObject({ status: "Declined", transaction_status: "Declined" });
+      expect(result).not.toHaveProperty("message");
       expect(calledUrls().filter(url => url.startsWith(MONOLITH))).toEqual([]);
       expect(calledUrls().some(url => url.includes("checkout-router"))).toBe(false);
       expect(localStorage.getItem("verify_transaction_status")).toBeNull();
@@ -657,6 +654,34 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       expect(redirect).not.toHaveBeenCalled();
       expect(result.transaction_status).toBe("Pending");
       expect(JSON.parse(localStorage.getItem("verify_transaction_status")).engine).toBe("core");
+    });
+
+    it("resolves the legacy transaction object as is on the legacy engine", async () => {
+      localStorage.setItem(
+        "verify_transaction_status",
+        JSON.stringify({
+          url: "/api/v1/tonder/ksk/business/12/payments/77/transactions/555",
+          engine: "legacy",
+          expires: Date.now() + 60000,
+        }),
+      );
+      const monolith = {
+        id: 555,
+        status: "Success",
+        transaction_status: "Success",
+        fee_amount: "3.0000",
+        checkout: { id: "route-1", is_route_finished: true },
+      };
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        ["/api/v1/tonder/ksk/", jsonResponse(monolith)],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+
+      expect(await checkout.verify3dsTransaction()).toEqual(monolith);
+      expect(calledUrls().some(url => url.includes("/transactions/v1/0190aaaa"))).toBe(false);
     });
 
     it("keeps the legacy engine when the flag turned ON meanwhile", async () => {

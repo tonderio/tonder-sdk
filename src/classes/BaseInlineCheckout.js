@@ -51,7 +51,7 @@ export class BaseInlineCheckout {
 
   /**
    * Verifies the 3DS transaction status.
-   * @returns {Promise<import("../../types").ITransaction | import("../../types").IStartCheckoutResponse | void>} The result of the 3DS verification and checkout resumption; a payment charged by the core returns the same body as payment().
+   * @returns {Promise<import("../../types").ITransaction | import("../../types").IStartCheckoutResponse | void>} The result of the 3DS verification and checkout resumption; a payment charged by the core resolves with the same transaction object as the legacy route, without the fields only the legacy back office holds.
    * @public
    */
   async verify3dsTransaction() {
