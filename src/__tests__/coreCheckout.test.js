@@ -328,7 +328,7 @@ describe("toLegacyTransaction", () => {
       amount: "100.0000",
       currency: { code: "MXN" },
       currency_code: "MXN",
-      transaction_type: "Payment",
+      transaction_type: "PAYMENT",
       metadata: { order_id: 9 },
       created: "2026-11-17T10:00:00Z",
       modified: "2026-11-17T10:00:05Z",
@@ -370,6 +370,13 @@ describe("toLegacyTransaction", () => {
     );
   });
 
+  it("maps the operation type to the monolith's stored transaction type", () => {
+    expect(toLegacyTransaction(core({ operation_type: "payment" })).transaction_type).toBe(
+      "PAYMENT",
+    );
+    expect(toLegacyTransaction(core({ operation_type: "refund" })).transaction_type).toBe("REFUND");
+  });
+
   it("keeps a Declined status and never builds a checkout-router body", () => {
     const transaction = toLegacyTransaction(
       core({ status: "Declined", transaction_status: "Declined", psp_response: { code: "51" } }),
@@ -398,7 +405,7 @@ describe("toLegacyTransaction", () => {
       status: "Success",
       transaction_status: "Success",
       provider: "tonder",
-      transaction_type: "Payment",
+      transaction_type: "PAYMENT",
       is_apm: false,
     });
   });

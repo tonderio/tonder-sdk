@@ -189,7 +189,7 @@ const FIRST_PARTY_TRANSACTION_FIELDS = [
 const nestedOrNull = (value, build) =>
   value === undefined || value === null ? value : build(value);
 
-const LEGACY_TRANSACTION_TYPES = { payment: "Payment", refund: "Refund" };
+const LEGACY_TRANSACTION_TYPES = { payment: "PAYMENT", refund: "REFUND" };
 
 /**
  * Rebuilds, from the core's `GET /transactions/v1/{id}` answer, the transaction object the legacy
@@ -212,7 +212,7 @@ export function toLegacyTransaction(core) {
     amount: core.amount,
     currency: nestedOrNull(core.currency, code => ({ code })),
     currency_code: core.currency,
-    transaction_type: LEGACY_TRANSACTION_TYPES[core.operation_type] || "Payment",
+    transaction_type: LEGACY_TRANSACTION_TYPES[core.operation_type] || "PAYMENT",
     metadata: core.metadata,
     created: core.created_at,
     modified: core.updated_at,
