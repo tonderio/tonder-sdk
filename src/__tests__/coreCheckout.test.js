@@ -255,7 +255,7 @@ describe("toLegacyCheckoutResult", () => {
       transaction_id: "guardian-row-1",
       payment_id: 77,
       provider: "tonder",
-      amount: "100.0000",
+      amount: 100,
       currency: "MXN",
       psp_response: { code: "51" },
       decline_code: "FH01",
