@@ -15,7 +15,7 @@ export const coreSuccess = (overrides = {}) => ({
   id: "0190aaaa-0000-7000-8000-000000000001",
   operation_type: "payment",
   status: "Success",
-  amount: 100,
+  amount: "100.0000",
   currency: "MXN",
   country: "MX",
   client_reference: "order-1",
