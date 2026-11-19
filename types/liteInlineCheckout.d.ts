@@ -1,8 +1,12 @@
 import { IConfigureCheckout, IInlineCheckoutBaseOptions } from "./common";
 import { ICustomerCardsResponse, ISaveCardRequest, ISaveCardResponse } from "./card";
 import { IPaymentMethod } from "./paymentMethod";
-import { IProcessPaymentRequest, IStartCheckoutResponse } from "./checkout";
-import { ITransaction } from "./transaction";
+import {
+  IProcessPaymentRequest,
+  IStartCheckoutErrorResponse,
+  IStartCheckoutResponse,
+} from "./checkout";
+import { CoreVerifyTransaction, ITransaction } from "./transaction";
 
 export class LiteInlineCheckout {
   constructor(options: IInlineLiteCheckoutOptions);
@@ -39,10 +43,16 @@ export class LiteInlineCheckout {
 
   /**
    * Verifies the 3DS transaction status.
-   * @returns {Promise<import("../types").ITransaction | import("../types").IStartCheckoutResponse | void>} The result of the 3DS verification and checkout resumption; a payment charged through the Tonder payments API returns the same body as payment().
+   * @returns {Promise<import("../types").ITransaction | import("../types").CoreVerifyTransaction | import("../types").IStartCheckoutResponse | import("../types").IStartCheckoutErrorResponse | void>} The result of the 3DS verification and checkout resumption; a payment charged through the Tonder payments API resolves with a CoreVerifyTransaction, or with an error body when that API cannot answer.
    * @public
    */
-  verify3dsTransaction(): Promise<ITransaction | IStartCheckoutResponse | void>;
+  verify3dsTransaction(): Promise<
+    | ITransaction
+    | CoreVerifyTransaction
+    | IStartCheckoutResponse
+    | IStartCheckoutErrorResponse
+    | void
+  >;
 
   /**
    * Retrieves the list of cards associated with a customer.
