@@ -123,7 +123,8 @@ function guardianBody(core, provider) {
     message: core.decline_reason,
     ...legacyBase(core, provider),
     transaction_id: String(core.transaction_id),
-    amount: core.amount,
+    // The legacy Guardian body sends the amount as a float, not the core's four-decimal string.
+    amount: Number(core.amount) || 0,
     currency: core.currency,
     psp_response: core.psp_response,
     decline_code: core.decline_code,
