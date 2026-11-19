@@ -11,6 +11,7 @@ export const businessConfig = (overrides = {}) => ({
   ...overrides,
 });
 
+// `id` is the transaction id (one per attempt with a method); `payment_id` groups the payment.
 export const coreSuccess = (overrides = {}) => ({
   id: "0190aaaa-0000-7000-8000-000000000001",
   operation_type: "payment",

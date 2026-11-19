@@ -210,7 +210,7 @@ export class ThreeDSHandler {
         if ([401, 404].includes(status)) this.removeVerifyTransactionUrl();
         return toLegacyCheckoutError(status, body);
       }
-      // The core already continued the route: the answer is the payment's current state.
+      // The core already continued the route: the answer is the transaction's current state.
       if (!OPEN_PAYMENT_STATUSES.includes(body.status)) this.removeVerifyTransactionUrl();
       return toLegacyTransaction(body);
     } catch (error) {
