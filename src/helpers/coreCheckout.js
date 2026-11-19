@@ -85,6 +85,8 @@ const isGuardianBlock = core => core.decline_code === GUARDIAN_DECLINE_CODE;
 const toTransactionId = value =>
   typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value;
 
+// `core.id` is the transaction id (one per attempt with a method), which both routes accept;
+// the payment that groups its transactions is `core.payment_id`.
 function buildActions(core, { coreUrl }) {
   return [
     {
