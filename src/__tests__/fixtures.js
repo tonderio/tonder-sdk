@@ -77,3 +77,55 @@ export const jsonResponse = (body, status = 200) => ({
   statusText: "",
   json: async () => body,
 });
+
+// Answers of the core's SDK support routes (its public contract), not the monolith's bodies.
+export const coreCustomer = (overrides = {}) => ({
+  customer_id: 5,
+  email: "ana@example.com",
+  first_name: "Ana",
+  last_name: "Lopez",
+  auth_token: "customer-token",
+  auth_token_expires_at: "2026-11-20T12:00:00Z",
+  ...overrides,
+});
+
+export const coreCard = (overrides = {}) => ({
+  id: "sky-1",
+  card_number: "XXXX-XXXX-XXXX-4242",
+  expiration_month: "12",
+  expiration_year: "29",
+  card_scheme: "VISA",
+  subscription_id: null,
+  ...overrides,
+});
+
+export const coreError = (code, message = "A sentence.", type = code, details) => ({
+  error: { code, message, type, ...(details ? { details } : {}) },
+  request_id: "req-1",
+});
+
+export const coreBank = (overrides = {}) => ({
+  bank_id: 41,
+  code: "BBVA",
+  name: "BBVA",
+  payment_type: "transfer",
+  priority: 1,
+  logo_url: "https://cdn.example/bbva.png",
+  country_name: "México",
+  channels: ["OL"],
+  limits: { min: 1, max: 1000 },
+  currency: "MXN",
+  locations_url: null,
+  ...overrides,
+});
+
+export const corePaymentMethod = (overrides = {}) => ({
+  id: "0190bbbb-0000-7000-8000-000000000001",
+  payment_method: "SPEI",
+  category: "Bank transfer",
+  acquirer: "stp",
+  status: "active",
+  priority: 2,
+  unavailable_countries: [],
+  ...overrides,
+});

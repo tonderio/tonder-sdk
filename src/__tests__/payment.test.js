@@ -41,6 +41,7 @@ const stubFetch = () => {
 };
 
 const legacyRoutes = () => [
+  ["/api/v1/customer/", jsonResponse(CUSTOMER, 201)],
   ["/api/v1/orders/", jsonResponse({ id: 31 }, 201)],
   ["/payments/", jsonResponse({ pk: 77 }, 201)],
   ["/api/v1/checkout-router/", jsonResponse({ status: "200", message: "Success" }, 201)],

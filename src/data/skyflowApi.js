@@ -1,9 +1,9 @@
-export async function getVaultToken(baseUrl, apiKey, signal = null) {
-  const response = await fetch(`${baseUrl}/api/v1/vault-token/`, {
+import { coreHeaders, coreRoute } from "./coreApi";
+
+export async function getVaultToken(coreUrl, apiKey, signal = null) {
+  const response = await fetch(coreRoute(coreUrl, "/vault-token"), {
     method: "GET",
-    headers: {
-      Authorization: `Token ${apiKey}`,
-    },
+    headers: coreHeaders(apiKey),
     signal: signal,
   });
 
