@@ -69,7 +69,7 @@ function getFieldStyles(field, styles) {
 export async function initSkyflow(
   vaultId,
   vaultUrl,
-  baseUrl,
+  coreUrl,
   apiKey,
   signal,
   customStyles = {},
@@ -78,7 +78,7 @@ export async function initSkyflow(
   mode,
   events = {},
 ) {
-  const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal, mode);
+  const skyflow = await initializeSkyflow(vaultId, vaultUrl, coreUrl, apiKey, signal, mode);
 
   // Create collect Container.
   const collectContainer = await skyflow.container(Skyflow.ContainerType.COLLECT);
@@ -244,7 +244,7 @@ export async function initUpdateSkyflow(
   skyflowId,
   vaultId,
   vaultUrl,
-  baseUrl,
+  coreUrl,
   apiKey,
   signal,
   customStyles = {},
@@ -252,7 +252,7 @@ export async function initUpdateSkyflow(
   mode,
   events = {},
 ) {
-  const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal, mode);
+  const skyflow = await initializeSkyflow(vaultId, vaultUrl, coreUrl, apiKey, signal, mode);
 
   const collectStylesOptions = {
     ...getDefaultStyles(displayMode === DISPLAY_MODE.dark),
@@ -299,20 +299,20 @@ export async function initUpdateSkyflow(
  * Initializes a Skyflow instance. Shared by all checkout classes.
  * @param {string} vaultId
  * @param {string} vaultUrl
- * @param {string} baseUrl
+ * @param {string} coreUrl - Host of the core, which mints the vault token.
  * @param {string} apiKey
  * @param {AbortSignal|null} signal
  * @param {string} [mode] - 'production' maps to Skyflow.Env.PROD; all others use DEV.
  * @returns {Promise<object>} Skyflow instance
  */
-export async function initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal, mode) {
+export async function initializeSkyflow(vaultId, vaultUrl, coreUrl, apiKey, signal, mode) {
   const env = mode === "production" ? Skyflow.Env.PROD : Skyflow.Env.DEV;
   return await Skyflow.init({
     vaultID: vaultId,
     vaultURL: vaultUrl,
     getBearerToken: async () => {
       // Pass the signal to the fetch call
-      return await getVaultToken(baseUrl, apiKey, signal);
+      return await getVaultToken(coreUrl, apiKey, signal);
     },
     options: {
       logLevel: Skyflow.LogLevel.ERROR,
