@@ -241,7 +241,7 @@ export class InlineCheckout extends BaseInlineCheckout {
       this.collectContainer = await initSkyflow(
         vault_id,
         vault_url,
-        this.baseUrl,
+        this.coreUrl,
         this.apiKeyTonder,
         this.abortController.signal,
         this.customStyles,
@@ -438,13 +438,14 @@ export class InlineCheckout extends BaseInlineCheckout {
       try {
         await saveCustomerCard(
           this.signatures,
-          this.baseUrl,
+          this._customerHost,
           this.#customerData.auth_token,
           this.secureToken,
           businessId,
           {
             skyflow_id: cardTokens.skyflow_id,
           },
+          this._usesCore,
         );
         showMessage(MESSAGES.cardSaved, this.radioChecked);
       } catch (error) {
@@ -518,7 +519,7 @@ export class InlineCheckout extends BaseInlineCheckout {
     try {
       const canGetCards = this.email && this.customization.saveCards?.showSaved;
       const pmResponsePromise = this.customization.paymentMethods?.show
-        ? fetchCustomerAPMs(this.baseUrl, this.apiKeyTonder)
+        ? fetchCustomerAPMs(this.coreUrl, this.apiKeyTonder)
         : Promise.resolve(null);
       const customerDataPromise =
         canGetCards && !!this.customer
@@ -537,10 +538,12 @@ export class InlineCheckout extends BaseInlineCheckout {
         const { auth_token } = customerData;
         const cardsResponse = await fetchCustomerCards(
           this.signatures,
-          this.baseUrl,
+          this._customerHost,
           auth_token,
           this.secureToken,
           this.merchantData.business.pk,
+          null,
+          this._usesCore,
         );
         this.#cardsData = get(cardsResponse, "cards", []);
       }
@@ -620,11 +623,12 @@ export class InlineCheckout extends BaseInlineCheckout {
         const businessId = this.merchantData.business.pk;
         await removeCustomerCard(
           this.signatures,
-          this.baseUrl,
+          this._customerHost,
           this.#customerData.auth_token,
           this.secureToken,
           skyflow_id,
           businessId,
+          this._usesCore,
         );
       } catch (error) {
       } finally {
@@ -696,7 +700,7 @@ export class InlineCheckout extends BaseInlineCheckout {
           container_radio_id,
           vault_id,
           vault_url,
-          this.baseUrl,
+          this.coreUrl,
           this.apiKeyTonder,
           this.abortController.signal,
           this.customStyles,
@@ -802,7 +806,7 @@ export class InlineCheckout extends BaseInlineCheckout {
   async #fetchSafetyPayBanks(paymentType) {
     try {
       const response = await fetchSafetyPayBanksByType(
-        this.baseUrl,
+        this.coreUrl,
         this.apiKeyTonder,
         paymentType,
         this.abortController.signal,

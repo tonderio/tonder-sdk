@@ -6,14 +6,14 @@ import { DISPLAY_MODE } from "../shared/constants/displayMode";
 export async function initSkyflow(
   vaultId,
   vaultUrl,
-  baseUrl,
+  coreUrl,
   apiKey,
   signal,
   customStyles = {},
   collectorIds,
   displayMode,
 ) {
-  const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal);
+  const skyflow = await initializeSkyflow(vaultId, vaultUrl, coreUrl, apiKey, signal);
 
   // Create collect Container.
   const collectContainer = await skyflow.container(Skyflow.ContainerType.COLLECT);
@@ -171,13 +171,13 @@ export async function initUpdateSkyflow(
   skyflowId,
   vaultId,
   vaultUrl,
-  baseUrl,
+  coreUrl,
   apiKey,
   signal,
   customStyles = {},
   displayMode,
 ) {
-  const skyflow = await initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal);
+  const skyflow = await initializeSkyflow(vaultId, vaultUrl, coreUrl, apiKey, signal);
 
   let collectStylesOptions = {
     ...getDefaultStyles(displayMode === DISPLAY_MODE.dark),
@@ -216,13 +216,13 @@ export async function initUpdateSkyflow(
   };
 }
 
-async function initializeSkyflow(vaultId, vaultUrl, baseUrl, apiKey, signal) {
+async function initializeSkyflow(vaultId, vaultUrl, coreUrl, apiKey, signal) {
   return await Skyflow.init({
     vaultID: vaultId,
     vaultURL: vaultUrl,
     getBearerToken: async () => {
       // Pass the signal to the fetch call
-      return await getVaultToken(baseUrl, apiKey, signal);
+      return await getVaultToken(coreUrl, apiKey, signal);
     },
     options: {
       logLevel: Skyflow.LogLevel.ERROR,
@@ -292,11 +292,11 @@ function updateErrorLabel(element, errorStyles, color = "") {
   }
 }
 
-export async function getSkyflowTokens({ baseUrl, apiKey, vault_id, vault_url, data }) {
+export async function getSkyflowTokens({ coreUrl, apiKey, vault_id, vault_url, data }) {
   const skyflow = Skyflow.init({
     vaultID: vault_id,
     vaultURL: vault_url,
-    getBearerToken: async () => await getVaultToken(baseUrl, apiKey),
+    getBearerToken: async () => await getVaultToken(coreUrl, apiKey),
     options: {
       logLevel: Skyflow.LogLevel.ERROR,
       env: Skyflow.Env.DEV,

@@ -118,8 +118,24 @@ export class BaseInlineCheckout {
     }
   }
 
+  // The customer and the saved cards live on the engine chosen at start-up: their tokens are not
+  // interchangeable between the monolith and the core.
+  get _usesCore() {
+    return this.#engine === PAYMENT_ENGINE.CORE;
+  }
+
+  get _customerHost() {
+    return this._usesCore ? this.coreUrl : this.baseUrl;
+  }
+
   async _getCustomer(customer, signal) {
-    return await registerOrFetchCustomer(this.baseUrl, this.apiKeyTonder, customer, signal);
+    return await registerOrFetchCustomer(
+      this._customerHost,
+      this.apiKeyTonder,
+      customer,
+      signal,
+      this._usesCore,
+    );
   }
 
   async _checkout() {
@@ -191,11 +207,23 @@ export class BaseInlineCheckout {
     return legacyBody;
   }
 
+  // The monolith's order needs a monolith customer token: a core customer token is refused. Same
+  // users table, so registering by email returns the same customer.
+  async #legacyCustomer(customer) {
+    if (!this._usesCore) return customer;
+    return await registerOrFetchCustomer(
+      this.baseUrl,
+      this.apiKeyTonder,
+      this.customer,
+      this.abortController.signal,
+    );
+  }
+
   async #handleLegacyCheckout({ card, payment_method, customer }) {
     const { reference, business } = this.merchantData;
     const total = Number(this.cartTotal);
     try {
-      const { id, auth_token } = customer;
+      const { id, auth_token } = await this.#legacyCustomer(customer);
       const orderItems = {
         business: this.apiKeyTonder,
         client: auth_token,
