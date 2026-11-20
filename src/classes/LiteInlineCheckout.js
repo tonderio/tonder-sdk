@@ -4,7 +4,6 @@ import {
   fetchCustomerCards,
   saveCustomerCard,
   removeCustomerCard,
-  registerOrFetchCustomer,
 } from "../data";
 import { initializeSkyflow, mountSkyflowFields, mountRevealFields } from "../helpers/skyflow";
 import { getPaymentMethodDetails } from "../shared/catalog/paymentMethodsCatalog";
@@ -61,10 +60,12 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
       const { auth_token } = await this.#getCustomer();
       const response = await fetchCustomerCards(
         this.signatures,
-        this.baseUrl,
+        this._customerHost,
         auth_token,
         this.secureToken,
         this.merchantData.business.pk,
+        null,
+        this._usesCore,
       );
       return {
         ...response,
@@ -100,11 +101,12 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
 
       return await saveCustomerCard(
         this.signatures,
-        this.baseUrl,
+        this._customerHost,
         auth_token,
         this.secureToken,
         business?.pk,
         skyflowTokens,
+        this._usesCore,
       );
     } catch (error) {
       throw formatPublicErrorResponse(
@@ -130,11 +132,12 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
 
       return await removeCustomerCard(
         this.signatures,
-        this.baseUrl,
+        this._customerHost,
         auth_token,
         this.secureToken,
         skyflowId,
         business?.pk,
+        this._usesCore,
       );
     } catch (error) {
       throw formatPublicErrorResponse(
@@ -154,7 +157,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
    */
   async getCustomerPaymentMethods() {
     try {
-      const response = await fetchCustomerAPMs(this.baseUrl, this.apiKeyTonder);
+      const response = await fetchCustomerAPMs(this.coreUrl, this.apiKeyTonder);
 
       const apms_results =
         response && "results" in response && response["results"].length > 0
@@ -313,7 +316,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
     this.#skyflowInstance = await initializeSkyflow(
       vault_id,
       vault_url,
-      this.baseUrl,
+      this.coreUrl,
       this.apiKeyTonder,
       null,
       this.mode,
@@ -393,11 +396,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
   async #getCustomer() {
     if (!!this.#customerData) return this.#customerData;
 
-    this.#customerData = await registerOrFetchCustomer(
-      this.baseUrl,
-      this.apiKeyTonder,
-      this.customer,
-    );
+    this.#customerData = await this._getCustomer(this.customer);
     return this.#customerData;
   }
 }

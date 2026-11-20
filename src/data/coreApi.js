@@ -1,7 +1,7 @@
 import { fetchWithSignatureHeaders } from "../shared/utils/apiFetch";
 import { CORE_APP_ORIGIN } from "../shared/constants/paymentEngine";
 
-const coreHeaders = apiKey => ({
+export const coreHeaders = apiKey => ({
   Authorization: `Token ${apiKey}`,
   "X-App-Origin": CORE_APP_ORIGIN,
 });
@@ -65,6 +65,13 @@ export async function processCorePayment(signatures, coreUrl, apiKey, body, requ
   if (!response.ok) await throwCoreError(response, "Failed to process the payment");
   return await response.json();
 }
+
+/**
+ * Url of a route of the core's payments API under `/transactions/v1`.
+ * @param {string} coreUrl - Host of the core.
+ * @param {string} path - Route path, starting with `/`.
+ */
+export const coreRoute = (coreUrl, path) => `${coreUrl}/transactions/v1${path}`;
 
 const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 

@@ -1,13 +1,24 @@
+import { coreHeaders, coreRoute } from "./coreApi";
+import { toLegacyCustomer } from "../helpers/coreSupport";
+
 /**
  * Registers a new customer or fetches an existing customer.
- * @param {string} baseUrl - The base URL of the  API.
+ * @param {string} baseUrl - Host of the engine that holds the customer: the core's with `core`.
  * @param {string} apiKey - The API key for authentication.
  * @param {Object} customer - The customer data.
  * @param {AbortSignal} signal - The abort signal to cancel the request.
- * @returns {Promise<Object>} The registered or fetched customer data.
+ * @param {boolean} core - Whether the customer lives on the core (`core_payments_enabled`).
+ * @returns {Promise<Object>} The registered or fetched customer data; from the core, its answer
+ * mapped to the monolith's `id` and `auth_token`.
  */
-export async function registerOrFetchCustomer(baseUrl, apiKey, customer, signal = null) {
-  const url = `${baseUrl}/api/v1/customer/`;
+export async function registerOrFetchCustomer(
+  baseUrl,
+  apiKey,
+  customer,
+  signal = null,
+  core = false,
+) {
+  const url = core ? coreRoute(baseUrl, "/customer") : `${baseUrl}/api/v1/customer/`;
   const data = {
     email: customer.email,
     first_name: customer?.firstName,
@@ -18,15 +29,21 @@ export async function registerOrFetchCustomer(baseUrl, apiKey, customer, signal 
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Token ${apiKey}`,
+      ...(core ? coreHeaders(apiKey) : { Authorization: `Token ${apiKey}` }),
     },
     signal: signal,
     body: JSON.stringify(data),
   });
 
   if (response.status === 201) {
-    return await response.json();
-  } else {
-    throw new Error(`Error: ${response.statusText}`);
+    const body = await response.json();
+    return core ? toLegacyCustomer(body) : body;
   }
+  if (!core) throw new Error(`Error: ${response.statusText}`);
+
+  const body = await response.json().catch(() => undefined);
+  const error = new Error(`Error: ${body?.error?.message ?? response.statusText}`);
+  error.status = response.status;
+  error.body = body;
+  throw error;
 }

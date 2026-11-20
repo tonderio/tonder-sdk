@@ -1,15 +1,22 @@
+import { coreHeaders, coreRoute } from "./coreApi";
+import {
+  toLegacyBanks,
+  toLegacyBanksByType,
+  toLegacyErrorBody,
+  toLegacyPaymentMethods,
+} from "../helpers/coreSupport";
 import { buildErrorResponse, buildErrorResponseFromCatch } from "../helpers/utils";
 
 /**
  * Fetches Alternative Payment Methods (APMs) of a customer.
- * @param {string} baseUrl - The base URL of the  API.
+ * @param {string} coreUrl - Host of the core.
  * @param {string} apiKey - The API key for authentication.
  * @param params - The query params to filter APMs
  * @param {AbortSignal} signal - The abort signal to cancel the request.
  * @returns {Promise<import("../../types").IPaymentMethodResponse>} The available APMs.
  */
 export async function fetchCustomerAPMs(
-  baseUrl,
+  coreUrl,
   apiKey,
   params = {
     status: "active",
@@ -20,18 +27,15 @@ export async function fetchCustomerAPMs(
   try {
     const queryString = new URLSearchParams(params).toString();
 
-    const response = await fetch(`${baseUrl}/api/v1/payment_methods?${queryString}`, {
+    const response = await fetch(coreRoute(coreUrl, `/payment_methods?${queryString}`), {
       method: "GET",
-      headers: {
-        Authorization: `Token ${apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json", ...coreHeaders(apiKey) },
       signal,
     });
 
-    if (response.ok) return await response.json();
     const res_json = await response.json();
-    throw await buildErrorResponse(response, res_json);
+    if (response.ok) return toLegacyPaymentMethods(res_json);
+    throw await buildErrorResponse(response, toLegacyErrorBody(res_json));
   } catch (error) {
     throw buildErrorResponseFromCatch(error);
   }
@@ -39,25 +43,22 @@ export async function fetchCustomerAPMs(
 
 /**
  * Fetches SafetyPay banks available for a business.
- * @param {string} baseUrl - The base URL of the API.
+ * @param {string} coreUrl - Host of the core.
  * @param {string} apiKey - The API key for authentication.
  * @param {AbortSignal} signal - The abort signal to cancel the request.
  * @returns {Promise<Object>} The available SafetyPay banks grouped by payment type.
  */
-export async function fetchSafetyPayBanks(baseUrl, apiKey, signal = null) {
+export async function fetchSafetyPayBanks(coreUrl, apiKey, signal = null) {
   try {
-    const response = await fetch(`${baseUrl}/api/v1/safetypay/banks/${apiKey}/`, {
+    const response = await fetch(coreRoute(coreUrl, "/safetypay/banks"), {
       method: "GET",
-      headers: {
-        Authorization: `Token ${apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json", ...coreHeaders(apiKey) },
       signal,
     });
 
-    if (response.ok) return await response.json();
     const res_json = await response.json();
-    throw await buildErrorResponse(response, res_json);
+    if (response.ok) return toLegacyBanksByType(res_json);
+    throw await buildErrorResponse(response, toLegacyErrorBody(res_json));
   } catch (error) {
     throw buildErrorResponseFromCatch(error);
   }
@@ -65,26 +66,23 @@ export async function fetchSafetyPayBanks(baseUrl, apiKey, signal = null) {
 
 /**
  * Fetches SafetyPay banks for a specific payment type.
- * @param {string} baseUrl - The base URL of the API.
+ * @param {string} coreUrl - Host of the core.
  * @param {string} apiKey - The API key for authentication.
  * @param {string} paymentType - The payment type ('cash' or 'transfer').
  * @param {AbortSignal} signal - The abort signal to cancel the request.
  * @returns {Promise<Array>} The available SafetyPay banks for the payment type.
  */
-export async function fetchSafetyPayBanksByType(baseUrl, apiKey, paymentType, signal = null) {
+export async function fetchSafetyPayBanksByType(coreUrl, apiKey, paymentType, signal = null) {
   try {
-    const response = await fetch(`${baseUrl}/api/v1/safetypay/banks/${apiKey}/${paymentType}/`, {
+    const response = await fetch(coreRoute(coreUrl, `/safetypay/banks/${paymentType}`), {
       method: "GET",
-      headers: {
-        Authorization: `Token ${apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json", ...coreHeaders(apiKey) },
       signal,
     });
 
-    if (response.ok) return await response.json();
     const res_json = await response.json();
-    throw await buildErrorResponse(response, res_json);
+    if (response.ok) return toLegacyBanks(res_json);
+    throw await buildErrorResponse(response, toLegacyErrorBody(res_json));
   } catch (error) {
     throw buildErrorResponseFromCatch(error);
   }
