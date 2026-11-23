@@ -24,6 +24,7 @@
   ],
   "license": "ISC",
   "dependencies": {
+    "@tonder.io/client-telemetry": "0.1.0",
     "accordion-js": "^3.4.0",
     "lodash.get": "^4.4.2"
   },

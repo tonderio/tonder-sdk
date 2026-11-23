@@ -3,6 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require('webpack');
 const JavaScriptObfuscator = require('webpack-obfuscator');
+const { version } = require('./package.json');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -42,6 +43,7 @@ module.exports = (env, argv) => {
   const plugins = [
     new webpack.DefinePlugin({
       'process.env.BASE_URL': JSON.stringify(process.env.BASE_URL),
+      'process.env.SDK_VERSION': JSON.stringify(version),
     }),
     new webpack.IgnorePlugin({
       resourceRegExp: /samples\//
