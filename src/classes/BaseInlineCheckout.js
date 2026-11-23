@@ -2,7 +2,7 @@ import { ThreeDSHandler } from "./3dsHandler.js";
 import { createOrder, registerOrFetchCustomer } from "../data";
 import { TONDER_CORE_URL_BY_MODE, TONDER_URL_BY_MODE } from "../shared/constants/tonderUrl";
 import { APPROVED_PAYMENT_STATUSES, PAYMENT_ENGINE } from "../shared/constants/paymentEngine";
-import { fetchCoreBusinessConfig, processCorePayment } from "../data/coreApi";
+import { coreHeaders, fetchCoreBusinessConfig, processCorePayment } from "../data/coreApi";
 import {
   buildCoreProcessBody,
   newRequestId,
@@ -12,6 +12,7 @@ import {
 import { globalLoader } from "./globalLoader";
 import { checkoutRouterError, createPayment, startCheckoutRouter } from "../data/checkoutApi";
 import { getBrowserInfo, injectMercadoPagoSecurity } from "../helpers/utils";
+import { createSdkTelemetry, reportMethodCalled } from "../helpers/telemetry";
 
 export class BaseInlineCheckout {
   baseUrl = "";
@@ -21,6 +22,7 @@ export class BaseInlineCheckout {
   #isProcessingPayment = false;
   // Read once from the business configuration at start-up.
   #engine = PAYMENT_ENGINE.LEGACY;
+  #telemetry = null;
   constructor({ mode = "stage", apiKey, returnUrl, callBack = () => {}, signatures }) {
     this.apiKeyTonder = apiKey;
     this.returnUrl = returnUrl;
@@ -30,6 +32,11 @@ export class BaseInlineCheckout {
     this.baseUrl = TONDER_URL_BY_MODE[this.mode] || TONDER_URL_BY_MODE["stage"];
     this.coreUrl = TONDER_CORE_URL_BY_MODE[this.mode] || TONDER_CORE_URL_BY_MODE["stage"];
     this.abortController = new AbortController();
+    this.#telemetry = createSdkTelemetry({
+      mode: this.mode,
+      endpoint: `${this.coreUrl}/telemetry`,
+      authorization: () => coreHeaders(this.apiKeyTonder).Authorization,
+    });
     this.process3ds = new ThreeDSHandler({
       apiKey: apiKey,
       baseUrl: this.baseUrl,
@@ -45,6 +52,7 @@ export class BaseInlineCheckout {
    * @public
    */
   configureCheckout(data) {
+    this._reportMethodCalled("configureCheckout");
     if ("secureToken" in data) this.#handleSecureToken(data["secureToken"]);
     this.#setCheckoutData(data);
   }
@@ -55,6 +63,7 @@ export class BaseInlineCheckout {
    * @public
    */
   async verify3dsTransaction() {
+    this._reportMethodCalled("verify3dsTransaction");
     globalLoader.show();
     const engine = this.process3ds.getStoredEngine();
     const result3ds = await this.process3ds.verifyTransactionStatus();
@@ -83,6 +92,7 @@ export class BaseInlineCheckout {
    * @public
    */
   payment(data) {
+    this._reportMethodCalled("payment");
     return new Promise(async (resolve, reject) => {
       // Prevent multiple concurrent payment requests
       // Silently ignore duplicate clicks without throwing an error
@@ -108,6 +118,10 @@ export class BaseInlineCheckout {
         this.#isProcessingPayment = false;
       }
     });
+  }
+
+  _reportMethodCalled(method) {
+    reportMethodCalled(this.#telemetry, method);
   }
 
   async _initializeCheckout() {
@@ -149,19 +163,10 @@ export class BaseInlineCheckout {
   async _handleCheckout(params) {
     // Card payments follow the engine chosen at start-up; APMs always use the legacy flow.
     if (this.#engine === PAYMENT_ENGINE.CORE && !params.payment_method) {
-      try {
-        return await this.#handleCoreCheckout(params);
-      } catch (error) {
-        // Nothing was created: the kill switch sends this payment back to the legacy flow.
-        if (!this.#isOperationsDisabled(error)) throw error;
-      }
+      return this.#handleCoreCheckout(params);
     }
     this.process3ds.setEngine(PAYMENT_ENGINE.LEGACY);
     return this.#handleLegacyCheckout(params);
-  }
-
-  #isOperationsDisabled(error) {
-    return error?.status === 503 && error?.body?.error?.code === "operations_disabled";
   }
 
   async #handleCoreCheckout({ card, savedCardId }) {
@@ -195,7 +200,7 @@ export class BaseInlineCheckout {
         newRequestId(),
       );
     } catch (error) {
-      if (error.status === undefined || this.#isOperationsDisabled(error)) throw error;
+      if (error.status === undefined) throw error;
       throw checkoutRouterError(toLegacyCheckoutError(error.status, error.body));
     }
 

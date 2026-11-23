@@ -320,7 +320,7 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       expect(calledUrls()).toContain(`${MONOLITH}/api/v1/checkout-router/`);
     });
 
-    it("retries once on the legacy flow when the core answers operations_disabled", async () => {
+    it("returns a core 503 operations_disabled to the merchant and makes no monolith request", async () => {
       routes = [
         ["/transactions/v1/business/config", jsonResponse(businessConfig())],
         [
@@ -332,10 +332,11 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       stubFetch();
       const checkout = create();
       await checkout._initializeCheckout();
-      const result = await checkout.payment(data);
 
-      expect(calledUrls()).toContain(`${MONOLITH}/api/v1/checkout-router/`);
-      expect(result.message).toBe("Success");
+      const error = await checkout.payment(data).catch(e => e);
+
+      expect(error).toBeInstanceOf(Error);
+      expect(calledUrls().filter(url => url.startsWith(MONOLITH))).toEqual([]);
     });
 
     it.each([
