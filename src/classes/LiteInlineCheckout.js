@@ -24,6 +24,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
    * @public
    */
   async injectCheckout() {
+    this._reportMethodCalled("injectCheckout");
     await this._initializeCheckout();
   }
 
@@ -36,6 +37,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
    * @public
    */
   async getCustomerCards() {
+    this._reportMethodCalled("getCustomerCards");
     try {
       const { auth_token } = await this.#getCustomer();
       const response = await fetchCustomerCards(
@@ -75,6 +77,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
    * @public
    */
   async saveCustomerCard(card) {
+    this._reportMethodCalled("saveCustomerCard");
     try {
       const { auth_token } = await this.#getCustomer();
       const { vault_id, vault_url, business } = this.merchantData;
@@ -116,6 +119,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
    * @public
    */
   async removeCustomerCard(skyflowId) {
+    this._reportMethodCalled("removeCustomerCard");
     try {
       const { auth_token } = await this.#getCustomer();
       const { business } = this.merchantData;
@@ -148,6 +152,7 @@ export class LiteInlineCheckout extends BaseInlineCheckout {
    * @public
    */
   async getCustomerPaymentMethods() {
+    this._reportMethodCalled("getCustomerPaymentMethods");
     try {
       const response = await fetchCustomerAPMs(this.coreUrl, this.apiKeyTonder);
 

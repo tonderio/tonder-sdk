@@ -129,6 +129,7 @@ export class InlineCheckout extends BaseInlineCheckout {
    * @public
    */
   async injectCheckout() {
+    this._reportMethodCalled("injectCheckout");
     if (InlineCheckout.injected) return;
     const containerTonderCheckout = document.querySelector(`#${HTML_IDS.tonderCheckout}`);
     if (containerTonderCheckout) {
@@ -175,6 +176,7 @@ export class InlineCheckout extends BaseInlineCheckout {
    * @public
    */
   removeCheckout() {
+    this._reportMethodCalled("removeCheckout");
     InlineCheckout.injected = false;
     InlineCheckout.cardsInjected = false;
     InlineCheckout.apmsInjected = false;

@@ -538,6 +538,10 @@ if (
 - If the business configuration cannot be loaded (an error answer, a network failure or an unreadable body), the SDK fails with the error "The Tonder checkout configuration could not be loaded." and there is no fallback to the legacy route. `LiteInlineCheckout.injectCheckout()` rejects with it. `InlineCheckout.injectCheckout()` rejects with it when the `#tonder-checkout` container is already in the page, hides the loader and shows "No se pudieron cargar los datos del comercio." in the container; when the container is not in the page yet, `injectCheckout()` has already resolved and the failure is reported with the same message in the container and as a `console.error`. A request cancelled with `removeCheckout()` is not an error and shows no message. In `development` mode the legacy calls keep going to your local backend, while the Tonder payments API is always remote (`https://api-dev.tonder.io`); `sandbox` uses the same payments API as `stage`.
 - The `refund_transaction` action of such a payment points at the refund route of the Tonder payments API (`POST /transactions/v1/process`), carries the body to send (`operation_type: "refund"` and `original_transaction_id`, the id of the transaction being refunded) and accepts the same API key.
 
+### Usage telemetry
+
+The SDK reports which public methods are called (`payment`, `configureCheckout`, `injectCheckout` and the rest), so Tonder can see which integrations still use this SDK. Each report carries only the method name, the SDK name (`web-sdk-legacy`) and version, and the environment; it never carries card, customer or payment data. It goes to `<Tonder API>/telemetry` with the same `Authorization` header as the SDK's other Tonder calls, in the background: it never delays or fails a payment and sends nothing when it cannot be delivered. It uses the same Tonder API host as the payments API, so a strict Content Security Policy `connect-src` that allows that host covers it.
+
 ## HMAC Signature Validation
 
 Tonder supports **HMAC** validation to ensure the data sent from your application to Tonder is not tampered with.
