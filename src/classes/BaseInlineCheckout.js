@@ -149,19 +149,10 @@ export class BaseInlineCheckout {
   async _handleCheckout(params) {
     // Card payments follow the engine chosen at start-up; APMs always use the legacy flow.
     if (this.#engine === PAYMENT_ENGINE.CORE && !params.payment_method) {
-      try {
-        return await this.#handleCoreCheckout(params);
-      } catch (error) {
-        // Nothing was created: the kill switch sends this payment back to the legacy flow.
-        if (!this.#isOperationsDisabled(error)) throw error;
-      }
+      return this.#handleCoreCheckout(params);
     }
     this.process3ds.setEngine(PAYMENT_ENGINE.LEGACY);
     return this.#handleLegacyCheckout(params);
-  }
-
-  #isOperationsDisabled(error) {
-    return error?.status === 503 && error?.body?.error?.code === "operations_disabled";
   }
 
   async #handleCoreCheckout({ card, savedCardId }) {
@@ -195,7 +186,7 @@ export class BaseInlineCheckout {
         newRequestId(),
       );
     } catch (error) {
-      if (error.status === undefined || this.#isOperationsDisabled(error)) throw error;
+      if (error.status === undefined) throw error;
       throw checkoutRouterError(toLegacyCheckoutError(error.status, error.body));
     }
 
