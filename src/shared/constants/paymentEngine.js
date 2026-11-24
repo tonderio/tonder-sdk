@@ -4,6 +4,26 @@ export const PAYMENT_ENGINE = Object.freeze({
   LEGACY: "legacy",
 });
 
+// The alternative payment methods the core charges, compared in upper case: the core accepts any
+// case (it stores and answers it upper case), so the code itself is always sent as the merchant wrote
+// it. Any other method (SPEI, an unknown code) stays on the legacy flow.
+const CORE_APM_TYPES = Object.freeze([
+  "OXXOPAY",
+  "MERCADOPAGO",
+  "SAFETYPAYCASH",
+  "SAFETYPAYTRANSFER",
+  "NEOSURF",
+  "QR",
+  "TRANSFER",
+]);
+
+export const isCoreApm = type => CORE_APM_TYPES.includes(type.toUpperCase());
+
+// What the core answers as a transaction's method type: a card or Apple Pay is not an APM, any
+// other type is, so a method the SDK does not list still reads as one.
+export const isApmTypeAnswer = type =>
+  !!type && !["CARD", "APPLE_PAY"].includes(type.toUpperCase());
+
 export const CORE_APP_ORIGIN = "sdk/web-legacy";
 
 // Statuses of a core payment that can still change; every other status is final.

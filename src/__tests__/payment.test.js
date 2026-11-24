@@ -7,6 +7,7 @@ import {
   API_KEY,
   CORE_HOST,
   businessConfig,
+  coreApmPending,
   coreDeclined,
   coreRedirect,
   coreSuccess,
@@ -303,22 +304,294 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       });
     });
 
-    it("keeps APMs on the legacy flow", async () => {
+    const payApm = async (payment_method, extra = {}, setup = () => {}) => {
       routes = [
         ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        ["/transactions/v1/process", jsonResponse(coreApmPending(), 201)],
+        ...legacyRoutes(),
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+      setup(checkout);
+      vi.spyOn(checkout, "_checkout").mockImplementation(() =>
+        checkout._handleCheckout({ payment_method, customer: CUSTOMER }),
+      );
+      // Like a card redirect, payment() never settles on a redirect: the page navigates away.
+      const redirected = new Promise(resolve =>
+        vi.spyOn(checkout.process3ds, "redirectToChallenge").mockImplementation(resolve),
+      );
+      const result = await Promise.race([checkout.payment({ ...data, ...extra }), redirected]);
+      return { checkout, result };
+    };
+
+    const processCall = () => calls.find(call => call.url.endsWith("/transactions/v1/process"));
+
+    it.each([
+      "oxxopay",
+      "mercadopago",
+      "safetypayCash",
+      "SafetyPayTransfer",
+      "neosurf",
+      "qr",
+      "Transfer",
+    ])("pays the APM %s through the core with its type as written", async code => {
+      await payApm(code);
+
+      expect(calledUrls().filter(url => url.startsWith(MONOLITH))).toEqual([]);
+      expect(processCall().options.headers.Authorization).toBe(`Token ${API_KEY}`);
+      expect(processCall().options.headers["X-App-Origin"]).toBe("sdk/web-legacy");
+      expect(processCall().body).toMatchObject({
+        operation_type: "payment",
+        amount: 100,
+        currency: "MXN",
+        client_reference: "order-1",
+        customer: { name: "Ana Lopez", email: "ana@example.com" },
+        payment_method: { type: code },
+        metadata: { order_id: 9 },
+        items: [{ name: "Shirt", quantity: 1 }],
+        return_url: "r",
+      });
+      expect(processCall().body.payment_method).not.toHaveProperty("token");
+      expect(processCall().body.payment_method).not.toHaveProperty("card_number");
+    });
+
+    it("sends the merchant's apm_config and omits an empty one", async () => {
+      const apm_config = { preference: { back_urls: { success: "https://shop.example/ok" } } };
+      await payApm("MercadoPago", { apm_config });
+      expect(processCall().body.payment_method).toEqual({ type: "MercadoPago", apm_config });
+
+      await payApm("oxxopay");
+      expect(processCall().body.payment_method).toEqual({ type: "oxxopay" });
+    });
+
+    it("builds the SafetyPay config from the selected bank", async () => {
+      await payApm("SafetyPayCash", {}, checkout => {
+        vi.spyOn(checkout, "getSelectedSafetyPayBank").mockReturnValue({ bankCode: "8186" });
+        vi.spyOn(checkout, "getSafetyPayBankInfo").mockReturnValue({ country_name: "México" });
+      });
+
+      expect(processCall().body.payment_method).toEqual({
+        type: "SafetyPayCash",
+        apm_config: { country: "México", channel: "WP", bank_ids: [{ id: "8186" }] },
+      });
+    });
+
+    it("resolves the legacy body with the buyer's page and the status check", async () => {
+      const { checkout } = await payApm("oxxopay");
+
+      expect(checkout.process3ds.payload).toMatchObject({
+        status: "200",
+        transaction_status: "Pending",
+        payment_id: 77,
+        next_action: {
+          redirect_to_url: {
+            url: "https://payflow.example/oxxo-pay?token=display",
+            verify_transaction_status_url: "/transactions/v1/0190aaaa",
+          },
+        },
+      });
+    });
+
+    it("leaves display data to the merchant that renders its own page", async () => {
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        [
+          "/transactions/v1/process",
+          jsonResponse(
+            coreApmPending({
+              next_action: {
+                redirect_to_url: { url: "https://payflow.example/transfer?token=d" },
+                display_bank_transfer: { cvu: "0000" },
+              },
+            }),
+            201,
+          ),
+        ],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+      vi.spyOn(checkout, "_checkout").mockImplementation(() =>
+        checkout._handleCheckout({ payment_method: "transfer", customer: CUSTOMER }),
+      );
+      vi.spyOn(checkout.process3ds, "redirectToChallenge").mockImplementation(() => {});
+      checkout.payment(data);
+      await vi.waitFor(() => expect(checkout.process3ds.payload).toBeTruthy());
+
+      expect(checkout.process3ds.payload.next_action.display_bank_transfer).toEqual({
+        cvu: "0000",
+      });
+    });
+
+    it("redirects a QR answer that carries display data, as the legacy flow does", async () => {
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        [
+          "/transactions/v1/process",
+          jsonResponse(
+            coreApmPending({
+              next_action: {
+                redirect_to_url: {
+                  url: "https://payflow.example/qr?token=d",
+                  verify_transaction_status_url: "/transactions/v1/0190aaaa",
+                },
+                display_qr_code: { qr: "x" },
+              },
+            }),
+            201,
+          ),
+        ],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+      vi.spyOn(checkout, "_checkout").mockImplementation(() =>
+        checkout._handleCheckout({ payment_method: "QR", customer: CUSTOMER }),
+      );
+      const redirected = new Promise(resolve =>
+        vi.spyOn(checkout.process3ds, "redirectToChallenge").mockImplementation(resolve),
+      );
+      checkout.payment(data);
+
+      await redirected;
+      expect(checkout.process3ds.payload.next_action.display_qr_code).toEqual({ qr: "x" });
+    });
+
+    it("still redirects a legacy answer that carries display data", async () => {
+      routes = [
+        [
+          "/transactions/v1/business/config",
+          jsonResponse(businessConfig({ core_payments_enabled: false })),
+        ],
+        ...legacyRoutes().slice(0, 3),
+        [
+          "/api/v1/checkout-router/",
+          jsonResponse(
+            {
+              status: "200",
+              next_action: {
+                redirect_to_url: { url: "https://payflow.example/qr?token=d" },
+                display_qr_code: { qr: "x" },
+              },
+            },
+            201,
+          ),
+        ],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+      vi.spyOn(checkout, "_checkout").mockImplementation(() =>
+        checkout._handleCheckout({ payment_method: "QR", customer: CUSTOMER }),
+      );
+      const redirected = new Promise(resolve =>
+        vi.spyOn(checkout.process3ds, "redirectToChallenge").mockImplementation(resolve),
+      );
+      checkout.payment(data);
+
+      await redirected;
+    });
+
+    it("redirects the buyer and stores the core engine to check the status later", async () => {
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        ["/transactions/v1/process", jsonResponse(coreApmPending(), 201)],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+      vi.spyOn(checkout, "_checkout").mockImplementation(() =>
+        checkout._handleCheckout({ payment_method: "oxxopay", customer: CUSTOMER }),
+      );
+      const redirect = vi.spyOn(checkout.process3ds, "redirectToChallenge");
+      vi.stubGlobal("location", { href: "" });
+      // Like a card redirect, payment() never settles: the page navigates away.
+      checkout.payment(data);
+      await vi.waitFor(() => expect(redirect).toHaveBeenCalled());
+
+      expect(checkout.process3ds.getRedirectUrl()).toBe(
+        "https://payflow.example/oxxo-pay?token=display",
+      );
+      expect(JSON.parse(localStorage.getItem("verify_transaction_status"))).toMatchObject({
+        url: "/transactions/v1/0190aaaa",
+        engine: "core",
+      });
+    });
+
+    it("verifies an APM payment on the core and keeps the state while it is pending", async () => {
+      localStorage.setItem(
+        "verify_transaction_status",
+        JSON.stringify({
+          url: "/transactions/v1/0190aaaa",
+          engine: "core",
+          expires: Date.now() + 60000,
+        }),
+      );
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        [
+          "/transactions/v1/0190aaaa",
+          jsonResponse(coreApmPending({ payment_method_type: "OxxoPay" })),
+        ],
+      ];
+      stubFetch();
+      const checkout = create();
+      await checkout._initializeCheckout();
+      const result = await checkout.verify3dsTransaction();
+
+      expect(result).toMatchObject({ transaction_status: "Pending", is_apm: true });
+      expect(JSON.parse(localStorage.getItem("verify_transaction_status")).engine).toBe("core");
+    });
+
+    it("returns a core error for an APM and never retries it on the legacy flow", async () => {
+      routes = [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        [
+          "/transactions/v1/process",
+          jsonResponse(
+            {
+              error: { code: "payment_method_not_enabled", message: "No.", type: "business_error" },
+              request_id: "req-1",
+            },
+            422,
+          ),
+        ],
         ...legacyRoutes(),
       ];
       stubFetch();
       const checkout = create();
       await checkout._initializeCheckout();
       vi.spyOn(checkout, "_checkout").mockImplementation(() =>
-        checkout._handleCheckout({ payment_method: "mercadopago", customer: CUSTOMER }),
+        checkout._handleCheckout({ payment_method: "oxxopay", customer: CUSTOMER }),
       );
-      await checkout.payment(data);
 
-      expect(calledUrls().some(url => url.includes("/transactions/v1/process"))).toBe(false);
-      expect(calledUrls()).toContain(`${MONOLITH}/api/v1/checkout-router/`);
+      const error = await checkout.payment(data).catch(e => e);
+      expect(error.details).toMatchObject({ status: "422", message: "No." });
+      expect(calledUrls().filter(url => url.startsWith(MONOLITH))).toEqual([]);
     });
+
+    it.each([" oxxopay", "oxxopay ", "   "])(
+      "sends the padded code %j to the legacy flow as written, as before",
+      async code => {
+        const { checkout } = await payApm(code);
+
+        expect(calledUrls().some(url => url.includes("/transactions/v1/process"))).toBe(false);
+        const router = calls.find(call => call.url.endsWith("/api/v1/checkout-router/"));
+        expect(router.body.payment_method).toBe(code);
+        expect(router.body).not.toHaveProperty("card");
+      },
+    );
+
+    it.each(["Spei", "spei", "wallet"])(
+      "keeps %s, which the core does not serve, on the legacy flow",
+      async code => {
+        await payApm(code);
+
+        expect(calledUrls().some(url => url.includes("/transactions/v1/process"))).toBe(false);
+        expect(calledUrls()).toContain(`${MONOLITH}/api/v1/checkout-router/`);
+      },
+    );
 
     it("returns a core 503 operations_disabled to the merchant and makes no monolith request", async () => {
       routes = [
@@ -380,22 +653,6 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
 
       await expect(checkout.payment(data)).rejects.toThrow("Failed to fetch");
       expect(calledUrls().filter(url => url.startsWith(MONOLITH))).toEqual([]);
-    });
-
-    it("keeps an APM on the legacy flow whatever the case of its name", async () => {
-      routes = [
-        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
-        ...legacyRoutes(),
-      ];
-      stubFetch();
-      const checkout = create();
-      await checkout._initializeCheckout();
-      vi.spyOn(checkout, "_checkout").mockImplementation(() =>
-        checkout._handleCheckout({ payment_method: "MercadoPago", customer: CUSTOMER }),
-      );
-      await checkout.payment(data);
-
-      expect(calledUrls().some(url => url.includes("/transactions/v1/process"))).toBe(false);
     });
 
     it("stores the engine with the 3DS state and verifies through the core", async () => {
@@ -742,6 +999,31 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       expect(calls[3].body).toMatchObject({ order_id: 31, payment_id: 77, business_id: 12 });
       expect(result).toEqual({ status: "200", message: "Success" });
     });
+
+    it.each(["oxxopay", "MercadoPago", "safetypayCash", "neosurf", "qr", "transfer", "Spei"])(
+      "keeps the APM %s on orders, payments and checkout-router, its type as written",
+      async code => {
+        routes = [
+          [
+            "/transactions/v1/business/config",
+            jsonResponse(businessConfig({ core_payments_enabled: false })),
+          ],
+          ...legacyRoutes(),
+        ];
+        stubFetch();
+        const checkout = create();
+        await checkout._initializeCheckout();
+        vi.spyOn(checkout, "_checkout").mockImplementation(() =>
+          checkout._handleCheckout({ payment_method: code, customer: CUSTOMER }),
+        );
+        await checkout.payment(data);
+
+        expect(calledUrls().some(url => url.includes("/transactions/v1/process"))).toBe(false);
+        const router = calls.find(call => call.url.endsWith("/api/v1/checkout-router/"));
+        expect(router.body).toMatchObject({ payment_method: code, apm_config: {}, source: "sdk" });
+        expect(router.body).not.toHaveProperty("card");
+      },
+    );
 
     it("treats a configuration without the flag as OFF", async () => {
       const { core_payments_enabled, ...withoutFlag } = businessConfig();
