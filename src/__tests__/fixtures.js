@@ -95,6 +95,22 @@ export const coreApmPending = (overrides = {}) =>
     ...overrides,
   });
 
+// SPEI answers like the Direct API: the payflow page and, beside next_action, the CLABE and bank.
+export const coreSpeiPending = (overrides = {}) =>
+  coreApmPending({
+    payment_method_type: "SPEI",
+    clabe: "646180123400000001",
+    bank_name: "Nvio Pagos Mexico",
+    next_action: {
+      redirect_to_url: {
+        url: "https://payflow.example/spei?token=display",
+        return_url: "https://shop.example/return?tndr_payment_id=77",
+        verify_transaction_status_url: "/transactions/v1/0190aaaa",
+      },
+    },
+    ...overrides,
+  });
+
 export const jsonResponse = (body, status = 200) => ({
   ok: status >= 200 && status <= 299,
   status,

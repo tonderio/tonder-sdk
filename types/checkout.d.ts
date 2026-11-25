@@ -67,6 +67,10 @@ export interface IStartCheckoutResponse {
   transaction_id: number;
   payment_id: number;
   provider: string;
+  /** SPEI: the CLABE to pay to, beside `next_action`. */
+  clabe?: string;
+  /** SPEI: the bank that holds the CLABE. */
+  bank_name?: string;
   next_action: {
     redirect_to_url?: {
       url: string;
