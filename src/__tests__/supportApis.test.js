@@ -193,7 +193,7 @@ describe("a payment that ends on the monolith with the flag ON", () => {
       customer: { firstName: "Ana", lastName: "Lopez", email: "ana@example.com" },
       cart: { total: "100", items: [{ name: "Shirt", quantity: 1 }] },
       currency: "MXN",
-      payment_method: "Spei",
+      payment_method: "wallet",
     });
 
     const monolithCustomer = calls.find(call => call.url === `${MONOLITH}/api/v1/customer/`);

@@ -166,7 +166,7 @@ export class BaseInlineCheckout {
 
   async _handleCheckout(params) {
     // Cards and the APMs the core serves follow the engine chosen at start-up; any other APM
-    // (SPEI, an unknown code) stays on the legacy flow.
+    // (an unknown code) stays on the legacy flow.
     if (
       this.#engine === PAYMENT_ENGINE.CORE &&
       (!params.payment_method || isCoreApm(params.payment_method))
