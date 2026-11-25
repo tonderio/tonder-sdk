@@ -5,7 +5,7 @@ import {
   toLegacyCheckoutResult,
   toLegacyTransaction,
 } from "../helpers/coreCheckout";
-import { CORE_HOST, coreDeclined, coreRedirect, coreSuccess } from "./fixtures";
+import { CORE_HOST, coreApmPending, coreDeclined, coreRedirect, coreSuccess } from "./fixtures";
 
 const ctx = { coreUrl: CORE_HOST };
 
@@ -409,5 +409,90 @@ describe("toLegacyTransaction", () => {
       transaction_type: "PAYMENT",
       is_apm: false,
     });
+  });
+});
+
+describe("APM payments", () => {
+  const apmBase = {
+    total: "100",
+    currency: "MXN",
+    reference: "TNDR-ref",
+    orderReference: "order-1",
+    firstName: "Ana",
+    lastName: "Lopez",
+    email: "ana@example.com",
+    returnUrl: "https://shop.example/return",
+    items: [{ name: "Shirt", quantity: 1 }],
+    paymentMethodType: "OxxoPay",
+  };
+
+  it("sends the type as the merchant wrote it and no card field", () => {
+    const body = buildCoreProcessBody({ ...apmBase, apmConfig: {} });
+    expect(body.payment_method).toEqual({ type: "OxxoPay" });
+    expect(body).toMatchObject({
+      operation_type: "payment",
+      amount: 100,
+      client_reference: "order-1",
+      customer: { name: "Ana Lopez", email: "ana@example.com" },
+      return_url: "https://shop.example/return",
+      items: [{ name: "Shirt", quantity: 1 }],
+    });
+  });
+
+  it("keeps a non-empty apm_config and drops an empty one", () => {
+    const config = { country: "México", channel: "WP", bank_ids: [{ id: "8186" }] };
+    expect(
+      buildCoreProcessBody({ ...apmBase, paymentMethodType: "safetypayCash", apmConfig: config })
+        .payment_method,
+    ).toEqual({ type: "safetypayCash", apm_config: config });
+    expect(buildCoreProcessBody({ ...apmBase, apmConfig: undefined }).payment_method).toEqual({
+      type: "OxxoPay",
+    });
+  });
+
+  it("answers the pending payment with its page, its display data and its status check", () => {
+    const next_action = {
+      redirect_to_url: coreApmPending().next_action.redirect_to_url,
+      display_qr_code: { qr: "x" },
+      display_bank_transfer: { cvu: "0000" },
+    };
+    const { ok, body } = toLegacyCheckoutResult(coreApmPending({ next_action }), ctx);
+    expect(ok).toBe(true);
+    expect(body).toMatchObject({ status: "200", transaction_status: "Pending", payment_id: 77 });
+    expect(body.next_action).toEqual(next_action);
+    expect(body.actions.map(action => action.name)).toContain("verify_transaction_status");
+  });
+
+  it("reads the routing id and the finished route from the routing block, as for a card", () => {
+    const { body } = toLegacyCheckoutResult(coreApmPending(), ctx);
+    expect(body).toMatchObject({
+      checkout_id: "0190aaaa-0000-7000-8000-000000000001",
+      is_route_finished: true,
+    });
+    expect(toLegacyTransaction(coreApmPending())).toMatchObject({
+      checkout_id: "0190aaaa-0000-7000-8000-000000000001",
+      checkout: { id: "0190aaaa-0000-7000-8000-000000000001", is_route_finished: true },
+    });
+  });
+
+  it("takes is_apm from the type the core answers, whatever the method", () => {
+    expect(toLegacyTransaction(coreApmPending({ payment_method_type: "SomeNewApm" })).is_apm).toBe(
+      true,
+    );
+    expect(toLegacyTransaction(coreApmPending({ payment_method_type: "OXXOPAY" })).is_apm).toBe(
+      true,
+    );
+    expect(toLegacyTransaction(coreSuccess({ payment_method_type: "card" })).is_apm).toBe(false);
+    expect(toLegacyTransaction(coreSuccess({ payment_method_type: "APPLE_PAY" })).is_apm).toBe(
+      false,
+    );
+  });
+
+  it("marks the verified transaction as an APM from the type the core answers", () => {
+    expect(toLegacyTransaction(coreApmPending({ payment_method_type: "OxxoPay" })).is_apm).toBe(
+      true,
+    );
+    expect(toLegacyTransaction(coreSuccess({ payment_method_type: "CARD" })).is_apm).toBe(false);
+    expect(toLegacyTransaction(coreSuccess()).is_apm).toBe(false);
   });
 });
