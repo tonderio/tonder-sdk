@@ -2,6 +2,7 @@ import { checkoutRouterError } from "../data/checkoutApi";
 import {
   APPROVED_PAYMENT_STATUSES,
   OPEN_PAYMENT_STATUSES,
+  isApmTypeAnswer,
 } from "../shared/constants/paymentEngine";
 
 const GUARDIAN_DECLINE_CODE = "FH01";
@@ -21,6 +22,32 @@ export function newRequestId() {
   return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 }
 
+// The type goes as the merchant wrote it; the core reads only `apm_config` beside it.
+const buildApmPaymentMethod = (type, apmConfig) => ({
+  type,
+  ...(apmConfig && Object.keys(apmConfig).length > 0 ? { apm_config: apmConfig } : {}),
+});
+
+function buildCardPaymentMethod(card, savedCardId) {
+  // The caller decides by flow: a fresh collect also returns the new record's skyflow_id,
+  // and the core reads `token` as a saved card.
+  if (!savedCardId && !CARD_FIELDS.some(field => card?.[field] !== undefined)) {
+    throw checkoutRouterError(
+      toLegacyCheckoutError(400, {
+        error: { message: "A saved card id or the collected card fields are required to pay." },
+      }),
+    );
+  }
+  return savedCardId
+    ? { type: "CARD", token: savedCardId }
+    : {
+        type: "CARD",
+        ...Object.fromEntries(CARD_FIELDS.map(field => [field, card[field] ?? ""])),
+        // Only the core's BIN lookup reads it; the card is still charged from the field tokens.
+        ...(card.skyflow_id ? { skyflow_id: card.skyflow_id } : {}),
+      };
+}
+
 /**
  * Builds the core's `/process` body from what the legacy SDK sends to `orders`,
  * `business/<b>/payments` and `checkout-router`.
@@ -38,28 +65,16 @@ export function buildCoreProcessBody({
   browserInfo,
   card,
   savedCardId,
+  paymentMethodType,
+  apmConfig,
   returnUrl,
   metadata,
   billingAddress,
   items,
 }) {
-  // The caller decides by flow: a fresh collect also returns the new record's skyflow_id,
-  // and the core reads `token` as a saved card.
-  if (!savedCardId && !CARD_FIELDS.some(field => card?.[field] !== undefined)) {
-    throw checkoutRouterError(
-      toLegacyCheckoutError(400, {
-        error: { message: "A saved card id or the collected card fields are required to pay." },
-      }),
-    );
-  }
-  const paymentMethod = savedCardId
-    ? { type: "CARD", token: savedCardId }
-    : {
-        type: "CARD",
-        ...Object.fromEntries(CARD_FIELDS.map(field => [field, card[field] ?? ""])),
-        // Only the core's BIN lookup reads it; the card is still charged from the field tokens.
-        ...(card.skyflow_id ? { skyflow_id: card.skyflow_id } : {}),
-      };
+  const paymentMethod = paymentMethodType
+    ? buildApmPaymentMethod(paymentMethodType, apmConfig)
+    : buildCardPaymentMethod(card, savedCardId);
   return {
     operation_type: "payment",
     amount: Number(total),
@@ -103,10 +118,16 @@ function buildActions(core, { coreUrl }) {
   ];
 }
 
+// An APM may also answer the data to render its own page; the legacy answer carries it untouched.
+const NEXT_ACTION_MEMBERS = ["redirect_to_url", "display_qr_code", "display_bank_transfer"];
+
 function buildNextAction(core) {
-  return core.next_action?.redirect_to_url
-    ? { redirect_to_url: core.next_action.redirect_to_url }
-    : {};
+  return Object.fromEntries(
+    NEXT_ACTION_MEMBERS.filter(member => core.next_action?.[member]).map(member => [
+      member,
+      core.next_action[member],
+    ]),
+  );
 }
 
 function legacyBase(core, provider) {
@@ -220,7 +241,7 @@ export function toLegacyTransaction(core) {
     modified: core.updated_at,
     payment: nestedOrNull(core.payment_id, id => ({ id })),
     response: core.psp_response,
-    is_apm: false,
+    is_apm: isApmTypeAnswer(core.payment_method_type),
   };
   FIRST_PARTY_TRANSACTION_FIELDS.forEach(field => {
     if (field in core) transaction[field] = core[field];

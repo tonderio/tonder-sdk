@@ -71,6 +71,30 @@ export const coreRedirect = () =>
     psp_response: {},
   });
 
+// An APM payment is Pending with the buyer's page; it has no routing cycle or card brand.
+export const coreApmPending = (overrides = {}) =>
+  coreSuccess({
+    status: "Pending",
+    transaction_status: "Pending",
+    acq: "apms",
+    // An APM is one step with no route: the core finishes it at once and the routing id is the id.
+    routing: {
+      checkout_id: "0190aaaa-0000-7000-8000-000000000001",
+      is_route_finished: true,
+      decline_type: null,
+      rejected_psp_responses: [],
+    },
+    next_action: {
+      redirect_to_url: {
+        url: "https://payflow.example/oxxo-pay?token=display",
+        return_url: "https://shop.example/return?tndr_payment_id=77",
+        verify_transaction_status_url: "/transactions/v1/0190aaaa",
+      },
+    },
+    psp_response: {},
+    ...overrides,
+  });
+
 export const jsonResponse = (body, status = 200) => ({
   ok: status >= 200 && status <= 299,
   status,

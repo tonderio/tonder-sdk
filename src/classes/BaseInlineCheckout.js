@@ -1,7 +1,11 @@
 import { ThreeDSHandler } from "./3dsHandler.js";
 import { createOrder, registerOrFetchCustomer } from "../data";
 import { TONDER_CORE_URL_BY_MODE, TONDER_URL_BY_MODE } from "../shared/constants/tonderUrl";
-import { APPROVED_PAYMENT_STATUSES, PAYMENT_ENGINE } from "../shared/constants/paymentEngine";
+import {
+  APPROVED_PAYMENT_STATUSES,
+  PAYMENT_ENGINE,
+  isCoreApm,
+} from "../shared/constants/paymentEngine";
 import { coreHeaders, fetchCoreBusinessConfig, processCorePayment } from "../data/coreApi";
 import {
   buildCoreProcessBody,
@@ -161,15 +165,19 @@ export class BaseInlineCheckout {
   }
 
   async _handleCheckout(params) {
-    // Card payments follow the engine chosen at start-up; APMs always use the legacy flow.
-    if (this.#engine === PAYMENT_ENGINE.CORE && !params.payment_method) {
+    // Cards and the APMs the core serves follow the engine chosen at start-up; any other APM
+    // (SPEI, an unknown code) stays on the legacy flow.
+    if (
+      this.#engine === PAYMENT_ENGINE.CORE &&
+      (!params.payment_method || isCoreApm(params.payment_method))
+    ) {
       return this.#handleCoreCheckout(params);
     }
     this.process3ds.setEngine(PAYMENT_ENGINE.LEGACY);
     return this.#handleLegacyCheckout(params);
   }
 
-  async #handleCoreCheckout({ card, savedCardId }) {
+  async #handleCoreCheckout({ card, savedCardId, payment_method }) {
     const { reference } = this.merchantData;
     const body = buildCoreProcessBody({
       total: this.cartTotal,
@@ -184,6 +192,8 @@ export class BaseInlineCheckout {
       browserInfo: getBrowserInfo(),
       card,
       savedCardId,
+      paymentMethodType: payment_method || undefined,
+      apmConfig: payment_method ? this.#buildApmConfig(payment_method) : undefined,
       returnUrl: this.returnUrl,
       metadata: this.metadata,
       billingAddress: this.billingAddress,

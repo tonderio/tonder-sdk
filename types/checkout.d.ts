@@ -68,11 +68,15 @@ export interface IStartCheckoutResponse {
   payment_id: number;
   provider: string;
   next_action: {
-    redirect_to_url: {
+    redirect_to_url?: {
       url: string;
       return_url: string;
       verify_transaction_status_url: string;
     };
+    /** Argentina QR on the Tonder payments API: what the buyer scans, for your own page. */
+    display_qr_code?: Record<string, any>;
+    /** Argentina transfer on the Tonder payments API: the account data to pay to. */
+    display_bank_transfer?: Record<string, any>;
     iframe_resources?: {
       iframe: string;
     };
