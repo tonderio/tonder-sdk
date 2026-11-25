@@ -5,6 +5,7 @@ import {
   isApmTypeAnswer,
 } from "../shared/constants/paymentEngine";
 
+const SPEI_TYPE = "SPEI";
 const GUARDIAN_DECLINE_CODE = "FH01";
 const DEFAULT_PROVIDER = "tonder";
 const CARD_FIELDS = [
@@ -22,11 +23,16 @@ export function newRequestId() {
   return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 }
 
-// The type goes as the merchant wrote it; the core reads only `apm_config` beside it.
-const buildApmPaymentMethod = (type, apmConfig) => ({
-  type,
-  ...(apmConfig && Object.keys(apmConfig).length > 0 ? { apm_config: apmConfig } : {}),
-});
+// The type goes as the merchant wrote it; the core reads only `apm_config` beside it. SPEI is
+// the exception: the core's schema accepts the constant SPEI and no other member, so it goes
+// upper case and alone.
+const buildApmPaymentMethod = (type, apmConfig) =>
+  isSpei(type)
+    ? { type: SPEI_TYPE }
+    : {
+        type,
+        ...(apmConfig && Object.keys(apmConfig).length > 0 ? { apm_config: apmConfig } : {}),
+      };
 
 function buildCardPaymentMethod(card, savedCardId) {
   // The caller decides by flow: a fresh collect also returns the new record's skyflow_id,
@@ -130,6 +136,19 @@ function buildNextAction(core) {
   );
 }
 
+// SPEI answers its CLABE and bank beside next_action, as the legacy route does. Only a SPEI
+// answer carries them, and only the ones it has: nothing is invented, null included.
+const SETTLEMENT_FIELDS = ["clabe", "bank_name"];
+
+const isSpei = type => typeof type === "string" && type.toUpperCase() === SPEI_TYPE;
+
+const buildSettlement = core =>
+  isSpei(core.payment_method_type)
+    ? Object.fromEntries(
+        SETTLEMENT_FIELDS.filter(field => core[field] != null).map(field => [field, core[field]]),
+      )
+    : {};
+
 function legacyBase(core, provider) {
   return {
     checkout_id: core.routing?.checkout_id,
@@ -174,6 +193,7 @@ function approvedBody(core, provider, ctx) {
     ...legacyBase(core, provider),
     transaction_id: toTransactionId(core.transaction_id),
     next_action: buildNextAction(core),
+    ...buildSettlement(core),
     psp_response: core.psp_response,
     actions: buildActions(core, ctx),
   };

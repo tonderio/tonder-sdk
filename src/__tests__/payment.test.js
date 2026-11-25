@@ -10,6 +10,7 @@ import {
   coreApmPending,
   coreDeclined,
   coreRedirect,
+  coreSpeiPending,
   coreSuccess,
   jsonResponse,
 } from "./fixtures";
@@ -377,6 +378,184 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       });
     });
 
+    describe("SPEI", () => {
+      const paySpei = async (checkout, payment_method = "SPEI", extra = {}) => {
+        vi.spyOn(checkout, "_checkout").mockImplementation(() =>
+          checkout._handleCheckout({ payment_method, customer: CUSTOMER }),
+        );
+        return checkout.payment({ ...data, ...extra });
+      };
+      const speiRoutes = answer => [
+        ["/transactions/v1/business/config", jsonResponse(businessConfig())],
+        ["/transactions/v1/process", jsonResponse(answer, 201)],
+        ...legacyRoutes(),
+      ];
+
+      it.each(["SPEI", "spei", "Spei"])(
+        'sends %s to the core as exactly { type: "SPEI" } and nothing to the monolith',
+        async code => {
+          routes = speiRoutes(coreSpeiPending());
+          stubFetch();
+          const checkout = create();
+          await checkout._initializeCheckout();
+          vi.spyOn(checkout.process3ds, "redirectToChallenge").mockImplementation(() => {});
+          paySpei(checkout, code);
+          await vi.waitFor(() => expect(checkout.process3ds.payload).toBeTruthy());
+
+          expect(processCall().body.payment_method).toStrictEqual({ type: "SPEI" });
+          expect(calledUrls().filter(url => url.startsWith(MONOLITH))).toEqual([]);
+        },
+      );
+
+      it("sends no apm_config for SPEI even when the merchant passes one", async () => {
+        routes = speiRoutes(coreSpeiPending());
+        stubFetch();
+        const checkout = create();
+        await checkout._initializeCheckout();
+        vi.spyOn(checkout.process3ds, "redirectToChallenge").mockImplementation(() => {});
+        paySpei(checkout, "SPEI", { apm_config: { country: "Mexico" } });
+        await vi.waitFor(() => expect(checkout.process3ds.payload).toBeTruthy());
+
+        expect(processCall().body.payment_method).toStrictEqual({ type: "SPEI" });
+      });
+
+      it("keeps the legacy flow with the flag OFF", async () => {
+        routes = [
+          [
+            "/transactions/v1/business/config",
+            jsonResponse(businessConfig({ core_payments_enabled: false })),
+          ],
+          ...legacyRoutes(),
+        ];
+        stubFetch();
+        const checkout = create();
+        await checkout._initializeCheckout();
+        await paySpei(checkout);
+
+        expect(calledUrls().some(url => url.includes("/transactions/v1/process"))).toBe(false);
+        expect(calledUrls()).toContain(`${MONOLITH}/api/v1/checkout-router/`);
+      });
+
+      it("hands the redirect to the buyer's page with the CLABE and the bank in the answer", async () => {
+        routes = speiRoutes(coreSpeiPending());
+        stubFetch();
+        const checkout = create();
+        await checkout._initializeCheckout();
+        const redirected = new Promise(resolve =>
+          vi.spyOn(checkout.process3ds, "redirectToChallenge").mockImplementation(resolve),
+        );
+        paySpei(checkout);
+        await redirected;
+
+        expect(checkout.process3ds.getRedirectUrl()).toBe(
+          "https://payflow.example/spei?token=display",
+        );
+        expect(checkout.process3ds.payload).toMatchObject({
+          transaction_status: "Pending",
+          payment_id: 77,
+          clabe: "646180123400000001",
+          bank_name: "Nvio Pagos Mexico",
+          next_action: {
+            redirect_to_url: {
+              return_url: "https://shop.example/return?tndr_payment_id=77",
+              verify_transaction_status_url: "/transactions/v1/0190aaaa",
+            },
+          },
+        });
+      });
+
+      it("resolves with the CLABE and the bank, without navigating, when there is no page", async () => {
+        routes = speiRoutes(coreSpeiPending({ next_action: {} }));
+        stubFetch();
+        const checkout = create();
+        await checkout._initializeCheckout();
+        const redirect = vi.spyOn(checkout.process3ds, "redirectToChallenge");
+
+        const result = await paySpei(checkout);
+
+        expect(redirect).not.toHaveBeenCalled();
+        expect(result).toMatchObject({
+          clabe: "646180123400000001",
+          bank_name: "Nvio Pagos Mexico",
+          next_action: {},
+        });
+      });
+
+      it("answers the same fields and navigation on both engines", async () => {
+        const settlement = { clabe: "646180123400000001", bank_name: "Nvio Pagos Mexico" };
+        const legacyAnswer = {
+          status: "200",
+          message: "Success",
+          transaction_status: "Pending",
+          ...settlement,
+          next_action: {
+            redirect_to_url: { url: "https://payflow.example/spei?clabe=1&sim_token=t" },
+          },
+        };
+        const run = async ({ flag, router, withUrl }) => {
+          routes = [
+            [
+              "/transactions/v1/business/config",
+              jsonResponse(businessConfig({ core_payments_enabled: flag })),
+            ],
+            [
+              "/transactions/v1/process",
+              jsonResponse(withUrl ? coreSpeiPending() : coreSpeiPending({ next_action: {} }), 201),
+            ],
+            ["/api/v1/checkout-router/", jsonResponse(router, 201)],
+            ...legacyRoutes(),
+          ];
+          stubFetch();
+          const checkout = create();
+          await checkout._initializeCheckout();
+          const redirect = vi
+            .spyOn(checkout.process3ds, "redirectToChallenge")
+            .mockImplementation(() => {});
+          const result = await Promise.race([
+            paySpei(checkout),
+            vi.waitFor(() => expect(redirect).toHaveBeenCalled()).then(() => "redirected"),
+          ]);
+          return {
+            result,
+            redirected: redirect.mock.calls.length > 0,
+            url: checkout.process3ds.getRedirectUrl(),
+            payload: checkout.process3ds.payload,
+            processed: calledUrls().some(url => url.includes("/transactions/v1/process")),
+          };
+        };
+
+        for (const withUrl of [true, false]) {
+          const legacyBody = withUrl ? legacyAnswer : { ...legacyAnswer, next_action: {} };
+          const legacy = await run({ flag: false, router: legacyBody, withUrl });
+          const core = await run({ flag: true, router: legacyBody, withUrl });
+
+          expect(legacy.processed).toBe(false);
+          expect(core.processed).toBe(true);
+          expect(core.redirected).toBe(legacy.redirected);
+          expect(core.redirected).toBe(withUrl);
+          expect(
+            Object.keys(core.payload ?? core.result)
+              .filter(k => k in settlement)
+              .sort(),
+          ).toEqual(
+            Object.keys(legacy.payload ?? legacy.result)
+              .filter(k => k in settlement)
+              .sort(),
+          );
+          expect(core.payload).toMatchObject(settlement);
+          expect(Object.keys(core.payload.next_action)).toEqual(
+            Object.keys(legacy.payload.next_action),
+          );
+          if (withUrl) {
+            expect(new URL(core.url).pathname).toBe(new URL(legacy.url).pathname);
+          } else {
+            expect(core.result).toMatchObject(settlement);
+            expect(legacy.result).toMatchObject(settlement);
+          }
+        }
+      });
+    });
+
     it("resolves the legacy body with the buyer's page and the status check", async () => {
       const { checkout } = await payApm("oxxopay");
 
@@ -583,7 +762,7 @@ describe.each(entryPoints)("%s", (_name, create, data) => {
       },
     );
 
-    it.each(["Spei", "spei", "wallet"])(
+    it.each(["wallet"])(
       "keeps %s, which the core does not serve, on the legacy flow",
       async code => {
         await payApm(code);

@@ -5,7 +5,14 @@ import {
   toLegacyCheckoutResult,
   toLegacyTransaction,
 } from "../helpers/coreCheckout";
-import { CORE_HOST, coreApmPending, coreDeclined, coreRedirect, coreSuccess } from "./fixtures";
+import {
+  CORE_HOST,
+  coreApmPending,
+  coreDeclined,
+  coreRedirect,
+  coreSpeiPending,
+  coreSuccess,
+} from "./fixtures";
 
 const ctx = { coreUrl: CORE_HOST };
 
@@ -461,6 +468,58 @@ describe("APM payments", () => {
     expect(body).toMatchObject({ status: "200", transaction_status: "Pending", payment_id: 77 });
     expect(body.next_action).toEqual(next_action);
     expect(body.actions.map(action => action.name)).toContain("verify_transaction_status");
+  });
+
+  it("sends SPEI as its type alone", () => {
+    expect(
+      buildCoreProcessBody({ ...apmBase, paymentMethodType: "SPEI", apmConfig: {} }).payment_method,
+    ).toEqual({ type: "SPEI" });
+  });
+
+  it("answers a SPEI payment with its CLABE and bank beside the page, as the legacy route does", () => {
+    const { ok, body } = toLegacyCheckoutResult(coreSpeiPending(), ctx);
+    expect(ok).toBe(true);
+    expect(body).toMatchObject({
+      clabe: "646180123400000001",
+      bank_name: "Nvio Pagos Mexico",
+      next_action: coreSpeiPending().next_action,
+    });
+  });
+
+  it.each([
+    ["null", null],
+    ["missing", undefined],
+  ])("leaves out a %s CLABE and bank of a SPEI answer", (_label, value) => {
+    const { body } = toLegacyCheckoutResult(
+      coreSpeiPending({ clabe: value, bank_name: value }),
+      ctx,
+    );
+    expect(body).not.toHaveProperty("clabe");
+    expect(body).not.toHaveProperty("bank_name");
+  });
+
+  it("never adds the CLABE or the bank to another APM's answer", () => {
+    const { body } = toLegacyCheckoutResult(
+      coreApmPending({ clabe: "646180123400000001", bank_name: "Nvio" }),
+      ctx,
+    );
+    expect(body).not.toHaveProperty("clabe");
+    expect(body).not.toHaveProperty("bank_name");
+  });
+
+  it("sends SPEI upper case and alone, whatever the merchant wrote or configured", () => {
+    for (const type of ["SPEI", "spei", "Spei"]) {
+      expect(
+        buildCoreProcessBody({ ...apmBase, paymentMethodType: type, apmConfig: { a: 1 } })
+          .payment_method,
+      ).toStrictEqual({ type: "SPEI" });
+    }
+  });
+
+  it("does not invent the CLABE or the bank when the core does not answer them", () => {
+    const { body } = toLegacyCheckoutResult(coreApmPending(), ctx);
+    expect(body).not.toHaveProperty("clabe");
+    expect(body).not.toHaveProperty("bank_name");
   });
 
   it("reads the routing id and the finished route from the routing block, as for a card", () => {
