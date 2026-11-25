@@ -6,7 +6,7 @@ export const PAYMENT_ENGINE = Object.freeze({
 
 // The alternative payment methods the core charges, compared in upper case: the core accepts any
 // case (it stores and answers it upper case), so the code itself is always sent as the merchant wrote
-// it. Any other method (SPEI, an unknown code) stays on the legacy flow.
+// it. Any other method (an unknown code) stays on the legacy flow.
 const CORE_APM_TYPES = Object.freeze([
   "OXXOPAY",
   "MERCADOPAGO",
@@ -15,6 +15,7 @@ const CORE_APM_TYPES = Object.freeze([
   "NEOSURF",
   "QR",
   "TRANSFER",
+  "SPEI",
 ]);
 
 export const isCoreApm = type => CORE_APM_TYPES.includes(type.toUpperCase());
