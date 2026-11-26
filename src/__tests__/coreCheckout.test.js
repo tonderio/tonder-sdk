@@ -555,3 +555,66 @@ describe("APM payments", () => {
     expect(toLegacyTransaction(coreSuccess()).is_apm).toBe(false);
   });
 });
+
+describe("toLegacyTransaction of a SPEI payment", () => {
+  const spei = overrides =>
+    coreSpeiPending({
+      amount: "150.3700",
+      currency: "MXN",
+      transaction_reference: "B1126031337626a",
+      operation_date: "2026-11-26T03:13:34.120Z",
+      ...overrides,
+    });
+
+  it("answers the amount as a number, as the deposits service does", () => {
+    expect(toLegacyTransaction(spei()).amount).toBe(150.37);
+    expect(toLegacyTransaction(spei({ amount: "100.0000" })).amount).toBe(100);
+  });
+
+  it("answers the deposit reference, and an empty text when the core has none", () => {
+    expect(toLegacyTransaction(spei()).transaction_reference).toBe("B1126031337626a");
+    expect(toLegacyTransaction(spei({ transaction_reference: null })).transaction_reference).toBe(
+      "",
+    );
+    expect(
+      toLegacyTransaction(spei({ transaction_reference: undefined })).transaction_reference,
+    ).toBe("");
+  });
+
+  it.each([
+    ["2026-11-26T03:13:34.120Z", "2026-11-26T03:13:34.120000+00:00"],
+    ["2026-11-26T03:13:34.123456Z", "2026-11-26T03:13:34.123456+00:00"],
+    ["2026-11-26T03:13:34.000Z", "2026-11-26T03:13:34+00:00"],
+    ["2026-11-26T03:13:34Z", "2026-11-26T03:13:34+00:00"],
+  ])("writes the operation date %s as Python isoformat UTC", (input, expected) => {
+    expect(toLegacyTransaction(spei({ operation_date: input })).operation_date).toBe(expected);
+  });
+
+  it("keeps a null operation date null and a missing one missing", () => {
+    expect(toLegacyTransaction(spei({ operation_date: null }))).toHaveProperty(
+      "operation_date",
+      null,
+    );
+    expect(toLegacyTransaction(spei({ operation_date: undefined }))).not.toHaveProperty(
+      "operation_date",
+    );
+  });
+
+  it("matches the SPEI type in any case", () => {
+    expect(toLegacyTransaction(spei({ payment_method_type: "spei" })).amount).toBe(150.37);
+  });
+
+  it("leaves the text amount, the reference and the date of a card and of another APM as they are", () => {
+    const fields = {
+      amount: "150.3700",
+      transaction_reference: null,
+      operation_date: "2026-11-26T03:13:34.120Z",
+    };
+    expect(
+      toLegacyTransaction(coreSuccess({ payment_method_type: "CARD", ...fields })),
+    ).toMatchObject(fields);
+    expect(
+      toLegacyTransaction(coreApmPending({ payment_method_type: "OXXOPAY", ...fields })),
+    ).toMatchObject(fields);
+  });
+});

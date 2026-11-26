@@ -228,6 +228,24 @@ const FIRST_PARTY_TRANSACTION_FIELDS = [
   "decline",
 ];
 
+// The deposits service answers a SPEI verification in its own shapes: the amount as a number, the
+// reference as text ("" when it has none) and the date as Python's UTC isoformat, with microseconds
+// only when they are not zero.
+const ISO_UTC = /^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.(\d+))?(?:Z|[+-]00:?00)?$/;
+
+const toPythonIsoformat = value => {
+  const match = typeof value === "string" && ISO_UTC.exec(value);
+  if (!match) return value;
+  const micros = (match[2] || "").slice(0, 6).padEnd(6, "0");
+  return `${match[1]}${/^0+$/.test(micros) ? "" : `.${micros}`}+00:00`;
+};
+
+const toSpeiTransactionFields = core => ({
+  amount: Number.isFinite(Number(core.amount)) ? Number(core.amount) : core.amount,
+  transaction_reference: core.transaction_reference ?? "",
+  ...("operation_date" in core ? { operation_date: toPythonIsoformat(core.operation_date) } : {}),
+});
+
 // A null answer stays null and a missing one stays missing, as the legacy route answers them.
 const nestedOrNull = (value, build) =>
   value === undefined || value === null ? value : build(value);
@@ -266,7 +284,11 @@ export function toLegacyTransaction(core) {
   FIRST_PARTY_TRANSACTION_FIELDS.forEach(field => {
     if (field in core) transaction[field] = core[field];
   });
-  return withoutUndefined(transaction);
+  return withoutUndefined(
+    isSpei(core.payment_method_type)
+      ? { ...transaction, ...toSpeiTransactionFields(core) }
+      : transaction,
+  );
 }
 
 export function toLegacyCheckoutError(status, body) {
