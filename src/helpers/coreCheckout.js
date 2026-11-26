@@ -232,6 +232,26 @@ const FIRST_PARTY_TRANSACTION_FIELDS = [
 const nestedOrNull = (value, build) =>
   value === undefined || value === null ? value : build(value);
 
+// usrv-deposits answers the SPEI verify with a number amount, an empty reference when it has none
+// and Python's isoformat for the date (microseconds only when not zero, +00:00 for UTC).
+function toPythonIsoformat(value) {
+  const time = typeof value === "string" ? Date.parse(value) : NaN;
+  if (Number.isNaN(time)) return undefined;
+  const date = new Date(time);
+  const micros = date.getUTCMilliseconds() * 1000;
+  const seconds = date.toISOString().slice(0, 19);
+  return `${seconds}${micros ? `.${String(micros).padStart(6, "0")}` : ""}+00:00`;
+}
+
+function speiTransactionFields(core) {
+  const firstParty = core.first_party || {};
+  return {
+    amount: Number(core.amount),
+    transaction_reference: firstParty.transaction_reference ?? "",
+    operation_date: toPythonIsoformat(firstParty.operation_date),
+  };
+}
+
 const LEGACY_TRANSACTION_TYPES = { payment: "PAYMENT", refund: "REFUND" };
 
 /**
@@ -266,6 +286,7 @@ export function toLegacyTransaction(core) {
   FIRST_PARTY_TRANSACTION_FIELDS.forEach(field => {
     if (field in core) transaction[field] = core[field];
   });
+  if (isSpei(core.payment_method_type)) Object.assign(transaction, speiTransactionFields(core));
   return withoutUndefined(transaction);
 }
 

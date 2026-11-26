@@ -534,6 +534,74 @@ describe("APM payments", () => {
     });
   });
 
+  describe("a SPEI transaction", () => {
+    const spei = (first_party, extra = {}) =>
+      coreSpeiPending({
+        amount: "150.3700",
+        first_party: {
+          transaction_reference: "B1126031337626a",
+          operation_date: "2026-11-26T03:13:34.120Z",
+          ...first_party,
+        },
+        ...extra,
+      });
+
+    it("answers the amount as a number, the deposit reference and a Python isoformat date", () => {
+      expect(toLegacyTransaction(spei())).toMatchObject({
+        amount: 150.37,
+        transaction_reference: "B1126031337626a",
+        operation_date: "2026-11-26T03:13:34.120000+00:00",
+        is_apm: true,
+      });
+    });
+
+    it("prints microseconds only when the milliseconds are not zero", () => {
+      expect(
+        toLegacyTransaction(spei({ operation_date: "2026-11-26T03:13:34.000Z" })).operation_date,
+      ).toBe("2026-11-26T03:13:34+00:00");
+      expect(
+        toLegacyTransaction(spei({ operation_date: "2026-11-26T03:13:34Z" })).operation_date,
+      ).toBe("2026-11-26T03:13:34+00:00");
+      expect(
+        toLegacyTransaction(spei({ operation_date: "2026-11-26T03:13:34.007Z" })).operation_date,
+      ).toBe("2026-11-26T03:13:34.007000+00:00");
+    });
+
+    it("answers an empty reference for a null one and leaves a missing date out", () => {
+      const transaction = toLegacyTransaction(
+        spei({ transaction_reference: null, operation_date: null }),
+      );
+      expect(transaction.transaction_reference).toBe("");
+      expect(transaction).not.toHaveProperty("operation_date");
+    });
+
+    it("answers an empty reference when the core sends no first_party block", () => {
+      const transaction = toLegacyTransaction(spei(undefined, { first_party: undefined }));
+      expect(transaction.transaction_reference).toBe("");
+      expect(transaction).not.toHaveProperty("operation_date");
+    });
+
+    it("recognises the type in any case", () => {
+      expect(toLegacyTransaction(spei({}, { payment_method_type: "spei" })).amount).toBe(150.37);
+    });
+
+    it("leaves a card's amount as the core's text and its first-party fields as answered", () => {
+      const transaction = toLegacyTransaction(
+        coreSuccess({
+          payment_method_type: "CARD",
+          amount: "150.3700",
+          transaction_reference: null,
+          operation_date: "2026-11-26T03:13:34.120Z",
+        }),
+      );
+      expect(transaction).toMatchObject({
+        amount: "150.3700",
+        transaction_reference: null,
+        operation_date: "2026-11-26T03:13:34.120Z",
+      });
+    });
+  });
+
   it("takes is_apm from the type the core answers, whatever the method", () => {
     expect(toLegacyTransaction(coreApmPending({ payment_method_type: "SomeNewApm" })).is_apm).toBe(
       true,
